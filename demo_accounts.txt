@@ -1,0 +1,30 @@
+ConsNE — Demo Accounts
+======================
+
+SUPERADMIN
+  Email    : karun@consne.in
+  Password : Karun@SuperAdmin1
+  Access   : Full platform — all tenants, all sites, all data
+
+CONTRACTOR
+  Email    : rajiv@buildne.in
+  Password : BuildNE@2024!
+  Access   : BuildNE company — all 3 sites, budget, team, reports
+
+SITE MANAGER
+  Email    : pranab@buildne.in
+  Password : BuildNE@2024!
+  Access   : NH-37 (Jorhat) + Manipur Hostel only
+
+SUPERVISOR
+  Email    : merina@buildne.in
+  Password : BuildNE@2024!
+  Access   : NH-37 only — daily logs and attendance
+
+STORE KEEPER
+  Email    : biplab@buildne.in
+  Password : BuildNE@2024!
+  Access   : Inventory across all 3 sites
+
+======================
+App URL : http://localhost:3001
