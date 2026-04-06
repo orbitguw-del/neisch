@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { HardHat, Users, Package, TrendingUp, Plus, IndianRupee } from 'lucide-react'
+import { HardHat, Users, Package, TrendingUp, Plus, IndianRupee, AlertTriangle } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
 import StatCard from '@/components/ui/StatCard'
@@ -15,20 +16,56 @@ const STATUS_CLASS = {
 }
 
 export default function ContractorDashboard() {
-  const navigate  = useNavigate()
-  const profile   = useAuthStore((s) => s.profile)
+  const navigate = useNavigate()
+  const profile  = useAuthStore((s) => s.profile)
   const { sites, fetchSites } = useSiteStore()
 
-  const tenantId = profile?.tenant_id
+  const [teamCount,    setTeamCount]    = useState(0)
+  const [lowStockCount, setLowStockCount] = useState(0)
+  const [loading,      setLoading]      = useState(true)
+
+  const tenantId  = profile?.tenant_id
+  const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
 
   useEffect(() => {
     if (tenantId) fetchSites(tenantId)
   }, [tenantId, fetchSites])
 
-  const activeSites   = sites.filter((s) => s.status === 'active').length
-  const planSites     = sites.filter((s) => s.status === 'planning').length
-  const totalBudget   = sites.reduce((sum, s) => sum + (Number(s.budget) || 0), 0)
-  const firstName     = profile?.full_name?.split(' ')[0] ?? 'there'
+  useEffect(() => {
+    if (!tenantId) return
+    async function loadKPIs() {
+      setLoading(true)
+      try {
+        // Team members (excluding contractor)
+        const { count: tc } = await supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId)
+          .neq('role', 'contractor')
+        setTeamCount(tc ?? 0)
+
+        // Low stock materials
+        const { data: mats } = await supabase
+          .from('materials')
+          .select('quantity_available, quantity_minimum, category')
+          .eq('tenant_id', tenantId)
+          .eq('category', 'consumable')
+          .not('quantity_minimum', 'is', null)
+          .not('quantity_available', 'is', null)
+        const low = (mats ?? []).filter(
+          (m) => Number(m.quantity_available) <= Number(m.quantity_minimum)
+        ).length
+        setLowStockCount(low)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadKPIs()
+  }, [tenantId])
+
+  const activeSites = sites.filter((s) => s.status === 'active').length
+  const planSites   = sites.filter((s) => s.status === 'planning').length
+  const totalBudget = sites.reduce((sum, s) => sum + (Number(s.budget) || 0), 0)
 
   return (
     <div>
@@ -42,16 +79,44 @@ export default function ContractorDashboard() {
         }
       />
 
+      {/* Low stock alert banner */}
+      {lowStockCount > 0 && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+          <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
+          <span className="text-sm text-red-700">
+            <strong>{lowStockCount}</strong> material{lowStockCount > 1 ? 's' : ''} below reorder level across your sites.{' '}
+            <button onClick={() => navigate('/inventory')} className="underline font-medium">View inventory →</button>
+          </span>
+        </div>
+      )}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Total Sites"    value={sites.length} icon={HardHat}      color="brand" />
-        <StatCard label="Active Sites"   value={activeSites}  icon={TrendingUp}   color="green" />
-        <StatCard label="In Planning"    value={planSites}    icon={Package}      color="earth" />
+        <StatCard label="Total Sites"    value={sites.length}  icon={HardHat}       color="brand" />
+        <StatCard label="Active Sites"   value={activeSites}   icon={TrendingUp}    color="green" />
+        <StatCard label="Team Members"   value={teamCount}     icon={Users}         color="earth" />
         <StatCard
           label="Total Budget"
           value={totalBudget > 0 ? formatINR(totalBudget) : '—'}
           icon={IndianRupee}
           color="red"
+        />
+      </div>
+
+      {/* Second row KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <StatCard label="In Planning"    value={planSites}     icon={Package}       color="earth" />
+        <StatCard
+          label="Low Stock Items"
+          value={lowStockCount}
+          icon={AlertTriangle}
+          color={lowStockCount > 0 ? 'red' : 'green'}
+        />
+        <StatCard
+          label="Completed Sites"
+          value={sites.filter((s) => s.status === 'completed').length}
+          icon={HardHat}
+          color="blue"
         />
       </div>
 
@@ -115,11 +180,11 @@ export default function ContractorDashboard() {
           <p className="text-xs text-gray-500 mt-0.5">Manage site assignments</p>
         </button>
         <button
-          onClick={() => navigate('/settings')}
+          onClick={() => navigate('/inventory')}
           className="card p-4 text-left hover:shadow-md transition-shadow"
         >
-          <p className="text-sm font-semibold text-gray-900">Settings</p>
-          <p className="text-xs text-gray-500 mt-0.5">Profile & company details</p>
+          <p className="text-sm font-semibold text-gray-900">Inventory</p>
+          <p className="text-xs text-gray-500 mt-0.5">Stock levels & alerts</p>
         </button>
       </div>
     </div>
