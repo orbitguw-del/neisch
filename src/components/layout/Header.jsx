@@ -1,4 +1,4 @@
-import { Bell, ChevronDown, LogOut, User } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, Menu, User } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '@/stores/authStore'
@@ -20,7 +20,7 @@ const AVATAR_COLORS = {
   store_keeper: 'bg-yellow-600',
 }
 
-export default function Header() {
+export default function Header({ onMenuClick }) {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
   const { profile, session, signOut } = useAuthStore()
@@ -37,7 +37,14 @@ export default function Header() {
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
-      <div />
+      <button
+        onClick={onMenuClick}
+        className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 lg:hidden"
+        aria-label="Open menu"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+      <div className="hidden lg:block" />
 
       <div className="flex items-center gap-3">
         {/* Notifications */}

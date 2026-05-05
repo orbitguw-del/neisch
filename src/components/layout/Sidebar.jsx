@@ -78,14 +78,19 @@ const ROLE_COLORS = {
   store_keeper: 'bg-yellow-50 text-yellow-700 border-yellow-200',
 }
 
-export default function Sidebar() {
+export default function Sidebar({ open = false, onClose = () => {} }) {
   const profile = useAuthStore((s) => s.profile)
   const role = profile?.role ?? 'contractor'
   const tenantName = profile?.tenant?.name ?? 'ConsNE'
   const navItems = NAV_BY_ROLE[role] ?? NAV_BY_ROLE.contractor
 
   return (
-    <aside className="flex w-60 flex-shrink-0 flex-col border-r border-gray-200 bg-white">
+    <aside className={cn(
+      'flex w-60 flex-shrink-0 flex-col border-r border-gray-200 bg-white',
+      'fixed inset-y-0 left-0 z-30 transition-transform duration-300 ease-in-out',
+      'lg:static lg:z-auto lg:translate-x-0',
+      open ? 'translate-x-0' : '-translate-x-full',
+    )}>
       {/* Logo */}
       <div className="flex h-16 items-center gap-3 border-b border-gray-200 px-5">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600">
@@ -115,6 +120,7 @@ export default function Sidebar() {
           <NavLink
             key={to}
             to={to}
+            onClick={onClose}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
