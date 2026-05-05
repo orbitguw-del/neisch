@@ -10,7 +10,11 @@ export default function RoleGuard({ roles, children, redirectTo = '/dashboard' }
   const profile = useAuthStore((s) => s.profile)
   const loading = useAuthStore((s) => s.loading)
 
-  if (loading) return null
+  if (loading) return (
+    <div className="flex flex-1 items-center justify-center">
+      <div className="h-8 w-8 rounded-full border-4 border-brand-600 border-t-transparent animate-spin" />
+    </div>
+  )
 
   if (!profile || !roles.includes(profile.role)) {
     return <Navigate to={redirectTo} replace />

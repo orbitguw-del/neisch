@@ -14,18 +14,18 @@ const useAuthStore = create((set, get) => ({
     if (get()._authSubscription) return
 
     const { data: { session } } = await supabase.auth.getSession()
-    set({ session, user: session?.user ?? null, loading: false })
+    set({ session, user: session?.user ?? null, loading: session?.user ? true : false })
 
     if (session?.user) {
       await get().fetchProfile(session.user.id)
     }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      set({ session, user: session?.user ?? null })
       if (session?.user) {
+        set({ session, user: session.user, loading: true })
         await get().fetchProfile(session.user.id)
       } else {
-        set({ profile: null })
+        set({ session: null, user: null, profile: null, loading: false })
       }
     })
 
@@ -48,7 +48,10 @@ const useAuthStore = create((set, get) => ({
       .eq('id', userId)
       .single()
 
-    if (!profile) return
+    if (!profile) {
+      set({ loading: false })
+      return
+    }
 
     let tenant = null
     if (profile.tenant_id) {
@@ -61,7 +64,7 @@ const useAuthStore = create((set, get) => ({
     }
 
     // Fix: build new object instead of mutating profile directly
-    set({ profile: { ...profile, tenant } })
+    set({ profile: { ...profile, tenant }, loading: false })
   },
 
   signIn: async ({ email, password }) => {
@@ -94,3 +97,6 @@ const useAuthStore = create((set, get) => ({
 }))
 
 export default useAuthStore
+
+
+
