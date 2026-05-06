@@ -8,25 +8,23 @@ export default function AuthCallback() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    // For OAuth (PKCE flow), Supabase exchanges the code via onAuthStateChange.
-    // getSession() alone won't trigger the exchange — we listen for SIGNED_IN.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        subscription.unsubscribe()
-        navigate('/dashboard', { replace: true })
-      } else if (event === 'SIGNED_OUT' || (!session && event !== 'INITIAL_SESSION')) {
-        subscription.unsubscribe()
-        navigate('/login', { replace: true })
-      }
-    })
+    const code = new URLSearchParams(window.location.search).get('code')
 
-    // Fallback: if session already exists (e.g. email magic link via hash)
-    supabase.auth.getSession().then(({ data: { session }, error: err }) => {
-      if (err) { setError(err.message); return }
-      if (session) { subscription.unsubscribe(); navigate('/dashboard', { replace: true }) }
-    })
-
-    return () => subscription.unsubscribe()
+    if (code) {
+      // PKCE flow (Google OAuth) — exchange the code for a session
+      supabase.auth.exchangeCodeForSession(code).then(({ data: { session }, error: err }) => {
+        if (err) { setError(err.message); return }
+        if (session) navigate('/dashboard', { replace: true })
+        else navigate('/login', { replace: true })
+      })
+    } else {
+      // Hash-based flow (magic link / email invite)
+      supabase.auth.getSession().then(({ data: { session }, error: err }) => {
+        if (err) { setError(err.message); return }
+        if (session) navigate('/dashboard', { replace: true })
+        else navigate('/login', { replace: true })
+      })
+    }
   }, [navigate])
 
   if (error) {
