@@ -69,7 +69,7 @@ export default function SuperAdminDashboard() {
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Total Tenants"  value={loading ? '—' : stats.tenants}     icon={Building2} color="brand" />
-        <StatCard label="Total Sites"    value={loading ? '—' : stats.sites}       icon={HardHat}   color="earth" />
+        <StatCard label="Total Sites"    value={loading ? '—' : stats.sites}       icon={HardHat}   color="sage" />
         <StatCard label="Active Sites"   value={loading ? '—' : stats.activeSites} icon={HardHat}   color="green" />
         <StatCard label="Platform Users" value={loading ? '—' : stats.users}       icon={Users}     color="red"   />
       </div>

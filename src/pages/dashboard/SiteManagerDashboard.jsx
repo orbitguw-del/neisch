@@ -39,7 +39,7 @@ export default function SiteManagerDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Assigned Sites" value={sites.length} icon={HardHat}      color="brand" />
         <StatCard label="Active"         value={activeSites}  icon={HardHat}      color="green" />
-        <StatCard label="Workers"        value="—"            icon={Users}        color="earth" />
+        <StatCard label="Workers"        value="—"            icon={Users}        color="sage" />
         <StatCard label="Logs Today"     value="—"            icon={ClipboardList} color="red"  />
       </div>
 

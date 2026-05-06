@@ -31,7 +31,7 @@ export default function Reports() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Total Sites"     value={sites.length}          icon={HardHat}   color="brand" />
         <StatCard label="Active"          value={byStatus.active ?? 0}  icon={BarChart3}  color="green" />
-        <StatCard label="Completed"       value={byStatus.completed ?? 0} icon={BarChart3} color="earth" />
+        <StatCard label="Completed"       value={byStatus.completed ?? 0} icon={BarChart3} color="sage" />
         <StatCard label="Total Budget"    value={formatINR(totalBudget)} icon={Package}   color="red"   />
       </div>
 

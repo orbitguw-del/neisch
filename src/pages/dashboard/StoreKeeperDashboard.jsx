@@ -83,7 +83,7 @@ export default function StoreKeeperDashboard() {
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Assigned Sites"  value={sites.length}      icon={HardHat}       color="brand" />
-        <StatCard label="Material Items"  value={totalItems}        icon={Package}       color="earth" />
+        <StatCard label="Material Items"  value={totalItems}        icon={Package}       color="sage" />
         <StatCard label="Low Stock Alerts" value={lowStockItems.length} icon={AlertTriangle} color="red" />
         <StatCard
           label="Inventory Value"

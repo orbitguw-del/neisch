@@ -94,7 +94,7 @@ export default function ContractorDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Total Sites"    value={sites.length}  icon={HardHat}       color="brand" />
         <StatCard label="Active Sites"   value={activeSites}   icon={TrendingUp}    color="green" />
-        <StatCard label="Team Members"   value={teamCount}     icon={Users}         color="earth" />
+        <StatCard label="Team Members"   value={teamCount}     icon={Users}         color="sage" />
         <StatCard
           label="Total Budget"
           value={totalBudget > 0 ? formatINR(totalBudget) : '—'}
@@ -105,7 +105,7 @@ export default function ContractorDashboard() {
 
       {/* Second row KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <StatCard label="In Planning"    value={planSites}     icon={Package}       color="earth" />
+        <StatCard label="In Planning"    value={planSites}     icon={Package}       color="sage" />
         <StatCard
           label="Low Stock Items"
           value={lowStockCount}
