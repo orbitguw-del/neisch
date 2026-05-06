@@ -4,6 +4,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import RoleGuard from '@/components/auth/RoleGuard'
 import Login from '@/pages/auth/Login'
 import Register from '@/pages/auth/Register'
+import AuthCallback from '@/pages/auth/AuthCallback'
 import Dashboard from '@/pages/dashboard/Dashboard'
 import Sites from '@/pages/sites/Sites'
 import SiteDetail from '@/pages/sites/SiteDetail'
@@ -40,6 +41,10 @@ const router = createBrowserRouter([
   {
     path: '/register',
     element: <Register />,
+  },
+  {
+    path: '/auth/callback',
+    element: <AuthCallback />,
   },
   {
     element: (

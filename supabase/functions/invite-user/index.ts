@@ -45,8 +45,11 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     )
 
+    const siteUrl = Deno.env.get("SITE_URL") ?? "http://localhost:3000"
+
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       data: { role, site_id, tenant_id, invited_role: role },
+      redirectTo: `${siteUrl}/auth/callback`,
     })
 
     if (error) throw error
