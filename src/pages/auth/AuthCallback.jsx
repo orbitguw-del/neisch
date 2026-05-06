@@ -8,19 +8,25 @@ export default function AuthCallback() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Supabase puts tokens in the URL hash after redirect.
-    // getSession() picks them up automatically.
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        setError(error.message)
-        return
-      }
-      if (session) {
+    // For OAuth (PKCE flow), Supabase exchanges the code via onAuthStateChange.
+    // getSession() alone won't trigger the exchange — we listen for SIGNED_IN.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        subscription.unsubscribe()
         navigate('/dashboard', { replace: true })
-      } else {
+      } else if (event === 'SIGNED_OUT' || (!session && event !== 'INITIAL_SESSION')) {
+        subscription.unsubscribe()
         navigate('/login', { replace: true })
       }
     })
+
+    // Fallback: if session already exists (e.g. email magic link via hash)
+    supabase.auth.getSession().then(({ data: { session }, error: err }) => {
+      if (err) { setError(err.message); return }
+      if (session) { subscription.unsubscribe(); navigate('/dashboard', { replace: true }) }
+    })
+
+    return () => subscription.unsubscribe()
   }, [navigate])
 
   if (error) {
