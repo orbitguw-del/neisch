@@ -12,6 +12,7 @@ import {
   UserCog,
   Warehouse,
   Wrench,
+  CalendarCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import useAuthStore from '@/stores/authStore'
@@ -26,6 +27,8 @@ const NAV_BY_ROLE = {
   contractor: [
     { label: 'Dashboard',  to: '/dashboard',  icon: LayoutDashboard },
     { label: 'Sites',      to: '/sites',      icon: HardHat },
+    { label: 'Workers',    to: '/workers',    icon: Users },
+    { label: 'Attendance', to: '/attendance', icon: CalendarCheck },
     { label: 'Inventory',  to: '/inventory',  icon: Warehouse },
     { label: 'Receipts',   to: '/receipts',   icon: ClipboardCheck },
     { label: 'Transfers',  to: '/transfers',  icon: ArrowRightLeft },
@@ -38,6 +41,7 @@ const NAV_BY_ROLE = {
     { label: 'Dashboard',  to: '/dashboard',  icon: LayoutDashboard },
     { label: 'My Sites',   to: '/sites',      icon: HardHat },
     { label: 'Workers',    to: '/workers',    icon: Users },
+    { label: 'Attendance', to: '/attendance', icon: CalendarCheck },
     { label: 'Inventory',  to: '/inventory',  icon: Warehouse },
     { label: 'Receipts',   to: '/receipts',   icon: ClipboardCheck },
     { label: 'Transfers',  to: '/transfers',  icon: ArrowRightLeft },
@@ -47,8 +51,9 @@ const NAV_BY_ROLE = {
   ],
   supervisor: [
     { label: 'Dashboard',  to: '/dashboard',  icon: LayoutDashboard },
-    { label: 'Daily Logs', to: '/logs',       icon: ClipboardList },
     { label: 'Workers',    to: '/workers',    icon: Users },
+    { label: 'Attendance', to: '/attendance', icon: CalendarCheck },
+    { label: 'Daily Logs', to: '/logs',       icon: ClipboardList },
     { label: 'Settings',   to: '/settings',   icon: Settings },
   ],
   store_keeper: [

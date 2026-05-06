@@ -9,6 +9,7 @@ import Dashboard from '@/pages/dashboard/Dashboard'
 import Sites from '@/pages/sites/Sites'
 import SiteDetail from '@/pages/sites/SiteDetail'
 import Workers from '@/pages/workers/Workers'
+import Attendance from '@/pages/workers/Attendance'
 import Materials from '@/pages/materials/Materials'
 import Reports from '@/pages/reports/Reports'
 import Settings from '@/pages/settings/Settings'
@@ -125,6 +126,16 @@ const router = createBrowserRouter([
         element: (
           <RoleGuard roles={SUPERVISOR_UP}>
             <Workers />
+          </RoleGuard>
+        ),
+      },
+
+      // ── Attendance ────────────────────────────────────────────────────────
+      {
+        path: '/attendance',
+        element: (
+          <RoleGuard roles={SUPERVISOR_UP}>
+            <Attendance />
           </RoleGuard>
         ),
       },
