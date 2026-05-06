@@ -163,7 +163,7 @@ export default function SupervisorDashboard() {
         </button>
         <button onClick={() => navigate('/workers')} className="card p-4 text-left hover:shadow-md transition-shadow">
           <div className="flex items-center gap-2 mb-1">
-            <Users className="h-4 w-4 text-earth-600" />
+            <Users className="h-4 w-4 text-sage-600" />
             <p className="text-sm font-semibold text-gray-900">Workers</p>
           </div>
           <p className="text-xs text-gray-500">Labour roster & status</p>

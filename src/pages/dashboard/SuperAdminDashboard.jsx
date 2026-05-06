@@ -52,7 +52,7 @@ export default function SuperAdminDashboard() {
     <div>
       <PageHeader
         title={`Welcome, ${firstName}`}
-        description="ConsNE platform overview — all tenants and operations."
+        description="Storey platform overview — all tenants and operations."
         action={
           <button onClick={() => navigate('/admin/tenants')} className="btn-primary">
             <Shield className="h-4 w-4" /> Manage Tenants

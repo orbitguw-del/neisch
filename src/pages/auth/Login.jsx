@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Building2, Mail, Chrome } from 'lucide-react'
+import { Chrome } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
 import { supabase } from '@/lib/supabase'
+import StoreyIcon from '@/components/brand/StoreyIcon'
 
 export default function Login() {
   const [tab, setTab]               = useState('email') // 'email' | 'invite'
@@ -69,12 +70,11 @@ export default function Login() {
 
         {/* Brand */}
         <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 shadow-lg">
-            <Building2 className="h-7 w-7 text-white" />
-          </div>
+          <StoreyIcon size={48} />
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900">ConsNE</h1>
-            <p className="text-sm text-gray-500">Construction Site Management</p>
+            <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Georgia, ui-serif, serif' }}>Storey</h1>
+            <p className="text-sm text-gray-500">Construction, organised.</p>
+            <p className="mt-1 text-xs text-gray-400">ConTech ERP · real-time site decisions</p>
           </div>
         </div>
 

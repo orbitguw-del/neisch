@@ -414,7 +414,7 @@ export default function Inventory() {
         {[['all', 'All'], ['consumable', 'Consumables'], ['equipment', 'Equipment']].map(([val, label]) => (
           <button key={val} onClick={() => setActiveCategory(val)}
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              activeCategory === val ? 'bg-earth-600 text-white' : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-50'
+              activeCategory === val ? 'bg-brand-600 text-white' : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-50'
             }`}
           >
             {label}

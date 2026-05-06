@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Building2 } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
+import StoreyIcon from '@/components/brand/StoreyIcon'
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -35,11 +35,9 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 to-gray-100 p-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 shadow-lg">
-            <Building2 className="h-7 w-7 text-white" />
-          </div>
+          <StoreyIcon size={48} />
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900">ConsNE</h1>
+            <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Georgia, ui-serif, serif' }}>Storey</h1>
             <p className="text-sm text-gray-500">Register your contracting company</p>
           </div>
         </div>

@@ -158,7 +158,7 @@ export default function Tenants() {
     <div>
       <PageHeader
         title="Tenants"
-        description="All registered contracting companies on the ConsNE platform."
+        description="All registered contracting companies on the Storey platform."
       />
 
       {/* Summary */}

@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 export default function StatCard({ label, value, icon: Icon, trend, color = 'brand' }) {
   const colorMap = {
     brand: 'bg-brand-50 text-brand-600',
-    earth: 'bg-earth-50 text-earth-600',
+    sage: 'bg-sage-100 text-sage-600',
     green: 'bg-green-50 text-green-600',
     red: 'bg-red-50 text-red-600',
   }

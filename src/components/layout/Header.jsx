@@ -15,9 +15,9 @@ const ROLE_LABELS = {
 const AVATAR_COLORS = {
   superadmin:   'bg-purple-600',
   contractor:   'bg-brand-600',
-  site_manager: 'bg-earth-600',
+  site_manager: 'bg-sage-500',
   supervisor:   'bg-green-600',
-  store_keeper: 'bg-yellow-600',
+  store_keeper: 'bg-sand-600',
 }
 
 export default function Header({ onMenuClick }) {

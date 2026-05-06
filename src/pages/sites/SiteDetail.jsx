@@ -83,8 +83,8 @@ export default function SiteDetail() {
             to={`/sites/${siteId}/workers`}
             className="card p-5 hover:shadow-md transition-shadow flex items-center gap-4"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-earth-50">
-              <Users className="h-5 w-5 text-earth-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-100">
+              <Users className="h-5 w-5 text-sage-600" />
             </div>
             <div>
               <p className="font-semibold text-gray-900">Workers</p>
