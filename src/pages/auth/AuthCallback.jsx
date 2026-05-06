@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import StoreyIcon from '@/components/brand/StoreyIcon'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
@@ -44,9 +44,7 @@ export default function AuthCallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 to-gray-100">
       <div className="flex flex-col items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 shadow-lg">
-          <Building2 className="h-7 w-7 text-white" />
-        </div>
+        <StoreyIcon size={48} />
         <div className="h-8 w-8 rounded-full border-4 border-brand-600 border-t-transparent animate-spin" />
         <p className="text-sm text-gray-500">Setting up your account…</p>
       </div>
