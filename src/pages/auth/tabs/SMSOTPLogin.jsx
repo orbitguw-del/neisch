@@ -4,22 +4,18 @@ import { useNavigate } from 'react-router-dom'
 import { Phone } from 'lucide-react'
 
 export default function SMSOTPLogin() {
-  const [step, setStep] = useState('email')  // 'email' | 'phone' | 'otp'
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
+  const [step,    setStep]    = useState('phone') // 'phone' | 'otp'
+  const [phone,   setPhone]   = useState('')
+  const [otp,     setOtp]     = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [timer, setTimer] = useState(0)
+  const [error,   setError]   = useState('')
+  const [timer,   setTimer]   = useState(0)
   const navigate = useNavigate()
 
   const startResendTimer = () => {
     setTimer(60)
     const interval = setInterval(() => {
-      setTimer((t) => {
-        if (t <= 1) { clearInterval(interval); return 0 }
-        return t - 1
-      })
+      setTimer((t) => { if (t <= 1) { clearInterval(interval); return 0 } return t - 1 })
     }, 1000)
   }
 
@@ -28,16 +24,13 @@ export default function SMSOTPLogin() {
     setLoading(true)
     setError('')
 
-    const { error: sendError } = await supabase.functions.invoke('send-sms-otp', {
-      body: { email, phone_number: phone },
-    })
+    const { error: sendError } = await supabase.auth.signInWithOtp({ phone })
 
     setLoading(false)
     if (sendError) {
       setError(sendError.message || 'Failed to send OTP. Check the number and try again.')
       return
     }
-
     setStep('otp')
     startResendTimer()
   }
@@ -47,43 +40,25 @@ export default function SMSOTPLogin() {
     setLoading(true)
     setError('')
 
-    const { data, error: verifyError } = await supabase.functions.invoke('verify-sms-otp', {
-      body: { email, phone_number: phone, otp_code: otp },
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      phone,
+      token: otp,
+      type: 'sms',
     })
 
-    if (verifyError || !data?.success) {
+    setLoading(false)
+    if (verifyError) {
       setError('Invalid or expired OTP. Please try again.')
-      setLoading(false)
       return
     }
-
-    // Use the magic link returned by the edge function to create a real session
-    if (data.magic_link) {
-      const url = new URL(data.magic_link)
-      const token_hash = url.searchParams.get('token_hash')
-      const type = url.searchParams.get('type') ?? 'magiclink'
-
-      if (token_hash) {
-        const { error: sessionError } = await supabase.auth.verifyOtp({ token_hash, type })
-        if (!sessionError) {
-          navigate('/dashboard')
-          return
-        }
-      }
-    }
-
-    // Fallback: if magic link fails, user needs to sign in with password
-    setError('Phone verified. Please sign in with your email and password.')
-    setLoading(false)
+    navigate('/dashboard')
   }
 
   const handleResend = async () => {
     if (timer > 0) return
     setError('')
     setLoading(true)
-    const { error: sendError } = await supabase.functions.invoke('send-sms-otp', {
-      body: { email, phone_number: phone },
-    })
+    const { error: sendError } = await supabase.auth.signInWithOtp({ phone })
     setLoading(false)
     if (sendError) {
       setError('Failed to resend OTP.')
@@ -92,37 +67,9 @@ export default function SMSOTPLogin() {
     }
   }
 
-  if (step === 'email') {
-    return (
-      <form onSubmit={(e) => { e.preventDefault(); setError(''); setStep('phone') }} className="space-y-4">
-        <div>
-          <label className="label" htmlFor="sms-email">Email</label>
-          <input
-            id="sms-email"
-            type="email"
-            autoComplete="email"
-            className="input"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            We'll look up your account then send an OTP to your registered phone.
-          </p>
-        </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
-          <Phone className="h-4 w-4" />
-          Continue with Phone OTP
-        </button>
-      </form>
-    )
-  }
-
   if (step === 'phone') {
     return (
-      <form onSubmit={handleSendOTP} className="space-y-4">
+      <form onSubmit={handleSendOTP} className="space-y-3">
         <div>
           <label className="label" htmlFor="sms-phone">Phone Number</label>
           <input
@@ -135,27 +82,23 @@ export default function SMSOTPLogin() {
             onChange={(e) => setPhone(e.target.value)}
             required
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Include country code, e.g. +91 for India
-          </p>
+          <p className="text-xs text-gray-500 mt-1">Include country code, e.g. +91 for India</p>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <button type="submit" className="btn-primary w-full" disabled={loading}>
-          {loading ? 'Sending OTP…' : 'Send OTP'}
-        </button>
         <button
-          type="button"
-          className="w-full text-sm text-gray-500 hover:text-gray-700 transition-colors"
-          onClick={() => { setStep('email'); setError('') }}
+          type="submit"
+          disabled={loading}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
-          ← Back
+          <Phone className="h-4 w-4" />
+          {loading ? 'Sending OTP…' : 'Continue with Phone OTP'}
         </button>
       </form>
     )
   }
 
   return (
-    <form onSubmit={handleVerifyOTP} className="space-y-4">
+    <form onSubmit={handleVerifyOTP} className="space-y-3">
       <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
         OTP sent to <span className="font-medium">{phone}</span>. Check your messages.
       </div>
@@ -190,9 +133,7 @@ export default function SMSOTPLogin() {
           type="button"
           onClick={handleResend}
           disabled={timer > 0 || loading}
-          className={`font-medium transition-colors ${
-            timer > 0 ? 'text-gray-400 cursor-not-allowed' : 'text-brand-600 hover:text-brand-700'
-          }`}
+          className={`font-medium transition-colors ${timer > 0 ? 'text-gray-400 cursor-not-allowed' : 'text-brand-600 hover:text-brand-700'}`}
         >
           {timer > 0 ? `Resend in ${timer}s` : 'Resend OTP'}
         </button>
