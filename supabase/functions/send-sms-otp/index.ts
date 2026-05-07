@@ -24,26 +24,27 @@ serve(async (req) => {
   }
 
   try {
-    const { email, phone_number } = await req.json()
+    const { phone_number } = await req.json()
 
-    if (!email || !phone_number) {
+    if (!phone_number) {
       return new Response(
-        JSON.stringify({ error: "Missing email or phone_number" }),
+        JSON.stringify({ error: "Missing phone_number" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
-    // Look up user via auth.admin (profiles don't store email)
-    const { data: authUser, error: userError } = await supabase.auth.admin.getUserByEmail(email)
+    // Look up user by phone number in auth.users
+    const { data: userData, error: lookupError } = await supabase
+      .rpc("get_auth_user_by_phone", { p_phone: phone_number })
 
-    if (userError || !authUser?.user) {
+    if (lookupError || !userData || userData.length === 0) {
       return new Response(
-        JSON.stringify({ error: "User not found" }),
+        JSON.stringify({ error: "No account found with this phone number. Sign in with email first and add your phone in settings." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
-    const user = { id: authUser.user.id }
+    const user = { id: userData[0].user_id }
 
     const otp_code = Math.floor(100000 + Math.random() * 900000).toString()
 
@@ -53,7 +54,7 @@ serve(async (req) => {
 
     if (otpError) {
       return new Response(
-        JSON.stringify({ error: "Failed to generate OTP" }),
+        JSON.stringify({ error: "Failed to generate OTP", detail: otpError.message }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }

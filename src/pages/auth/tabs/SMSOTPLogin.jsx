@@ -1,7 +1,20 @@
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { useNavigate } from 'react-router-dom'
 import { Phone } from 'lucide-react'
+
+const SUPABASE_URL     = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+async function callEdge(fn, body) {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify(body),
+  })
+  return res.json()
+}
 
 export default function SMSOTPLogin() {
   const [step,    setStep]    = useState('phone') // 'phone' | 'otp'
@@ -10,7 +23,6 @@ export default function SMSOTPLogin() {
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState('')
   const [timer,   setTimer]   = useState(0)
-  const navigate = useNavigate()
 
   const startResendTimer = () => {
     setTimer(60)
@@ -19,18 +31,18 @@ export default function SMSOTPLogin() {
     }, 1000)
   }
 
+  // Normalise phone: strip spaces/dashes so "+91 7002 500154" → "+917002500154"
+  const normPhone = (raw) => raw.replace(/[\s\-().]/g, '')
+
   const handleSendOTP = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    const { error: sendError } = await supabase.auth.signInWithOtp({ phone })
+    const data = await callEdge('send-sms-otp', { phone_number: normPhone(phone) })
 
     setLoading(false)
-    if (sendError) {
-      setError(sendError.message || 'Failed to send OTP. Check the number and try again.')
-      return
-    }
+    if (data.error) { setError(data.error); return }
     setStep('otp')
     startResendTimer()
   }
@@ -40,31 +52,29 @@ export default function SMSOTPLogin() {
     setLoading(true)
     setError('')
 
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      phone,
-      token: otp,
-      type: 'sms',
+    const data = await callEdge('verify-sms-otp', {
+      phone_number: normPhone(phone),
+      otp_code: otp,
     })
 
     setLoading(false)
-    if (verifyError) {
-      setError('Invalid or expired OTP. Please try again.')
-      return
+    if (data.error) { setError('Invalid or expired OTP. Please try again.'); return }
+
+    if (data.magic_link) {
+      // Navigate to magic link — Supabase will verify and redirect to /dashboard with session
+      window.location.href = data.magic_link
+    } else {
+      setError('Verification succeeded but session could not be created. Please sign in with email.')
     }
-    navigate('/dashboard')
   }
 
   const handleResend = async () => {
     if (timer > 0) return
     setError('')
     setLoading(true)
-    const { error: sendError } = await supabase.auth.signInWithOtp({ phone })
+    const data = await callEdge('send-sms-otp', { phone_number: normPhone(phone) })
     setLoading(false)
-    if (sendError) {
-      setError('Failed to resend OTP.')
-    } else {
-      startResendTimer()
-    }
+    if (data.error) { setError('Failed to resend OTP.') } else { startResendTimer() }
   }
 
   if (step === 'phone') {

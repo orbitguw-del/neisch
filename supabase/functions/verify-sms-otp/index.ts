@@ -20,27 +20,29 @@ serve(async (req) => {
   }
 
   try {
-    const { email, phone_number, otp_code } = await req.json()
+    const { phone_number, otp_code } = await req.json()
 
-    if (!email || !phone_number || !otp_code) {
+    if (!phone_number || !otp_code) {
       return new Response(
-        JSON.stringify({ error: "Missing email, phone_number, or otp_code" }),
+        JSON.stringify({ error: "Missing phone_number or otp_code" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
-    // Look up user via auth.admin (profiles don't store email)
-    const { data: authUser, error: userError } = await supabase.auth.admin.getUserByEmail(email)
+    // Look up user by phone number in auth.users
+    const { data: userData, error: lookupError } = await supabase
+      .rpc("get_auth_user_by_phone", { p_phone: phone_number })
 
-    if (userError || !authUser?.user) {
+    if (lookupError || !userData || userData.length === 0) {
       return new Response(
-        JSON.stringify({ error: "User not found" }),
+        JSON.stringify({ error: "No account found with this phone number" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
-    const user = { id: authUser.user.id }
+    const user = { id: userData[0].user_id, email: userData[0].user_email }
 
+    // Verify OTP
     const { data: verification, error: verifyError } = await supabase
       .from("phone_verifications")
       .select("*")
@@ -54,7 +56,7 @@ serve(async (req) => {
       .single()
 
     if (verifyError || !verification) {
-      // Increment attempts on the most recent unverified record
+      // Increment attempts on the latest unverified record
       const { data: latest } = await supabase
         .from("phone_verifications")
         .select("id, attempts")
@@ -78,29 +80,37 @@ serve(async (req) => {
       )
     }
 
+    // Mark OTP as verified
     await supabase
       .from("phone_verifications")
       .update({ verified_at: new Date().toISOString() })
       .eq("id", verification.id)
 
+    // Update profile
     await supabase
       .from("profiles")
       .update({ phone: phone_number, phone_verified: true, auth_method: "phone" })
       .eq("id", user.id)
 
-    // Generate a magic link so the frontend can establish a real auth session
+    // Generate magic link so the frontend can establish a real auth session
     const { data: magicData, error: magicError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
-      email,
+      email: user.email,
+      options: {
+        redirectTo: "https://consne.com/dashboard",
+      },
     })
+
+    if (magicError) {
+      console.error("Magic link error:", magicError.message)
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
         user_id: user.id,
         message: "Phone verified successfully",
-        // Include the magic link token so the frontend can sign in without a password
-        magic_link: magicError ? null : magicData?.properties?.action_link ?? null,
+        magic_link: magicError ? null : (magicData?.properties?.action_link ?? null),
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     )
