@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import RoleGuard from '@/components/auth/RoleGuard'
+import Landing from '@/pages/landing/Landing'
 import Login from '@/pages/auth/Login'
 import Register from '@/pages/auth/Register'
 import AuthCallback from '@/pages/auth/AuthCallback'
@@ -33,7 +34,7 @@ const ALL_ROLES        = ['superadmin', 'contractor', 'site_manager', 'superviso
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/dashboard" replace />,
+    element: <Landing />,
   },
   {
     path: '/login',
