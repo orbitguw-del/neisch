@@ -22,29 +22,32 @@ export default function AuthCallback() {
 
     if (hash && hash.includes('access_token')) {
       // Implicit / magic-link flow — Supabase processes the hash asynchronously.
-      // Listen for SIGNED_IN rather than calling getSession() immediately (race condition).
+      // Use a ref-like variable so the callback can safely unsubscribe even if it
+      // fires before the const assignment is returned (closure timing safety).
       let done = false
+      let sub = null
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
         if (done) return
         if (event === 'SIGNED_IN' && session) {
           done = true
-          subscription.unsubscribe()
+          if (sub) sub.unsubscribe()
           navigate('/dashboard', { replace: true })
         }
       })
+      sub = subscription
 
       // Fallback: if SIGNED_IN hasn't fired after 4 s, check session directly
       const timer = setTimeout(async () => {
         if (done) return
         done = true
-        subscription.unsubscribe()
+        sub.unsubscribe()
         const { data: { session } } = await supabase.auth.getSession()
         navigate(session ? '/dashboard' : '/login', { replace: true })
       }, 4000)
 
       return () => {
-        subscription.unsubscribe()
+        sub?.unsubscribe()
         clearTimeout(timer)
       }
     }
