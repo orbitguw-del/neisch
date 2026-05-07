@@ -89,7 +89,7 @@ serve(async (req) => {
     // Update profile
     await supabase
       .from("profiles")
-      .update({ phone: phone_number, phone_verified: true, auth_method: "phone" })
+      .update({ phone: phone_number, phone_verified: true })
       .eq("id", user.id)
 
     // Generate magic link so the frontend can establish a real auth session

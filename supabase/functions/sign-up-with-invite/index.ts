@@ -21,7 +21,7 @@ serve(async (req) => {
     if (!invite_code || !email || !password) {
       return new Response(
         JSON.stringify({ error: "invite_code, email and password are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
@@ -36,16 +36,16 @@ serve(async (req) => {
 
     if (inviteErr || !invite) {
       return new Response(
-        JSON.stringify({ error: "Invite code is invalid or has expired." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Invite code is invalid or has expired. Ask your contractor to resend." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
     // ── 2. Email must match what the contractor invited ──────────────────────
     if (invite.email.toLowerCase() !== email.toLowerCase().trim()) {
       return new Response(
-        JSON.stringify({ error: "This invite code was sent to a different email address." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "This invite code was sent to a different email address. Use the email your contractor invited." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
@@ -55,24 +55,31 @@ serve(async (req) => {
       password,
       email_confirm: true,
       user_metadata: {
-        full_name: full_name ?? email.split("@")[0],
+        full_name:    full_name ?? email.split("@")[0],
         invited_role: invite.role,
         tenant_id:    invite.tenant_id,
         site_id:      invite.site_id,
       },
     })
 
+    let userId = authData?.user?.id
+
     if (createErr) {
-      // User already exists — still allow them to join this tenant
-      if (!createErr.message.includes("already")) {
+      if (createErr.message.toLowerCase().includes("already")) {
+        // User already exists — look them up via their profile row (simpler than listUsers pagination)
+        const { data: profileRow } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", email.toLowerCase().trim())
+          .single()
+        userId = profileRow?.id ?? undefined
+      } else {
         return new Response(
           JSON.stringify({ error: createErr.message }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         )
       }
     }
-
-    const userId = authData?.user?.id
 
     // ── 4. Set profile role + tenant (trigger may have already done this) ────
     if (userId) {
@@ -111,7 +118,7 @@ serve(async (req) => {
   } catch (err) {
     return new Response(
       JSON.stringify({ error: err.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     )
   }
 })

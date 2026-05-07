@@ -1,17 +1,33 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
+const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+// Use raw fetch so we always get the response body, whether 200 or 4xx
+async function callInvite(body) {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/sign-up-with-invite`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify(body),
+  })
+  return res.json()
+}
+
 export default function AcceptInviteTab() {
   const [searchParams] = useSearchParams()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email,           setEmail]           = useState('')
+  const [fullName,        setFullName]        = useState('')
+  const [password,        setPassword]        = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [inviteCode, setInviteCode] = useState(searchParams.get('invite') || '')
-  const [step, setStep] = useState('code')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [inviteCode,      setInviteCode]      = useState(searchParams.get('invite') || '')
+  const [step,            setStep]            = useState('code')
+  const [loading,         setLoading]         = useState(false)
+  const [error,           setError]           = useState('')
   const { signIn } = useAuthStore()
   const navigate = useNavigate()
 
@@ -21,8 +37,9 @@ export default function AcceptInviteTab() {
 
   const handleSubmitCode = (e) => {
     e.preventDefault()
-    if (inviteCode.trim().length < 6) {
-      setError('Invite code must be at least 6 characters')
+    // Codes are always 8 characters
+    if (inviteCode.trim().length < 8) {
+      setError('Invite code must be 8 characters — check the code your contractor sent')
       return
     }
     setError('')
@@ -38,21 +55,27 @@ export default function AcceptInviteTab() {
     setLoading(true)
     setError('')
 
-    const { error: signupError } = await supabase.functions.invoke('sign-up-with-invite', {
-      body: { email, password, invite_code: inviteCode.trim() },
+    // Use raw fetch so we always get the JSON body (even on 4xx errors)
+    const data = await callInvite({
+      email:        email.trim(),
+      password,
+      full_name:    fullName.trim() || undefined,
+      invite_code:  inviteCode.trim(),
     })
 
-    if (signupError) {
-      setError(signupError.message || 'Failed to accept invite')
+    if (data.error) {
+      setError(data.error)
       setLoading(false)
       return
     }
 
+    // Account created — sign in immediately
     try {
-      await signIn({ email, password })
+      await signIn({ email: email.trim(), password })
       navigate('/dashboard')
     } catch {
-      setError('Account created. Please sign in with your email and password.')
+      // Account exists but sign-in failed — prompt manual login
+      setError('Account created! Please sign in with your email and password.')
       setLoading(false)
     }
   }
@@ -62,7 +85,7 @@ export default function AcceptInviteTab() {
       <div className="space-y-4">
         <div className="rounded-lg bg-brand-50 border border-brand-200 px-4 py-3 text-sm text-brand-700">
           <p className="font-medium mb-1">📩 Invited by a contractor?</p>
-          <p className="text-brand-600">Enter your invite code from the email your contractor sent.</p>
+          <p className="text-brand-600">Enter the 8-character code your contractor shared with you.</p>
         </div>
         <form onSubmit={handleSubmitCode} className="space-y-4">
           <div>
@@ -70,14 +93,15 @@ export default function AcceptInviteTab() {
             <input
               id="invite-code"
               type="text"
-              className="input uppercase tracking-widest"
+              className="input uppercase tracking-widest font-mono"
               placeholder="e.g., ABC12345"
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+              maxLength={8}
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              Find this code in your invite email from Storey
+              8-character code from your contractor or invite email
             </p>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
@@ -92,6 +116,19 @@ export default function AcceptInviteTab() {
   return (
     <form onSubmit={handleSignup} className="space-y-4">
       <div>
+        <label className="label" htmlFor="inv-name">Your full name</label>
+        <input
+          id="inv-name"
+          type="text"
+          autoComplete="name"
+          className="input"
+          placeholder="e.g. Ravi Kumar"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          required
+        />
+      </div>
+      <div>
         <label className="label" htmlFor="inv-email">Email</label>
         <input
           id="inv-email"
@@ -103,6 +140,7 @@ export default function AcceptInviteTab() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
+        <p className="text-xs text-gray-400 mt-1">Must match the email your contractor invited</p>
       </div>
       <div>
         <label className="label" htmlFor="inv-password">Password</label>
@@ -111,7 +149,8 @@ export default function AcceptInviteTab() {
           type="password"
           autoComplete="new-password"
           className="input"
-          placeholder="••••••••"
+          placeholder="Min. 8 characters"
+          minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

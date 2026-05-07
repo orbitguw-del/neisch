@@ -212,7 +212,7 @@ export default function Login() {
               <SMSOTPLogin />
               <p className="mt-4 text-xs text-gray-400 text-center">
                 Need to add your phone?{' '}
-                <Link to="/dashboard" className="text-brand-600 hover:underline">
+                <Link to="/settings" className="text-brand-600 hover:underline">
                   Go to Settings
                 </Link>
               </p>
