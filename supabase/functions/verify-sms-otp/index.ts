@@ -97,7 +97,7 @@ serve(async (req) => {
       type: "magiclink",
       email: user.email,
       options: {
-        redirectTo: "https://consne.com/dashboard",
+        redirectTo: "https://consne.com/auth/callback",
       },
     })
 

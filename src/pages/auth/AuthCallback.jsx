@@ -9,22 +9,50 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('code')
+    const hash = window.location.hash
 
     if (code) {
       // PKCE flow (Google OAuth) — exchange the code for a session
       supabase.auth.exchangeCodeForSession(code).then(({ data: { session }, error: err }) => {
         if (err) { setError(err.message); return }
-        if (session) navigate('/dashboard', { replace: true })
-        else navigate('/login', { replace: true })
+        navigate(session ? '/dashboard' : '/login', { replace: true })
       })
-    } else {
-      // Hash-based flow (magic link / email invite)
-      supabase.auth.getSession().then(({ data: { session }, error: err }) => {
-        if (err) { setError(err.message); return }
-        if (session) navigate('/dashboard', { replace: true })
-        else navigate('/login', { replace: true })
-      })
+      return
     }
+
+    if (hash && hash.includes('access_token')) {
+      // Implicit / magic-link flow — Supabase processes the hash asynchronously.
+      // Listen for SIGNED_IN rather than calling getSession() immediately (race condition).
+      let done = false
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (done) return
+        if (event === 'SIGNED_IN' && session) {
+          done = true
+          subscription.unsubscribe()
+          navigate('/dashboard', { replace: true })
+        }
+      })
+
+      // Fallback: if SIGNED_IN hasn't fired after 4 s, check session directly
+      const timer = setTimeout(async () => {
+        if (done) return
+        done = true
+        subscription.unsubscribe()
+        const { data: { session } } = await supabase.auth.getSession()
+        navigate(session ? '/dashboard' : '/login', { replace: true })
+      }, 4000)
+
+      return () => {
+        subscription.unsubscribe()
+        clearTimeout(timer)
+      }
+    }
+
+    // No code, no hash — just check for an existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      navigate(session ? '/dashboard' : '/login', { replace: true })
+    })
   }, [navigate])
 
   if (error) {
