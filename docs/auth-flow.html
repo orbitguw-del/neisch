@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Storey — Auth Flow Diagram</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #f8fafc;
+    font-family: Georgia, serif;
+  }
+  header p {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin-top: 0.4rem;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+  }
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .chart-section {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  .chart-section h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .chart-section p {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+  }
+  .badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 99px;
+    font-weight: 600;
+  }
+  .mermaid { background: transparent; }
+  .mermaid svg { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏗️ Storey — Authentication Flow</h1>
+  <p>Complete login, registration and invite workflows for every user type</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="dot" style="background:#f59e0b"></div> Contractor (Company Owner)</div>
+  <div class="legend-item"><div class="dot" style="background:#8b5cf6"></div> Team Member (Invited)</div>
+  <div class="legend-item"><div class="dot" style="background:#10b981"></div> Phone OTP Flow</div>
+  <div class="legend-item"><div class="dot" style="background:#3b82f6"></div> Google / Email Flow</div>
+  <div class="legend-item"><div class="dot" style="background:#ef4444"></div> Error / Blocked</div>
+</div>
+
+<!-- ─── 1. CONTRACTOR REGISTRATION ─────────────────────────────────── -->
+<div class="chart-section">
+  <h2>1. Contractor Registration <span class="badge" style="background:#78350f;color:#fde68a">New Company</span></h2>
+  <p>A new construction company signs up and becomes the Contractor (owner) of their tenant.</p>
+  <div class="mermaid">
+flowchart LR
+  A(["/register"]) --> B["Fill form\nCompany · Name\nEmail · Password"]
+  B --> C["supabase.auth.signUp\n+ full_name metadata"]
+  C --> D["handle_new_user trigger\n→ profiles row created\nrole = contractor"]
+  D --> E["Insert into tenants\nowner_id = user.id"]
+  E --> F["link_owner_to_tenant trigger\nprofiles.tenant_id set"]
+  F --> G(["✅ /dashboard\nas Contractor"])
+
+  style A fill:#1e293b,stroke:#f59e0b,color:#fde68a
+  style G fill:#14532d,stroke:#16a34a,color:#bbf7d0
+  style C fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
+  style D fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
+  style E fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
+  style F fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
+  </div>
+</div>
+
+<!-- ─── 2. CONTRACTOR LOGIN ─────────────────────────────────────────── -->
+<div class="chart-section">
+  <h2>2. Contractor / Existing User Login <span class="badge" style="background:#78350f;color:#fde68a">3 methods</span></h2>
+  <p>Existing users (any role) can sign in via Google, email/password, or SMS OTP.</p>
+  <div class="mermaid">
+flowchart TD
+  LP(["/login"]) --> CHOICE{"Choose method"}
+
+  CHOICE --> G["🌐 Google OAuth"]
+  CHOICE --> E["📧 Email & Password"]
+  CHOICE --> P["📱 Phone OTP"]
+
+  G --> GO["supabase.auth.signInWithOAuth\nredirectTo: /auth/callback"]
+  GO --> GCB["/auth/callback\n?code=... PKCE"]
+  GCB --> GEXCH["exchangeCodeForSession"]
+  GEXCH --> DASH
+
+  E --> EF["Enter email + password"]
+  EF --> ES["supabase.auth.signInWithPassword"]
+  ES --> DASH
+
+  P --> PCHECK{"Phone linked\nin auth.users?"}
+  PCHECK -- "No" --> PSET["→ Settings\nAdd phone first"]
+  PCHECK -- "Yes" --> PSEND["Enter phone number\n→ send-sms-otp edge fn"]
+  PSEND --> TWILIO["Twilio SMS\n6-digit code"]
+  TWILIO --> POTPE["Enter OTP"]
+  POTPE --> PVERIFY["verify-sms-otp edge fn\ncheck phone_verifications table"]
+  PVERIFY -- "Invalid/Expired" --> PERR["❌ Error shown\nRetry or Resend"]
+  PERR --> POTPE
+  PVERIFY -- "Valid" --> MLINK["admin.generateLink\ntype: magiclink\nredirectTo: /auth/callback"]
+  MLINK --> MCB["/auth/callback\n#access_token in hash"]
+  MCB --> MSESS["onAuthStateChange\nSIGNED_IN event"]
+  MSESS --> DASH
+
+  DASH(["✅ /dashboard"])
+
+  style LP fill:#1e293b,stroke:#f59e0b,color:#fde68a
+  style DASH fill:#14532d,stroke:#16a34a,color:#bbf7d0
+  style PERR fill:#450a0a,stroke:#ef4444,color:#fca5a5
+  style PSET fill:#450a0a,stroke:#ef4444,color:#fca5a5
+  style TWILIO fill:#064e3b,stroke:#10b981,color:#a7f3d0
+  style MLINK fill:#064e3b,stroke:#10b981,color:#a7f3d0
+  style GCB fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
+  style MCB fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
+  </div>
+</div>
+
+<!-- ─── 3. PHONE LINKING ────────────────────────────────────────────── -->
+<div class="chart-section">
+  <h2>3. Linking a Phone Number (Settings) <span class="badge" style="background:#064e3b;color:#a7f3d0">Prerequisite for SMS OTP</span></h2>
+  <p>Any logged-in user can link a phone number in Settings. Required before SMS OTP login can be used.</p>
+  <div class="mermaid">
+flowchart LR
+  A(["Logged in user"]) --> B["/settings\nPhone Number section"]
+  B --> C["Click 'Add phone number'"]
+  C --> D["Enter phone\n+countrycode number"]
+  D --> E["link-phone edge fn\naction: send\n(authenticated via JWT)"]
+  E --> DUP{"Phone already\non another account?"}
+  DUP -- "Yes" --> ERR["❌ Error: already linked"]
+  DUP -- "No" --> OTP["Twilio SMS → phone"]
+  OTP --> F["Enter 6-digit OTP"]
+  F --> G["link-phone edge fn\naction: verify"]
+  G --> BAD{"OTP valid?"}
+  BAD -- "No" --> ERR2["❌ Invalid OTP"]
+  BAD -- "Yes" --> H["admin.updateUserById\nauth.users.phone = number"]
+  H --> I["profiles.phone updated\nphone_verified = true"]
+  I --> J(["✅ Phone linked\n✓ Verified badge shown"])
+
+  style A fill:#1e293b,stroke:#10b981,color:#a7f3d0
+  style J fill:#14532d,stroke:#16a34a,color:#bbf7d0
+  style ERR fill:#450a0a,stroke:#ef4444,color:#fca5a5
+  style ERR2 fill:#450a0a,stroke:#ef4444,color:#fca5a5
+  style H fill:#064e3b,stroke:#10b981,color:#a7f3d0
+  style I fill:#064e3b,stroke:#10b981,color:#a7f3d0
+  </div>
+</div>
+
+<!-- ─── 4. CONTRACTOR SENDS INVITE ────────────────────────────────── -->
+<div class="chart-section">
+  <h2>4. Contractor Sends Team Invite <span class="badge" style="background:#3b0764;color:#e9d5ff">Team Management</span></h2>
+  <p>The Contractor invites site managers, supervisors, or store keepers from the Team page.</p>
+  <div class="mermaid">
+flowchart LR
+  A(["Contractor\non /team"]) --> B["Click 'Invite Member'\nEnter email, role, site"]
+  B --> C["INSERT into pending_invites\ntenant_id · email · role\nsite_id · invite_code · expires_at"]
+  C --> D["Invite email sent\ncontains invite_code"]
+  D --> E(["Team member\nreceives email"])
+
+  style A fill:#1e293b,stroke:#f59e0b,color:#fde68a
+  style E fill:#2e1065,stroke:#8b5cf6,color:#ddd6fe
+  style C fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
+  </div>
+</div>
+
+<!-- ─── 5. TEAM MEMBER ACCEPTS INVITE ─────────────────────────────── -->
+<div class="chart-section">
+  <h2>5. Team Member Accepts Invite <span class="badge" style="background:#3b0764;color:#e9d5ff">Site Manager · Supervisor · Store Keeper</span></h2>
+  <p>Invited users create their account using the invite code from their email.</p>
+  <div class="mermaid">
+flowchart TD
+  A(["Email received\nwith invite_code"]) --> B["/login → Accept Team Invite"]
+  B --> C["Enter invite code\ne.g. ABC12345"]
+  C --> D{"Code valid\n& not expired?"}
+  D -- "No" --> ERR["❌ Invalid code"]
+  D -- "Yes" --> E["Enter email + password\n(create account)"]
+  E --> F["sign-up-with-invite\nedge function"]
+  F --> G["supabase.auth.signUp"]
+  G --> H["Lookup pending_invite\nby code + email"]
+  H --> I{"Invite found\n& not accepted?"}
+  I -- "No" --> ERR2["❌ Invite not found\nor already used"]
+  I -- "Yes" --> J["profiles.role = invited role\nprofiles.tenant_id = contractor's tenant\nsite_assignments row created"]
+  J --> K["pending_invites.accepted_at = now()"]
+  K --> L["signIn with email + password"]
+  L --> M(["✅ /dashboard\nas Site Manager /\nSupervisor / Store Keeper"])
+
+  style A fill:#2e1065,stroke:#8b5cf6,color:#ddd6fe
+  style M fill:#14532d,stroke:#16a34a,color:#bbf7d0
+  style ERR fill:#450a0a,stroke:#ef4444,color:#fca5a5
+  style ERR2 fill:#450a0a,stroke:#ef4444,color:#fca5a5
+  style F fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
+  style J fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
+  </div>
+</div>
+
+<!-- ─── 6. ROLE ACCESS SUMMARY ─────────────────────────────────────── -->
+<div class="chart-section">
+  <h2>6. Role Access After Login</h2>
+  <p>What each user can access once they reach the dashboard.</p>
+  <div class="mermaid">
+flowchart LR
+  DASH(["✅ /dashboard"])
+
+  DASH --> CONT["Contractor\n(company owner)"]
+  DASH --> SM["Site Manager"]
+  DASH --> SUP["Supervisor"]
+  DASH --> SK["Store Keeper"]
+
+  CONT --> CA["Sites · Team · Materials\nReceipts · Transfers · Reports\nAttendance · Equipment · Inventory"]
+  SM --> SMA["Assigned sites\nMaterials · Attendance\nTransfers · Reports"]
+  SUP --> SUPA["Assigned sites\nWorkers · Attendance\nDaily Logs"]
+  SK --> SKA["Assigned sites\nMaterials · Receipts\nInventory · Equipment"]
+
+  style DASH fill:#1e293b,stroke:#f59e0b,color:#fde68a
+  style CONT fill:#78350f,stroke:#f59e0b,color:#fde68a
+  style SM fill:#3b0764,stroke:#8b5cf6,color:#ddd6fe
+  style SUP fill:#3b0764,stroke:#8b5cf6,color:#ddd6fe
+  style SK fill:#3b0764,stroke:#8b5cf6,color:#ddd6fe
+  style CA fill:#1e293b,stroke:#f59e0b,color:#fed7aa
+  style SMA fill:#1e293b,stroke:#8b5cf6,color:#ddd6fe
+  style SUPA fill:#1e293b,stroke:#8b5cf6,color:#ddd6fe
+  style SKA fill:#1e293b,stroke:#8b5cf6,color:#ddd6fe
+  </div>
+</div>
+
+<footer style="text-align:center;margin-top:2rem;color:#475569;font-size:0.75rem;">
+  Storey — ConTech ERP · Auth Flow Diagram · Generated by Claude
+</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#1e293b',
+      primaryColor: '#1e3a5f',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#3b82f6',
+      lineColor: '#64748b',
+      secondaryColor: '#0f172a',
+      tertiaryColor: '#334155',
+      edgeLabelBackground: '#1e293b',
+      clusterBkg: '#0f172a',
+    },
+    flowchart: {
+      curve: 'basis',
+      padding: 20,
+    },
+  })
+</script>
+</body>
+</html>
