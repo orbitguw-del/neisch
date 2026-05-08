@@ -12,7 +12,7 @@ const CAN_CREATE_SITES = ['superadmin', 'contractor']
 
 const STATUS_OPTIONS = ['planning', 'active', 'on_hold', 'completed']
 
-function SiteForm({ onSubmit, loading }) {
+function SiteForm({ onSubmit, loading, error }) {
   const [form, setForm] = useState({
     name: '', location: '', status: 'planning',
     start_date: '', end_date: '', budget: '',
@@ -48,17 +48,24 @@ function SiteForm({ onSubmit, loading }) {
         </div>
         <div>
           <label className="label">Start date</label>
-          <input className="input" type="date" value={form.start_date} onChange={set('start_date')} />
+          <input className="input" type="date" value={form.start_date} onChange={set('start_date')}
+            style={{ WebkitAppearance: 'none' }} />
         </div>
         <div>
           <label className="label">End date</label>
-          <input className="input" type="date" value={form.end_date} onChange={set('end_date')} />
+          <input className="input" type="date" value={form.end_date} onChange={set('end_date')}
+            style={{ WebkitAppearance: 'none' }} />
         </div>
         <div className="col-span-2">
           <label className="label">Description</label>
           <textarea className="input resize-none" rows={2} value={form.description} onChange={set('description')} />
         </div>
       </div>
+      {error && (
+        <p className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      )}
       <div className="flex justify-end gap-2 pt-1">
         <button type="submit" disabled={loading} className="btn-primary">
           {loading ? 'Saving…' : 'Create site'}
@@ -74,6 +81,7 @@ export default function Sites() {
   const { sites, loading, fetchSites, createSite } = useSiteStore()
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   const tenantId = profile?.tenant_id
   const canCreate = CAN_CREATE_SITES.includes(profile?.role)
@@ -83,10 +91,14 @@ export default function Sites() {
   }, [tenantId, fetchSites])
 
   const handleCreate = async (form) => {
+    if (!tenantId) { setSaveError('Profile not loaded yet — please try again.'); return }
     setSaving(true)
+    setSaveError('')
     try {
       await createSite({ ...form, tenant_id: tenantId, budget: form.budget || null })
       setModalOpen(false)
+    } catch (err) {
+      setSaveError(err?.message ?? 'Failed to create site. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -152,8 +164,8 @@ export default function Sites() {
         </div>
       )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New Construction Site">
-        <SiteForm onSubmit={handleCreate} loading={saving} />
+      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setSaveError('') }} title="New Construction Site">
+        <SiteForm onSubmit={handleCreate} loading={saving} error={saveError} />
       </Modal>
     </div>
   )

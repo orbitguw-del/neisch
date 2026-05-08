@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.storeyinfra.app',
+  appId: 'com.storeyrelease.apk',
   appName: 'Storey',
   webDir: 'dist',
 
@@ -10,7 +10,7 @@ const config: CapacitorConfig = {
     backgroundColor: '#B85042',   // brand terracotta — shown during cold start
     allowMixedContent: false,
     captureInput: true,
-    webContentsDebuggingEnabled: false, // set true during dev if needed
+    webContentsDebuggingEnabled: false,
   },
 
   plugins: {

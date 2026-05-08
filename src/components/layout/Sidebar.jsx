@@ -29,6 +29,7 @@ const NAV_BY_ROLE = {
     { label: 'Sites',      to: '/sites',      icon: HardHat },
     { label: 'Workers',    to: '/workers',    icon: Users },
     { label: 'Attendance', to: '/attendance', icon: CalendarCheck },
+    { label: 'Daily Logs', to: '/logs',       icon: ClipboardList },
     { label: 'Inventory',  to: '/inventory',  icon: Warehouse },
     { label: 'Receipts',   to: '/receipts',   icon: ClipboardCheck },
     { label: 'Transfers',  to: '/transfers',  icon: ArrowRightLeft },
@@ -58,10 +59,11 @@ const NAV_BY_ROLE = {
   ],
   store_keeper: [
     { label: 'Dashboard',  to: '/dashboard',  icon: LayoutDashboard },
+    { label: 'My Sites',   to: '/sites',      icon: HardHat },
     { label: 'Inventory',  to: '/inventory',  icon: Warehouse },
     { label: 'Receipts',   to: '/receipts',   icon: ClipboardCheck },
+    { label: 'Transfers',  to: '/transfers',  icon: ArrowRightLeft },
     { label: 'Equipment',  to: '/equipment',  icon: Wrench },
-    { label: 'My Sites',   to: '/sites',      icon: HardHat },
     { label: 'Settings',   to: '/settings',   icon: Settings },
   ],
 }

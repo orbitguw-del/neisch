@@ -4,6 +4,7 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  base: './',                    // ← relative paths so file:// works on Android
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
