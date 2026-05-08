@@ -8,7 +8,7 @@ import StoreyIcon from '@/components/brand/StoreyIcon'
 import EmailPasswordLogin from './tabs/EmailPasswordLogin'
 import AcceptInviteTab from './tabs/AcceptInviteTab'
 import SMSOTPLogin from './tabs/SMSOTPLogin'
-import { supabase } from '@/lib/supabase'
+import { supabase, authRedirectUrl } from '@/lib/supabase'
 
 // ── Google button (inline, no sub-component needed) ──────────────────────────
 function GoogleButton() {
@@ -17,7 +17,7 @@ function GoogleButton() {
     setErr('')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: authRedirectUrl },
     })
     if (error) setErr(error.message)
   }

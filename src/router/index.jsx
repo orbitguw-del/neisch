@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createHashRouter, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import RoleGuard from '@/components/auth/RoleGuard'
@@ -31,7 +31,7 @@ const SUPERVISOR_UP    = ['superadmin', 'contractor', 'site_manager', 'superviso
 const STOREKEEPER_UP   = ['superadmin', 'contractor', 'site_manager', 'store_keeper']
 const ALL_ROLES        = ['superadmin', 'contractor', 'site_manager', 'supervisor', 'store_keeper']
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: '/',
     element: <Landing />,
