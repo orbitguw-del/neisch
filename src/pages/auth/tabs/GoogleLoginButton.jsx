@@ -1,5 +1,5 @@
 import { Chrome } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { supabase, authRedirectUrl } from '@/lib/supabase'
 import { useState } from 'react'
 
 export default function GoogleLoginButton({ label = 'Continue with Google' }) {
@@ -9,7 +9,7 @@ export default function GoogleLoginButton({ label = 'Continue with Google' }) {
     setError('')
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: authRedirectUrl },
     })
     if (oauthError) setError(oauthError.message)
   }
