@@ -60,8 +60,11 @@ export default function SMSOTPLogin() {
     setLoading(false)
     if (data.error) { setError('Invalid or expired OTP. Please try again.'); return }
 
-    if (data.magic_link) {
-      // Navigate to magic link — Supabase will verify and redirect to /dashboard with session
+    if (data.session) {
+      // Edge function returned a session directly — reload so Supabase picks it up
+      window.location.replace('/#/dashboard')
+    } else if (data.magic_link) {
+      // Navigate to magic link — Supabase will verify and redirect back
       window.location.href = data.magic_link
     } else {
       setError('Verification succeeded but session could not be created. Please sign in with email.')

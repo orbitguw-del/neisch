@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import StoreyIcon from '@/components/brand/StoreyIcon'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get('code')
-    const hash = window.location.hash
+    // With createHashRouter the URL is /#/auth/callback?code=xxx
+    // useSearchParams correctly parses params from within the hash fragment.
+    const code = searchParams.get('code')
+
+    // Also check window.location.hash for access_token (magic-link / implicit flow)
+    // Strip the leading #/auth/callback part to isolate the token fragment
+    const rawHash = window.location.hash
+    const tokenFragment = rawHash.includes('access_token') ? rawHash : ''
 
     if (code) {
       // PKCE flow (Google OAuth) — exchange the code for a session
@@ -20,10 +27,8 @@ export default function AuthCallback() {
       return
     }
 
-    if (hash && hash.includes('access_token')) {
+    if (tokenFragment) {
       // Implicit / magic-link flow — Supabase processes the hash asynchronously.
-      // Use a ref-like variable so the callback can safely unsubscribe even if it
-      // fires before the const assignment is returned (closure timing safety).
       let done = false
       let sub = null
 
@@ -52,11 +57,11 @@ export default function AuthCallback() {
       }
     }
 
-    // No code, no hash — just check for an existing session
+    // No code, no token — just check for an existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       navigate(session ? '/dashboard' : '/login', { replace: true })
     })
-  }, [navigate])
+  }, [navigate, searchParams])
 
   if (error) {
     return (
