@@ -7,20 +7,6 @@ import { initCapacitor } from './lib/capacitor'
 import ErrorBoundary from './components/ErrorBoundary'
 import { supabase } from './lib/supabase'
 
-// ── Canonical domain redirect ────────────────────────────────────────────────
-// Ensure the app always runs on www.storeyinfra.com so that the PKCE code
-// verifier (stored in localStorage) is always on the same origin as the
-// OAuth callback. Without this, starting OAuth on www and landing the callback
-// on non-www (or vice-versa) makes exchangeCodeForSession fail silently.
-if (typeof window !== 'undefined' && window.location.hostname === 'storeyinfra.com') {
-  window.location.replace(
-    'https://www.storeyinfra.com' +
-    window.location.pathname +
-    window.location.search +
-    window.location.hash
-  )
-  // Stop — the browser is redirecting
-}
 // ── OAuth callback interceptor ──────────────────────────────────────────────
 // When Supabase redirects back after Google OAuth it goes to:
 //   https://www.storeyinfra.com/auth/callback?code=xxx  (real path, no hash)
@@ -28,7 +14,7 @@ if (typeof window !== 'undefined' && window.location.hostname === 'storeyinfra.c
 // because it's in window.location.search, not the hash fragment.
 // We intercept it here — BEFORE React renders — exchange the code, then push
 // the user into the hash router at /#/dashboard or /#/login.
-else if (
+if (
   typeof window !== 'undefined' &&
   window.location.pathname === '/auth/callback'
 ) {
