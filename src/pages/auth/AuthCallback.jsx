@@ -9,59 +9,65 @@ export default function AuthCallback() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    // With createHashRouter the URL is /#/auth/callback?code=xxx
-    // useSearchParams correctly parses params from within the hash fragment.
-    const code = searchParams.get('code')
-
-    // Also check window.location.hash for access_token (magic-link / implicit flow)
-    // Strip the leading #/auth/callback part to isolate the token fragment
+    const code  = searchParams.get('code')
     const rawHash = window.location.hash
-    const tokenFragment = rawHash.includes('access_token') ? rawHash : ''
+    const hasToken = rawHash.includes('access_token')
 
+    // Helper: go to dashboard if session exists, else login
+    const finish = async (session) => {
+      if (session) { navigate('/dashboard', { replace: true }); return }
+      // Safety net: maybe session was already stored by Supabase auto-detection
+      const { data } = await supabase.auth.getSession()
+      navigate(data.session ? '/dashboard' : '/login', { replace: true })
+    }
+
+    // ── PKCE flow (Google OAuth) ────────────────────────────────────────────
     if (code) {
-      // PKCE flow (Google OAuth) — exchange the code for a session
-      supabase.auth.exchangeCodeForSession(code).then(({ data: { session }, error: err }) => {
-        if (err) { setError(err.message); return }
-        navigate(session ? '/dashboard' : '/login', { replace: true })
-      })
+      supabase.auth.exchangeCodeForSession(code)
+        .then(async ({ data, error: err }) => {
+          if (err) {
+            // Code may have been auto-consumed — check for existing session
+            const { data: existing } = await supabase.auth.getSession()
+            if (existing.session) { navigate('/dashboard', { replace: true }); return }
+            setError(err.message)
+            return
+          }
+          await finish(data.session)
+        })
       return
     }
 
-    if (tokenFragment) {
-      // Implicit / magic-link flow — Supabase processes the hash asynchronously.
+    // ── Magic-link / implicit flow ──────────────────────────────────────────
+    if (hasToken) {
       let done = false
       let sub = null
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
         if (done) return
-        if (event === 'SIGNED_IN' && session) {
+        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
           done = true
-          if (sub) sub.unsubscribe()
+          sub?.unsubscribe()
           navigate('/dashboard', { replace: true })
         }
       })
       sub = subscription
 
-      // Fallback: if SIGNED_IN hasn't fired after 4 s, check session directly
       const timer = setTimeout(async () => {
         if (done) return
         done = true
-        sub.unsubscribe()
-        const { data: { session } } = await supabase.auth.getSession()
-        navigate(session ? '/dashboard' : '/login', { replace: true })
-      }, 4000)
-
-      return () => {
         sub?.unsubscribe()
-        clearTimeout(timer)
-      }
+        const { data } = await supabase.auth.getSession()
+        navigate(data.session ? '/dashboard' : '/login', { replace: true })
+      }, 5000)
+
+      return () => { sub?.unsubscribe(); clearTimeout(timer) }
     }
 
-    // No code, no token — just check for an existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      navigate(session ? '/dashboard' : '/login', { replace: true })
+    // ── No auth params — check existing session ─────────────────────────────
+    supabase.auth.getSession().then(({ data }) => {
+      navigate(data.session ? '/dashboard' : '/login', { replace: true })
     })
-  }, [navigate, searchParams])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps — intentionally run once
 
   if (error) {
     return (
@@ -70,10 +76,7 @@ export default function AuthCallback() {
           <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
-          <button
-            onClick={() => navigate('/login')}
-            className="text-sm text-brand-600 hover:text-brand-700 font-medium"
-          >
+          <button onClick={() => navigate('/login')} className="text-sm text-brand-600 hover:text-brand-700 font-medium">
             Back to sign in
           </button>
         </div>
