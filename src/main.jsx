@@ -7,17 +7,43 @@ import { initCapacitor } from './lib/capacitor'
 import ErrorBoundary from './components/ErrorBoundary'
 import { supabase } from './lib/supabase'
 
+// ── Canonical domain redirect ────────────────────────────────────────────────
+// Ensure the app always runs on www.storeyinfra.com so that the PKCE code
+// verifier (stored in localStorage) is always on the same origin as the
+// OAuth callback. Without this, starting OAuth on www and landing the callback
+// on non-www (or vice-versa) makes exchangeCodeForSession fail silently.
+if (typeof window !== 'undefined' && window.location.hostname === 'storeyinfra.com') {
+  window.location.replace(
+    'https://www.storeyinfra.com' +
+    window.location.pathname +
+    window.location.search +
+    window.location.hash
+  )
+  // Stop — the browser is redirecting
+}
 // ── OAuth callback interceptor ──────────────────────────────────────────────
 // When Supabase redirects back after Google OAuth it goes to:
-//   https://storeyinfra.com/auth/callback?code=xxx   (real path, no hash)
+//   https://www.storeyinfra.com/auth/callback?code=xxx  (real path, no hash)
 // Vercel rewrites this to index.html, but the hash router can't read the code
 // because it's in window.location.search, not the hash fragment.
 // We intercept it here — BEFORE React renders — exchange the code, then push
 // the user into the hash router at /#/dashboard or /#/login.
-if (
+else if (
   typeof window !== 'undefined' &&
   window.location.pathname === '/auth/callback'
 ) {
+  // ── Show a loading spinner so users don't see a blank white page ──────────
+  const root = document.getElementById('root')
+  if (root) {
+    root.innerHTML = `
+      <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f9fafb;gap:12px">
+        <div style="width:40px;height:40px;border:4px solid #d97706;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite"></div>
+        <p style="font-size:14px;color:#6b7280;font-family:system-ui,sans-serif;margin:0">Signing you in…</p>
+      </div>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    `
+  }
+
   const params = new URLSearchParams(window.location.search)
   const code   = params.get('code')
   const err    = params.get('error')
