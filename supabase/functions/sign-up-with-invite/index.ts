@@ -66,13 +66,11 @@ serve(async (req) => {
 
     if (createErr) {
       if (createErr.message.toLowerCase().includes("already")) {
-        // User already exists — look them up via their profile row (simpler than listUsers pagination)
-        const { data: profileRow } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("email", email.toLowerCase().trim())
-          .single()
-        userId = profileRow?.id ?? undefined
+        // User already exists — look up by email via auth.users (SECURITY DEFINER RPC)
+        // profiles table has no 'email' column, so we use a dedicated helper function.
+        const { data: existingId } = await supabase
+          .rpc("get_auth_user_id_by_email", { p_email: email.toLowerCase().trim() })
+        userId = existingId ?? undefined
       } else {
         return new Response(
           JSON.stringify({ error: createErr.message }),

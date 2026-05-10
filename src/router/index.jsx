@@ -6,6 +6,7 @@ import Landing from '@/pages/landing/Landing'
 import Login from '@/pages/auth/Login'
 import Register from '@/pages/auth/Register'
 import AuthCallback from '@/pages/auth/AuthCallback'
+import CreateCompany from '@/pages/auth/CreateCompany'
 import Dashboard from '@/pages/dashboard/Dashboard'
 import Sites from '@/pages/sites/Sites'
 import SiteDetail from '@/pages/sites/SiteDetail'
@@ -47,6 +48,11 @@ const router = createHashRouter([
   {
     path: '/auth/callback',
     element: <AuthCallback />,
+  },
+  {
+    // Onboarding: Google OAuth contractors who haven't created their company yet
+    path: '/create-company',
+    element: <CreateCompany />,
   },
   {
     element: (
