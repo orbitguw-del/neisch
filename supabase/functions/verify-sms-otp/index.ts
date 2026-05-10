@@ -97,7 +97,7 @@ serve(async (req) => {
       type: "magiclink",
       email: user.email,
       options: {
-        redirectTo: Deno.env.get("SITE_URL") ?? "https://www.storeyinfra.com/auth/callback",
+        redirectTo: `${(Deno.env.get("SITE_URL") ?? "https://storeyinfra.com").replace(/\/$/, "")}/auth/callback`,
       },
     })
 
