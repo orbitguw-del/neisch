@@ -1,5 +1,7 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import StoreyIcon from '@/components/brand/StoreyIcon'
+import { supabase } from '@/lib/supabase'
 
 // ── Nav ──────────────────────────────────────────────────────────────────────
 function Nav() {
@@ -93,6 +95,15 @@ function RoleCard({ emoji, role, who, can }) {
 
 // ════════════════════════════════════════════════════════════════════════════════
 export default function Landing() {
+  const navigate = useNavigate()
+
+  // If user is already logged in, send them straight to dashboard
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) navigate('/dashboard', { replace: true })
+    })
+  }, [navigate])
+
   return (
     <div className="min-h-screen bg-sand-200 text-charcoal-900">
       <Nav />

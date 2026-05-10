@@ -20,11 +20,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
-    // Capacitor's WebView uses localStorage (available in WebView) — this is fine.
-    // If you later add @capacitor/preferences you can swap storage here.
+    detectSessionInUrl: false, // AuthCallback handles the code exchange manually
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    flowType: 'pkce',    // PKCE is required for mobile (no implicit flow)
+    flowType: 'pkce',
   },
   global: {
     headers: {
