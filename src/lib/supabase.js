@@ -14,7 +14,7 @@ const isNative = typeof window !== 'undefined' &&
 
 const authRedirectUrl = isNative
   ? 'storeyapp://auth/callback'
-  : `${window.location.origin}/#/auth/callback`
+  : `${window.location.origin}/auth/callback`
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
