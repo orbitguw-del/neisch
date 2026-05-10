@@ -615,11 +615,12 @@ export default function MaterialReceipts() {
         />
       ) : (
         <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
                 {['Date', 'Material', 'Site', 'Source', 'Qty', 'Qty Received', 'GRN No.', 'LR No.', 'Challan No.', 'Status', 'Actions'].map((h) => (
-                  <th key={h} className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
+                  <th key={h} className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -697,6 +698,7 @@ export default function MaterialReceipts() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

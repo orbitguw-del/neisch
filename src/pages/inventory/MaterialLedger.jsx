@@ -111,7 +111,7 @@ export default function MaterialLedger() {
             <h2 className="text-sm font-semibold text-gray-900">Transaction Ledger</h2>
             <p className="text-xs text-gray-500">Sorted oldest → newest · Running balance computed from first entry</p>
           </div>
-          <table className="min-w-full divide-y divide-gray-100">
+          <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
                 {['Date & Time', 'Type', 'Document / Reference', 'In (+)', 'Out (−)', 'Balance', 'Recorded by'].map((h) => (
@@ -156,7 +156,7 @@ export default function MaterialLedger() {
                 )
               })}
             </tbody>
-          </table>
+          </table></div>
         </div>
       )}
     </div>

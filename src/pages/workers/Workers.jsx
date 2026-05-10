@@ -472,6 +472,7 @@ export default function Workers() {
         />
       ) : (
         <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
@@ -494,6 +495,7 @@ export default function Workers() {
               ))}
             </tbody>
           </table>
+          </div>
           <div className="border-t border-gray-100 px-4 py-2 text-xs text-gray-400">
             {filtered.length} worker{filtered.length !== 1 ? 's' : ''} shown
           </div>

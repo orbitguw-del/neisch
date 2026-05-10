@@ -60,7 +60,7 @@ function OverviewTab({ sites }) {
         {sites.length === 0 ? (
           <p className="px-5 py-8 text-sm text-gray-500">No sites to report on yet.</p>
         ) : (
-          <table className="min-w-full divide-y divide-gray-100">
+          <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
                 {['Site', 'Location', 'Status', 'Start date', 'Budget'].map((h) => (
@@ -87,7 +87,7 @@ function OverviewTab({ sites }) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
     </div>
@@ -176,7 +176,7 @@ function MonthlyTab({ tenantId, sites }) {
             No confirmed receipts for {monthLabel(month)}.
           </p>
         ) : (
-          <table className="min-w-full divide-y divide-gray-100">
+          <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
                 {['Material', 'Unit', 'Qty received', 'Transferred out', 'Cost'].map((h) => (
@@ -203,7 +203,7 @@ function MonthlyTab({ tenantId, sites }) {
                 <td className="px-4 py-3 text-sm text-gray-900">{formatINR(monthlyData.totalCost)}</td>
               </tr>
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
     </div>
@@ -381,7 +381,7 @@ function BudgetTab({ tenantId, sites }) {
             <p className="text-xs text-gray-400">Click "Add budget line" to set targets for this site & month.</p>
           </div>
         ) : (
-          <table className="min-w-full divide-y divide-gray-100">
+          <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
                 {['Material', 'Budgeted qty', 'Budgeted cost', 'Actual cost', 'Variance', ''].map((h) => (
@@ -425,7 +425,7 @@ function BudgetTab({ tenantId, sites }) {
                 <td />
               </tr>
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
 
