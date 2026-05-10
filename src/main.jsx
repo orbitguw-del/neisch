@@ -34,9 +34,16 @@ if (
   const code   = params.get('code')
   const err    = params.get('error')
 
+  // Also check hash fragment for access_token (magic-link / implicit flow)
+  const rawHash    = window.location.hash
+  const hashParams = new URLSearchParams(rawHash.startsWith('#') ? rawHash.slice(1) : rawHash)
+  const accessToken  = hashParams.get('access_token')
+  const refreshToken = hashParams.get('refresh_token')
+
   if (err) {
     window.location.replace(`/#/login?error=${encodeURIComponent(err)}`)
   } else if (code) {
+    // PKCE flow (Google OAuth)
     supabase.auth.exchangeCodeForSession(code)
       .then(({ data, error: exchErr }) => {
         if (exchErr || !data?.session) {
@@ -47,9 +54,23 @@ if (
         }
       })
       .catch(() => window.location.replace('/#/login'))
+  } else if (accessToken) {
+    // Magic-link / implicit flow (phone OTP sign-in)
+    supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken ?? '' })
+      .then(({ data, error: sessErr }) => {
+        if (sessErr || !data?.session) {
+          console.error('[MagicLink] setSession failed:', sessErr?.message)
+          window.location.replace('/#/login')
+        } else {
+          window.location.replace('/#/dashboard')
+        }
+      })
+      .catch(() => window.location.replace('/#/login'))
   } else {
-    // No code, no error — just go to login
-    window.location.replace('/#/login')
+    // No code, no token, no error — check if a session already exists
+    supabase.auth.getSession().then(({ data }) => {
+      window.location.replace(data?.session ? '/#/dashboard' : '/#/login')
+    }).catch(() => window.location.replace('/#/login'))
   }
 } else {
   // Normal app startup
