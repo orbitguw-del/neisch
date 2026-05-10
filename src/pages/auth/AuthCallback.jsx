@@ -9,15 +9,30 @@ export default function AuthCallback() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    const code  = searchParams.get('code')
-    const rawHash = window.location.hash
-    const hasToken = rawHash.includes('access_token')
+    // Supabase may append ?code= before the # (e.g. /?code=xxx#/auth/callback)
+    // OR inside the hash (e.g. /#/auth/callback?code=xxx).
+    // Check both locations to cover either case.
+    const urlSearch  = new URLSearchParams(window.location.search)
+    const code       = searchParams.get('code') || urlSearch.get('code')
+    const oauthErr   = searchParams.get('error') || urlSearch.get('error')
+    const oauthDesc  = searchParams.get('error_description') || urlSearch.get('error_description')
+    const rawHash    = window.location.hash
+    const hasToken   = rawHash.includes('access_token')
+
+    console.log('[AuthCallback] code:', code, '| error:', oauthErr, '| hash:', rawHash)
+
+    // ── OAuth error returned by Google / Supabase ───────────────────────────
+    if (oauthErr) {
+      setError(`Sign-in failed: ${oauthDesc || oauthErr}`)
+      return
+    }
 
     // Helper: go to dashboard if session exists, else login
     const finish = async (session) => {
+      console.log('[AuthCallback] finish — session:', !!session)
       if (session) { navigate('/dashboard', { replace: true }); return }
-      // Safety net: maybe session was already stored by Supabase auto-detection
       const { data } = await supabase.auth.getSession()
+      console.log('[AuthCallback] fallback getSession:', !!data.session)
       navigate(data.session ? '/dashboard' : '/login', { replace: true })
     }
 
@@ -25,8 +40,8 @@ export default function AuthCallback() {
     if (code) {
       supabase.auth.exchangeCodeForSession(code)
         .then(async ({ data, error: err }) => {
+          console.log('[AuthCallback] exchangeCodeForSession — session:', !!data?.session, '| err:', err?.message)
           if (err) {
-            // Code may have been auto-consumed — check for existing session
             const { data: existing } = await supabase.auth.getSession()
             if (existing.session) { navigate('/dashboard', { replace: true }); return }
             setError(err.message)
