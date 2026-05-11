@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Phone } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 const SUPABASE_URL     = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -23,6 +25,7 @@ export default function SMSOTPLogin() {
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState('')
   const [timer,   setTimer]   = useState(0)
+  const navigate = useNavigate()
 
   const startResendTimer = () => {
     setTimer(60)
@@ -64,22 +67,35 @@ export default function SMSOTPLogin() {
     if (data.error) { setError('Invalid or expired OTP. Please try again.'); return }
 
     if (data.session) {
-      // Edge function returned a session directly — reload so Supabase picks it up
+      // Edge function returned a session directly (future-proofing)
       window.location.replace('/#/dashboard')
-    } else if (data.magic_link) {
-      if (isNative) {
-        // On native: open in @capacitor/browser so the app WebView stays alive.
-        // The magic link redirects to storeyapp://auth/callback#access_token=...
-        // which fires appUrlOpen and AuthCallback handles the session.
-        const { Browser } = await import('@capacitor/browser')
-        await Browser.open({ url: data.magic_link, windowName: '_self' })
-      } else {
-        // On web: navigate directly — main.jsx will intercept the auth/callback
-        window.location.href = data.magic_link
-      }
-    } else {
-      setError('Verification succeeded but session could not be created. Please sign in with email.')
+      return
     }
+
+    if (data.hashed_token) {
+      // ── Preferred path: verify the token directly, no browser needed ─────────
+      // Works the same on web and native — no redirect, no Chrome tab.
+      setLoading(true)
+      const { error: verifyErr } = await supabase.auth.verifyOtp({
+        token_hash: data.hashed_token,
+        type: 'magiclink',
+      })
+      setLoading(false)
+      if (verifyErr) {
+        setError('Could not sign in: ' + verifyErr.message)
+        return
+      }
+      navigate('/dashboard', { replace: true })
+      return
+    }
+
+    if (data.magic_link) {
+      // ── Fallback: open magic link in browser (web only) ──────────────────────
+      window.location.href = data.magic_link
+      return
+    }
+
+    setError('Verification succeeded but session could not be created. Please sign in with email.')
   }
 
   const handleResend = async () => {

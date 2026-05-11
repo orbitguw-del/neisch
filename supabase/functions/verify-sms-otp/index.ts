@@ -93,12 +93,14 @@ serve(async (req) => {
       .update({ phone: phone_number, phone_verified: true })
       .eq("id", user.id)
 
-    // Generate magic link so the frontend can establish a real auth session.
-    // On native (Android app) redirect to the custom scheme so the OS opens
-    // the app directly instead of the browser.
-    const nativeRedirect = "storeyapp://auth/callback"
-    const webRedirect    = `${(Deno.env.get("SITE_URL") ?? "https://storeyinfra.com").replace(/\/$/, "")}/auth/callback`
-    const redirectTo     = isNative ? nativeRedirect : webRedirect
+    // Generate a magic-link token so the frontend can establish a real auth
+    // session WITHOUT opening any browser.
+    // We return the hashed_token — the client calls
+    //   supabase.auth.verifyOtp({ token_hash, type: 'magiclink' })
+    // which hits POST /auth/v1/verify server-side and returns a session
+    // directly, no redirect or browser tab needed.
+    const siteUrl    = (Deno.env.get("SITE_URL") ?? "https://storeyinfra.com").replace(/\/$/, "")
+    const redirectTo = isNative ? "storeyapp://auth/callback" : `${siteUrl}/auth/callback`
 
     const { data: magicData, error: magicError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
@@ -110,12 +112,18 @@ serve(async (req) => {
       console.error("Magic link error:", magicError.message)
     }
 
+    const hashedToken = magicData?.properties?.hashed_token ?? null
+    const actionLink  = magicData?.properties?.action_link  ?? null
+
     return new Response(
       JSON.stringify({
-        success: true,
-        user_id: user.id,
-        message: "Phone verified successfully",
-        magic_link: magicError ? null : (magicData?.properties?.action_link ?? null),
+        success:      true,
+        user_id:      user.id,
+        message:      "Phone verified successfully",
+        // hashed_token: client calls verifyOtp({ token_hash }) — no browser needed
+        hashed_token: magicError ? null : hashedToken,
+        // magic_link: fallback for web if verifyOtp is not available
+        magic_link:   magicError ? null : actionLink,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     )
