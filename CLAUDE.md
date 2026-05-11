@@ -79,6 +79,43 @@ superadmin > contractor > site_manager > supervisor > store_keeper
 
 ---
 
+## Vendor Module — Policy Decisions (DO NOT OVERRIDE)
+
+### Phase 1 (build now — next 10 days)
+- Vendor module lives INSIDE the contractor app only
+- **Contractor adds vendors manually** — fills in vendor details themselves
+- No vendor self-registration in Phase 1 at all
+- No vendor login in Phase 1
+- Contractor owns and manages all vendor data (documents, catalogue, assignments)
+
+### Phase 2 (BLOCKED until Phase 1 is battle-tested with 10+ contractors)
+- Independent vendor portal (vendor gets their own login)
+- **Vendor self-registration = request only** — vendor submits registration request
+- **Only superadmin can approve** vendor registration — contractor cannot approve
+- Superadmin reviews on `/admin/vendors` → approves or rejects
+- Only after superadmin approval is the vendor active and visible to contractors
+- No open/public auto-approval — prevents data pollution
+- Also unlocks: own profile, catalogue, geo-tagging, public directory
+
+### Vendor registration flow (Phase 2 only)
+```
+Vendor fills public registration form (no login needed) →
+  vendors row created with status = 'pending_approval' →
+  superadmin sees pending list on /admin/vendors →
+  superadmin approves → status = 'approved' →
+    vendor gets login credentials
+    vendor becomes discoverable by contractors
+  superadmin rejects → status = 'rejected' → vendor notified with reason
+```
+
+### RLS rule for vendors
+- `pending_approval` vendors: superadmin only (contractors cannot see or action)
+- `approved` vendors: visible to all contractors (not tenant-scoped — shared directory)
+- Vendor data linked to a contractor only via `vendor_connections` table
+- Vendor data NEVER writable by contractors — read only after connection
+
+---
+
 ## Key files
 
 | File | Purpose |
