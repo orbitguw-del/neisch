@@ -239,9 +239,7 @@ export default function Login() {
         {/* Footer */}
         <p className="mt-4 text-center text-xs text-white/40">
           By signing in you agree to our{' '}
-          <a href="#" className="underline hover:text-white/60">Terms</a>
-          {' '}and{' '}
-          <a href="#" className="underline hover:text-white/60">Privacy Policy</a>
+          <a href="/#/privacy" className="underline hover:text-white/60">Privacy Policy</a>
         </p>
 
       </div>
