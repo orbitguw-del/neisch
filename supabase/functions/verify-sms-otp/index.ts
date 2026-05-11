@@ -29,17 +29,22 @@ serve(async (req) => {
       )
     }
 
-    // Look up user via auth.admin (profiles don't store email)
-    const { data: authUser, error: userError } = await supabase.auth.admin.getUserByEmail(email)
+    // Look up user via Auth Admin REST API (profiles don't store email)
+    const adminRes = await fetch(
+      `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(email)}&per_page=1`,
+      { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } }
+    )
+    const adminJson = await adminRes.json()
+    const authUser = adminJson?.users?.[0]
 
-    if (userError || !authUser?.user) {
+    if (!authUser?.id) {
       return new Response(
         JSON.stringify({ error: "User not found" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
-    const user = { id: authUser.user.id }
+    const user = { id: authUser.id }
 
     const { data: verification, error: verifyError } = await supabase
       .from("phone_verifications")
