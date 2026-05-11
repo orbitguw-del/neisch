@@ -52,8 +52,37 @@ export default function AuthCallback() {
       return
     }
 
-    // ── Magic-link / implicit flow ──────────────────────────────────────────
+    // ── Magic-link / implicit / recovery flow ──────────────────────────────
     if (hasToken) {
+      // On native (Capacitor) the deep-link URL arrives as:
+      //   storeyapp://auth/callback#access_token=xxx&refresh_token=yyy&type=recovery
+      // capacitor.js calls router.navigate('/auth/callback#access_token=xxx...')
+      // which makes window.location.hash = "#/auth/callback#access_token=xxx..."
+      // (two # signs — browser only honours the first one as the fragment delimiter)
+      // We extract tokens from the second fragment if present, otherwise from the first.
+      const secondHash   = rawHash.indexOf('#', 1)
+      const tokenFrag    = secondHash !== -1 ? rawHash.slice(secondHash + 1) : rawHash.slice(1)
+      const tokenParams  = new URLSearchParams(tokenFrag)
+      const accessToken  = tokenParams.get('access_token')
+      const refreshToken = tokenParams.get('refresh_token') ?? ''
+      const tokenType    = tokenParams.get('type') // 'recovery' | 'signup' | null
+
+      console.log('[AuthCallback] magic-link | type:', tokenType, '| hasToken:', !!accessToken)
+
+      if (accessToken) {
+        // Explicitly set the session (needed on native — detectSessionInUrl is false)
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+          .then(({ data, error: sessErr }) => {
+            console.log('[AuthCallback] setSession — session:', !!data?.session, '| err:', sessErr?.message)
+            if (sessErr || !data?.session) { navigate('/login', { replace: true }); return }
+            navigate(tokenType === 'recovery' ? '/reset-password' : '/dashboard', { replace: true })
+          })
+          .catch(() => navigate('/login', { replace: true }))
+        return
+      }
+
+      // Fallback: no explicit token found — wait for Supabase auth state change
+      // (e.g. detectSessionInUrl handled it externally)
       let done = false
       let sub = null
 
