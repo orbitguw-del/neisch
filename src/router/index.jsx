@@ -8,6 +8,7 @@ import Register from '@/pages/auth/Register'
 import AuthCallback from '@/pages/auth/AuthCallback'
 import CreateCompany from '@/pages/auth/CreateCompany'
 import Privacy from '@/pages/Privacy'
+import ResetPassword from '@/pages/auth/ResetPassword'
 import Dashboard from '@/pages/dashboard/Dashboard'
 import Sites from '@/pages/sites/Sites'
 import SiteDetail from '@/pages/sites/SiteDetail'
@@ -58,6 +59,10 @@ const router = createHashRouter([
   {
     path: '/privacy',
     element: <Privacy />,
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPassword />,
   },
   {
     element: (

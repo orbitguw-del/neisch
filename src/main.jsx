@@ -55,12 +55,16 @@ if (
       })
       .catch(() => window.location.replace('/#/login'))
   } else if (accessToken) {
-    // Magic-link / implicit flow (phone OTP sign-in)
+    // Magic-link / implicit flow — also used for password recovery
+    const tokenType = hashParams.get('type') // 'recovery' | 'signup' | null
     supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken ?? '' })
       .then(({ data, error: sessErr }) => {
         if (sessErr || !data?.session) {
           console.error('[MagicLink] setSession failed:', sessErr?.message)
           window.location.replace('/#/login')
+        } else if (tokenType === 'recovery') {
+          // Password reset flow — send to reset page
+          window.location.replace('/#/reset-password')
         } else {
           window.location.replace('/#/dashboard')
         }
