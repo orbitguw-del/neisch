@@ -14,11 +14,9 @@ const DASHBOARDS = {
 }
 
 export default function Dashboard() {
-  const { role, loading, signOut } = useAuthStore((s) => ({
-    role:    s.profile?.role,
-    loading: s.loading,
-    signOut: s.signOut,
-  }))
+  const role    = useAuthStore((s) => s.profile?.role)
+  const loading = useAuthStore((s) => s.loading)
+  const signOut = useAuthStore((s) => s.signOut)
   const DashboardComponent = DASHBOARDS[role]
 
   // Still fetching profile — brief spinner
