@@ -52,9 +52,12 @@ export default function SMSOTPLogin() {
     setLoading(true)
     setError('')
 
+    const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()
+
     const data = await callEdge('verify-sms-otp', {
       phone_number: normPhone(phone),
       otp_code: otp,
+      platform: isNative ? 'native' : 'web',
     })
 
     setLoading(false)
@@ -64,8 +67,16 @@ export default function SMSOTPLogin() {
       // Edge function returned a session directly — reload so Supabase picks it up
       window.location.replace('/#/dashboard')
     } else if (data.magic_link) {
-      // Navigate to magic link — Supabase will verify and redirect back
-      window.location.href = data.magic_link
+      if (isNative) {
+        // On native: open in @capacitor/browser so the app WebView stays alive.
+        // The magic link redirects to storeyapp://auth/callback#access_token=...
+        // which fires appUrlOpen and AuthCallback handles the session.
+        const { Browser } = await import('@capacitor/browser')
+        await Browser.open({ url: data.magic_link, windowName: '_self' })
+      } else {
+        // On web: navigate directly — main.jsx will intercept the auth/callback
+        window.location.href = data.magic_link
+      }
     } else {
       setError('Verification succeeded but session could not be created. Please sign in with email.')
     }

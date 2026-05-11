@@ -20,7 +20,8 @@ serve(async (req) => {
   }
 
   try {
-    const { phone_number, otp_code } = await req.json()
+    const { phone_number, otp_code, platform } = await req.json()
+    const isNative = platform === 'native'
 
     if (!phone_number || !otp_code) {
       return new Response(
@@ -92,13 +93,17 @@ serve(async (req) => {
       .update({ phone: phone_number, phone_verified: true })
       .eq("id", user.id)
 
-    // Generate magic link so the frontend can establish a real auth session
+    // Generate magic link so the frontend can establish a real auth session.
+    // On native (Android app) redirect to the custom scheme so the OS opens
+    // the app directly instead of the browser.
+    const nativeRedirect = "storeyapp://auth/callback"
+    const webRedirect    = `${(Deno.env.get("SITE_URL") ?? "https://storeyinfra.com").replace(/\/$/, "")}/auth/callback`
+    const redirectTo     = isNative ? nativeRedirect : webRedirect
+
     const { data: magicData, error: magicError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
       email: user.email,
-      options: {
-        redirectTo: `${(Deno.env.get("SITE_URL") ?? "https://storeyinfra.com").replace(/\/$/, "")}/auth/callback`,
-      },
+      options: { redirectTo },
     })
 
     if (magicError) {

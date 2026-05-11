@@ -16,6 +16,7 @@
   "dependencies": {
     "@capacitor/android": "^8.3.2",
     "@capacitor/app": "^8.1.0",
+    "@capacitor/browser": "^8.0.3",
     "@capacitor/cli": "^8.3.2",
     "@capacitor/core": "^8.3.2",
     "@capacitor/splash-screen": "^8.0.1",
@@ -39,10 +40,13 @@
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
+    "libsodium-wrappers": "^0.8.4",
     "pg": "^8.20.0",
     "postcss": "^8.4.47",
     "pptxgenjs": "^4.0.1",
     "tailwindcss": "^3.4.14",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1",
     "typescript": "^6.0.3",
     "vite": "^8.0.3"
   }

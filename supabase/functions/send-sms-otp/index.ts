@@ -47,10 +47,11 @@ serve(async (req) => {
     const user = { id: userData[0].user_id }
 
     const otp_code = Math.floor(100000 + Math.random() * 900000).toString()
+    const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes
 
     const { error: otpError } = await supabase
       .from("phone_verifications")
-      .insert([{ user_id: user.id, phone_number, otp_code }])
+      .insert([{ user_id: user.id, phone_number, otp_code, expires_at }])
 
     if (otpError) {
       return new Response(

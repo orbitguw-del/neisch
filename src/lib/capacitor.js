@@ -25,15 +25,24 @@ export async function initCapacitor(router) {
     await SplashScreen.hide()
   } catch {}
 
-  // ── Deep-link handler (for Google OAuth callback) ──────────────────────────
-  // When the user signs in with Google, Supabase redirects to:
-  //   storeyapp://auth/callback?code=XXXX  (PKCE flow)
+  // ── Deep-link handler (for Google OAuth / magic-link callbacks) ────────────
+  // When the user signs in with Google (or follows a magic link / password reset
+  // email), Supabase redirects to:
+  //   storeyapp://auth/callback?code=XXXX    (PKCE flow)
+  //   storeyapp://auth/callback#access_token=... (implicit / magic-link)
   // Capacitor catches this URL and fires appUrlOpen.
-  // We extract the path + query and push it into React Router.
+  // We close any open @capacitor/browser window first, then push the path into
+  // React Router so AuthCallback / ResetPassword can handle it.
   try {
     const { App } = await import('@capacitor/app')
 
-    App.addListener('appUrlOpen', ({ url }) => {
+    App.addListener('appUrlOpen', async ({ url }) => {
+      // Close the in-app browser that was opened for OAuth / magic-link
+      try {
+        const { Browser } = await import('@capacitor/browser')
+        await Browser.close()
+      } catch { /* Browser may not be open — ignore */ }
+
       // e.g. "storeyapp://auth/callback?code=abc123"
       const parsed = new URL(url)
       // Build the hash-router path: /auth/callback?code=abc123
@@ -42,8 +51,13 @@ export async function initCapacitor(router) {
     })
 
     // Handle the URL that launched the app (cold-start deep link)
-    const { url: launchUrl } = await App.getLaunchUrl() ?? {}
+    const launchResult = await App.getLaunchUrl()
+    const launchUrl = launchResult?.url
     if (launchUrl) {
+      try {
+        const { Browser } = await import('@capacitor/browser')
+        await Browser.close()
+      } catch { /* ignore */ }
       const parsed = new URL(launchUrl)
       const path = parsed.pathname + parsed.search + parsed.hash
       router.navigate(path, { replace: true })

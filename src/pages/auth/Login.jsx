@@ -15,11 +15,30 @@ function GoogleButton() {
   const [err, setErr] = useState('')
   const handleGoogle = async () => {
     setErr('')
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: authRedirectUrl },
-    })
-    if (error) setErr(error.message)
+    const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()
+
+    if (isNative) {
+      // On native: get the OAuth URL WITHOUT opening the browser automatically.
+      // We open it in @capacitor/browser so the app WebView stays alive — this
+      // preserves the PKCE code verifier in localStorage and keeps React running,
+      // so appUrlOpen can fire and AuthCallback can complete the exchange.
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: authRedirectUrl, skipBrowserRedirect: true },
+      })
+      if (error) { setErr(error.message); return }
+      if (data?.url) {
+        const { Browser } = await import('@capacitor/browser')
+        await Browser.open({ url: data.url, windowName: '_self' })
+      }
+    } else {
+      // On web: normal flow — Supabase opens the OAuth URL directly
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: authRedirectUrl },
+      })
+      if (error) setErr(error.message)
+    }
   }
   return (
     <div>
