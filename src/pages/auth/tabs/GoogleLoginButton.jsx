@@ -2,16 +2,37 @@ import { Chrome } from 'lucide-react'
 import { supabase, authRedirectUrl } from '@/lib/supabase'
 import { useState } from 'react'
 
+const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()
+
 export default function GoogleLoginButton({ label = 'Continue with Google' }) {
   const [error, setError] = useState('')
 
   const handleGoogle = async () => {
     setError('')
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: authRedirectUrl },
-    })
-    if (oauthError) setError(oauthError.message)
+
+    if (isNative) {
+      // On native: get the OAuth URL without auto-redirecting the WebView,
+      // then open it in Chrome Custom Tabs via @capacitor/browser.
+      // The PKCE verifier stays in the WebView localStorage.
+      // When Google redirects back to storeyapp://auth/callback?code=xxx,
+      // capacitor.js appUrlOpen fires and AuthCallback exchanges the code.
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: authRedirectUrl, skipBrowserRedirect: true },
+      })
+      if (oauthError) { setError(oauthError.message); return }
+      if (data?.url) {
+        const { Browser } = await import('@capacitor/browser')
+        await Browser.open({ url: data.url, windowName: '_self' })
+      }
+    } else {
+      // On web: standard redirect
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: authRedirectUrl },
+      })
+      if (oauthError) setError(oauthError.message)
+    }
   }
 
   return (
