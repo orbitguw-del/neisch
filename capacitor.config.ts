@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.storeyrelease.apk',
+  appId: 'com.storeyinfra.app',
   appName: 'Storey',
   webDir: 'dist',
 
