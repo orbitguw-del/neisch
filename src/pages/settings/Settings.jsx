@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import PageHeader from '@/components/ui/PageHeader'
+import HelpDesk from '@/components/auth/HelpDesk'
 import PhoneEnrollmentCard from './PhoneEnrollmentCard'
 
 export default function Settings() {
@@ -82,6 +83,10 @@ export default function Settings() {
       </div>
 
       <PhoneEnrollmentCard />
+
+      <div className="card p-6">
+        <HelpDesk collapsedLabel="Contact support" />
+      </div>
     </div>
   )
 }
