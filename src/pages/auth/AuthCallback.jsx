@@ -8,8 +8,25 @@ export default function AuthCallback() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get('code')
+    const query = new URLSearchParams(window.location.search)
+    // Errors can arrive in either the query string (PKCE) or the URL hash (implicit/magic link).
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+    const providerError =
+      query.get('error_description') ?? query.get('error') ??
+      hash.get('error_description')  ?? hash.get('error')
 
+    if (providerError) {
+      // Friendly mapping for the most common case — user denied consent.
+      const code = query.get('error') ?? hash.get('error')
+      const message =
+        code === 'access_denied'
+          ? 'Sign-in was cancelled. You can try again or use another method.'
+          : decodeURIComponent(providerError.replace(/\+/g, ' '))
+      setError(message)
+      return
+    }
+
+    const code = query.get('code')
     if (code) {
       // PKCE flow (Google OAuth) — exchange the code for a session
       supabase.auth.exchangeCodeForSession(code).then(({ data: { session }, error: err }) => {

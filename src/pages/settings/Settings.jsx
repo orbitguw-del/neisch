@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import PageHeader from '@/components/ui/PageHeader'
+import PhoneEnrollmentCard from './PhoneEnrollmentCard'
 
 export default function Settings() {
   const { profile, fetchProfile, user } = useAuthStore()
@@ -31,7 +32,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="max-w-lg">
+    <div className="max-w-lg space-y-6">
       <PageHeader title="Settings" description="Manage your profile and account preferences." />
 
       <div className="card p-6">
@@ -79,6 +80,8 @@ export default function Settings() {
           </div>
         </form>
       </div>
+
+      <PhoneEnrollmentCard />
     </div>
   )
 }
