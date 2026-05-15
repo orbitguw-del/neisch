@@ -11,6 +11,8 @@ import useReportsStore from '@/stores/reportsStore'
 import PageHeader from '@/components/ui/PageHeader'
 import StatCard from '@/components/ui/StatCard'
 import Modal from '@/components/ui/Modal'
+import PrintButton from '@/components/print/PrintButton'
+import PrintHeader from '@/components/print/PrintHeader'
 import { formatINR, formatDate, cn } from '@/lib/utils'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -46,6 +48,12 @@ function OverviewTab({ sites }) {
 
   return (
     <div className="space-y-6">
+      <PrintHeader title="Site Overview" subtitle={`${sites.length} sites · Total budget: ${formatINR(totalBudget)}`} />
+
+      <div className="no-print flex justify-end">
+        <PrintButton label="Print overview" />
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Sites"  value={sites.length}             icon={HardHat}  color="brand" />
         <StatCard label="Active"       value={byStatus.active ?? 0}    icon={BarChart3} color="green" />
@@ -106,10 +114,17 @@ function MonthlyTab({ tenantId, sites }) {
     if (tenantId) fetchMonthlyReport(tenantId, month, siteId || null)
   }, [tenantId, month, siteId])
 
+  const siteName = siteId ? sites.find((s) => s.id === siteId)?.name : 'All sites'
+
   return (
     <div className="space-y-6">
+      <PrintHeader
+        title={`Monthly Materials Report — ${monthLabel(month)}`}
+        subtitle={`Site: ${siteName}`}
+      />
+
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="no-print flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-4 w-4 text-gray-400" />
           <select
@@ -130,6 +145,7 @@ function MonthlyTab({ tenantId, sites }) {
           <option value="">All Sites</option>
           {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
+        <PrintButton label="Print monthly report" className="ml-auto" />
       </div>
 
       {/* Summary cards */}
@@ -322,10 +338,17 @@ function BudgetTab({ tenantId, sites }) {
     ? <TrendingDown className="h-3.5 w-3.5 inline mr-0.5" />
     : <TrendingUp   className="h-3.5 w-3.5 inline mr-0.5" />
 
+  const siteName = sites.find((s) => s.id === siteId)?.name ?? 'Unknown site'
+
   return (
     <div className="space-y-6">
+      <PrintHeader
+        title={`Budget vs Actual — ${monthLabel(month)}`}
+        subtitle={`Site: ${siteName}`}
+      />
+
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="no-print flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-4 w-4 text-gray-400" />
           <select className="input py-1.5 pr-8 text-sm" value={month} onChange={(e) => setMonth(e.target.value)}>
@@ -336,13 +359,16 @@ function BudgetTab({ tenantId, sites }) {
           <option value="">Select site</option>
           {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        <button
-          onClick={() => setModalOpen(true)}
-          disabled={!siteId}
-          className="btn-primary ml-auto"
-        >
-          <Plus className="h-4 w-4" /> Add budget line
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <PrintButton label="Print" />
+          <button
+            onClick={() => setModalOpen(true)}
+            disabled={!siteId}
+            className="btn-primary"
+          >
+            <Plus className="h-4 w-4" /> Add budget line
+          </button>
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -403,7 +429,7 @@ function BudgetTab({ tenantId, sites }) {
                     {formatINR(Math.abs(item.variance))}
                     <span className="ml-1 text-xs opacity-70">({item.variance_pct}%)</span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 no-print">
                     <button
                       onClick={() => handleDelete(item.id)}
                       className="text-gray-300 hover:text-red-500 transition-colors"
@@ -422,16 +448,16 @@ function BudgetTab({ tenantId, sites }) {
                   {varIcon(budgetData.totalVariance)}
                   {formatINR(Math.abs(budgetData.totalVariance))}
                 </td>
-                <td />
+                <td className="no-print" />
               </tr>
             </tbody>
           </table></div>
         )}
       </div>
 
-      {/* Budget lines list (for management) */}
+      {/* Budget lines list (for management) — manage UI, not part of printed report */}
       {budgetLines.length > 0 && (
-        <div className="card overflow-hidden">
+        <div className="card overflow-hidden no-print">
           <div className="border-b border-gray-200 px-5 py-4">
             <h2 className="text-sm font-semibold text-gray-900">Budget Lines (manage)</h2>
           </div>
@@ -499,7 +525,7 @@ export default function Reports() {
       />
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-200 mb-6">
+      <div className="no-print flex gap-1 border-b border-gray-200 mb-6">
         {TABS.map((t) => (
           <button
             key={t.id}

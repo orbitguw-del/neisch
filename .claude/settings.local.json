@@ -26,28 +26,7 @@
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f''''Total: {len\\(d\\)}''''\\)\" echo \"=== DAILY LOGS count ===\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f''''Total: {len\\(d\\)}''''\\)\")",
       "Bash(mkdir -p C:/garment-poster)",
-      "Read(//c//**)",
-      "Bash(xargs grep *)",
-      "Bash(git add *)",
-      "Bash(git commit -m ' *)",
-      "mcp__Claude_in_Chrome__tabs_context_mcp",
-      "mcp__Claude_in_Chrome__computer",
-      "mcp__Claude_in_Chrome__navigate",
-      "mcp__Claude_in_Chrome__browser_batch",
-      "PowerShell(gh pr list --repo orbitguw-del/neisch)",
-      "Bash(python -m markitdown \"C:\\\\Users\\\\model\\\\Downloads\\\\ConsNE_Investor_Deck.pptx\")",
-      "Bash(python3 -m markitdown \"C:/Users/model/Downloads/ConsNE_Investor_Deck.pptx\")",
-      "Bash(git commit -m 'fix: replace StatCard color='\\\\''earth'\\\\'' with '\\\\''sage'\\\\'' across dashboards *)",
-      "Bash(supabase --version)",
-      "Bash(git commit -m 'fix: Google OAuth redirect to /auth/callback *)",
-      "Bash(git push *)",
-      "Bash(git commit -m 'fix: handle OAuth PKCE code exchange in AuthCallback *)",
-      "Bash(git commit -m 'fix: explicitly exchange PKCE code in AuthCallback for Google OAuth *)",
-      "mcp__Claude_in_Chrome__javascript_tool",
-      "mcp__Claude_in_Chrome__resize_window",
-      "Read(//c/Users/model/Downloads/**)",
-      "Bash(python -m markitdown ConsNE_Investor_Deck.pptx)",
-      "mcp__Claude_in_Chrome__get_page_text"
+      "Read(//c//**)"
     ]
   }
 }

@@ -10,6 +10,8 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 const supabase = createClient(supabaseUrl, supabaseKey)
 
+const MAX_ATTEMPTS = 5
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
@@ -20,28 +22,63 @@ serve(async (req) => {
   }
 
   try {
-    const { phone_number, otp_code, platform } = await req.json()
-    const isNative = platform === 'native'
+    const { email, phone_number, otp_code, platform } = await req.json()
+    const isNative = platform === "native"
 
-    if (!phone_number || !otp_code) {
+    if (!email || !phone_number || !otp_code) {
       return new Response(
-        JSON.stringify({ error: "Missing phone_number or otp_code" }),
+        JSON.stringify({ error: "Missing email, phone_number, or otp_code" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
-    // Look up user by phone number in auth.users
-    const { data: userData, error: lookupError } = await supabase
-      .rpc("get_auth_user_by_phone", { p_phone: phone_number })
-
-    if (lookupError || !userData || userData.length === 0) {
+    // Look up user via Auth Admin REST API (profiles don't store email)
+    const adminRes = await fetch(
+      `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(email)}&per_page=1`,
+      { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } }
+    )
+    const adminJson = await adminRes.json()
+    const authUser = adminJson?.users?.[0]
+    if (!authUser?.id) {
       return new Response(
-        JSON.stringify({ error: "No account found with this phone number" }),
+        JSON.stringify({ error: "Invalid or expired OTP" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
-    const user = { id: userData[0].user_id, email: userData[0].user_email }
+    const user = { id: authUser.id, email: authUser.email }
+
+    // Hard cap brute force on the most recent unverified record.
+    const { data: latest } = await supabase
+      .from("phone_verifications")
+      .select("id, attempts")
+      .eq("user_id", user.id)
+      .eq("phone_number", phone_number)
+      .is("verified_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (latest && (latest.attempts || 0) >= MAX_ATTEMPTS) {
+      return new Response(
+        JSON.stringify({ error: "Too many attempts. Request a new code." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
+    }
+
+    // Phone-ownership binding: profile.phone must be set AND match.
+    // First-time enrollment is via dedicated enroll-phone-otp endpoint.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("phone")
+      .eq("id", user.id)
+      .single()
+    if (!profile?.phone || profile.phone !== phone_number) {
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired OTP" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
+    }
 
     // Verify OTP
     const { data: verification, error: verifyError } = await supabase
@@ -57,48 +94,25 @@ serve(async (req) => {
       .single()
 
     if (verifyError || !verification) {
-      // Increment attempts on the latest unverified record
-      const { data: latest } = await supabase
-        .from("phone_verifications")
-        .select("id, attempts")
-        .eq("user_id", user.id)
-        .eq("phone_number", phone_number)
-        .is("verified_at", null)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single()
-
       if (latest) {
         await supabase
           .from("phone_verifications")
           .update({ attempts: (latest.attempts || 0) + 1 })
           .eq("id", latest.id)
       }
-
       return new Response(
         JSON.stringify({ error: "Invalid or expired OTP" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
-    // Mark OTP as verified
+    // Mark OTP as verified — DO NOT overwrite profile.phone (closed takeover vector).
     await supabase
       .from("phone_verifications")
       .update({ verified_at: new Date().toISOString() })
       .eq("id", verification.id)
 
-    // Update profile
-    await supabase
-      .from("profiles")
-      .update({ phone: phone_number, phone_verified: true })
-      .eq("id", user.id)
-
-    // Generate a magic-link token so the frontend can establish a real auth
-    // session WITHOUT opening any browser.
-    // We return the hashed_token — the client calls
-    //   supabase.auth.verifyOtp({ token_hash, type: 'magiclink' })
-    // which hits POST /auth/v1/verify server-side and returns a session
-    // directly, no redirect or browser tab needed.
+    // Generate a magic-link token so the frontend can verifyOtp() and mint a session.
     const siteUrl    = (Deno.env.get("SITE_URL") ?? "https://storeyinfra.com").replace(/\/$/, "")
     const redirectTo = isNative ? "storeyapp://auth/callback" : `${siteUrl}/auth/callback`
 
@@ -108,22 +122,22 @@ serve(async (req) => {
       options: { redirectTo },
     })
 
-    if (magicError) {
-      console.error("Magic link error:", magicError.message)
-    }
+    if (magicError) console.error("Magic link error:", magicError.message)
 
-    const hashedToken = magicData?.properties?.hashed_token ?? null
-    const actionLink  = magicData?.properties?.action_link  ?? null
+    const hashedToken = magicError ? null : magicData?.properties?.hashed_token ?? null
 
+    // Response includes BOTH `token_hash` (preferred — for verifyOtp) AND
+    // `hashed_token` alias for forward-compat with older callers.
+    // We intentionally DO NOT return `magic_link` (the full action URL) —
+    // that would leak a usable session credential in the response body.
     return new Response(
       JSON.stringify({
         success:      true,
         user_id:      user.id,
         message:      "Phone verified successfully",
-        // hashed_token: client calls verifyOtp({ token_hash }) — no browser needed
-        hashed_token: magicError ? null : hashedToken,
-        // magic_link: fallback for web if verifyOtp is not available
-        magic_link:   magicError ? null : actionLink,
+        token_hash:   hashedToken,
+        hashed_token: hashedToken,
+        otp_type:     "magiclink",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     )

@@ -61,3 +61,67 @@
   .badge-blue   { @apply badge bg-blue-100 text-blue-700; }
   .badge-gray   { @apply badge bg-gray-100 text-gray-600; }
 }
+
+/* ─── Print styles ────────────────────────────────────────────────────────── */
+/* Visible only on paper; hidden on screen. */
+.print-only { display: none; }
+
+@media print {
+  @page {
+    margin: 0.5in;
+    size: A4 portrait;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+  }
+
+  /* Strip app chrome */
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print-only { display: block !important; }
+
+  /* Make the layout flow naturally — no fixed heights or scroll containers */
+  .h-screen        { height: auto !important; }
+  .overflow-hidden { overflow: visible !important; }
+  .overflow-y-auto { overflow: visible !important; }
+
+  /* Cards: flatten — no shadows or rounded corners on paper */
+  .card {
+    border-color: #e5e7eb !important;
+    box-shadow: none !important;
+    border-radius: 4px !important;
+    page-break-inside: avoid;
+  }
+
+  /* Tables: keep header on each page, avoid row splits */
+  table {
+    page-break-inside: auto;
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead { display: table-header-group; }
+  tfoot { display: table-row-group; }
+  tr    { page-break-inside: avoid; page-break-after: auto; }
+
+  /* Stat cards: stack horizontally cleanly */
+  .grid {
+    display: grid !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Force light backgrounds — modern browsers honour color-adjust */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide router-attached anchors that don't make sense on paper */
+  a[href]::after { content: ''; }
+}

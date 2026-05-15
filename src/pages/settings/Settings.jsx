@@ -6,6 +6,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import PageHeader from '@/components/ui/PageHeader'
+import HelpDesk from '@/components/auth/HelpDesk'
 
 const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -404,6 +405,10 @@ export default function Settings() {
       <div className="text-center text-xs text-gray-400 pb-4 space-y-1">
         <p>Storey — Construction Management</p>
         <p>v1.0.2 · <a href="/#/privacy" className="hover:underline">Privacy Policy</a></p>
+      </div>
+
+      <div className="card p-6">
+        <HelpDesk collapsedLabel="Contact support" />
       </div>
     </div>
   )

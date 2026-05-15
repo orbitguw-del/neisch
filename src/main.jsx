@@ -7,6 +7,16 @@ import { initCapacitor } from './lib/capacitor'
 import ErrorBoundary from './components/ErrorBoundary'
 import { supabase } from './lib/supabase'
 
+// Recover from stale chunk references after a redeploy.
+// Vite fires `vite:preloadError` when a dynamic import 404s; one reload pulls the new build.
+// sessionStorage gate prevents an infinite loop if the new build is also broken.
+window.addEventListener('vite:preloadError', (event) => {
+  if (sessionStorage.getItem('chunk-reload-attempted')) return
+  sessionStorage.setItem('chunk-reload-attempted', '1')
+  event.preventDefault()
+  window.location.reload()
+})
+
 // ── OAuth callback interceptor ──────────────────────────────────────────────
 // When Supabase redirects back after Google OAuth it goes to:
 //   https://www.storeyinfra.com/auth/callback?code=xxx  (real path, no hash)

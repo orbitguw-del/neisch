@@ -5,6 +5,7 @@ import {
   Building2, Chrome, CheckCircle2,
 } from 'lucide-react'
 import StoreyIcon from '@/components/brand/StoreyIcon'
+import HelpDesk from '@/components/auth/HelpDesk'
 import EmailPasswordLogin from './tabs/EmailPasswordLogin'
 import AcceptInviteTab from './tabs/AcceptInviteTab'
 import SMSOTPLogin from './tabs/SMSOTPLogin'
@@ -18,10 +19,6 @@ function GoogleButton() {
     const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()
 
     if (isNative) {
-      // On native: get the OAuth URL WITHOUT opening the browser automatically.
-      // We open it in @capacitor/browser so the app WebView stays alive — this
-      // preserves the PKCE code verifier in localStorage and keeps React running,
-      // so appUrlOpen can fire and AuthCallback can complete the exchange.
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: authRedirectUrl, skipBrowserRedirect: true },
@@ -32,7 +29,6 @@ function GoogleButton() {
         await Browser.open({ url: data.url, windowName: '_self' })
       }
     } else {
-      // On web: normal flow — Supabase opens the OAuth URL directly
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: authRedirectUrl },
@@ -47,7 +43,6 @@ function GoogleButton() {
         onClick={handleGoogle}
         className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:border-gray-300 hover:shadow active:scale-[0.99]"
       >
-        {/* Google "G" svg */}
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -61,7 +56,6 @@ function GoogleButton() {
   )
 }
 
-// ── Method card button ────────────────────────────────────────────────────────
 function MethodCard({ icon: Icon, iconBg, title, subtitle, onClick }) {
   return (
     <button
@@ -81,7 +75,6 @@ function MethodCard({ icon: Icon, iconBg, title, subtitle, onClick }) {
   )
 }
 
-// ── Back button ───────────────────────────────────────────────────────────────
 function BackButton({ onClick }) {
   return (
     <button
@@ -105,21 +98,15 @@ function Divider({ label = 'or' }) {
   )
 }
 
-// ── Feature pills ─────────────────────────────────────────────────────────────
 const FEATURES = ['Site tracking', 'Materials', 'Attendance', 'Reports']
 
-// ════════════════════════════════════════════════════════════════════════════════
 export default function Login() {
-  // view: 'main' | 'email' | 'phone' | 'invite'
   const [view, setView] = useState('main')
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-brand-950 to-slate-900 p-4">
-
-      {/* Card */}
       <div className="w-full max-w-sm">
 
-        {/* Brand header */}
         <div className="mb-7 flex flex-col items-center gap-3 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 shadow-lg backdrop-blur-sm ring-1 ring-white/20">
             <StoreyIcon size={32} className="text-white" />
@@ -140,23 +127,16 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Auth card */}
         <div className="rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 p-6">
 
-          {/* ── MAIN VIEW ──────────────────────────────────────────────────── */}
           {view === 'main' && (
             <div className="space-y-4">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">Welcome back</h2>
                 <p className="text-sm text-gray-500">Choose how you'd like to sign in</p>
               </div>
-
-              {/* Google — most prominent */}
               <GoogleButton />
-
               <Divider label="or sign in with" />
-
-              {/* Other methods */}
               <div className="space-y-2.5">
                 <MethodCard
                   icon={Mail}
@@ -173,10 +153,7 @@ export default function Login() {
                   onClick={() => setView('phone')}
                 />
               </div>
-
               <Divider label="new here" />
-
-              {/* Invite + Register */}
               <div className="space-y-2.5">
                 <MethodCard
                   icon={Users}
@@ -202,7 +179,6 @@ export default function Login() {
             </div>
           )}
 
-          {/* ── EMAIL / PASSWORD ──────────────────────────────────────────── */}
           {view === 'email' && (
             <div>
               <BackButton onClick={() => setView('main')} />
@@ -217,7 +193,6 @@ export default function Login() {
             </div>
           )}
 
-          {/* ── PHONE OTP ─────────────────────────────────────────────────── */}
           {view === 'phone' && (
             <div>
               <BackButton onClick={() => setView('main')} />
@@ -238,7 +213,6 @@ export default function Login() {
             </div>
           )}
 
-          {/* ── ACCEPT INVITE ─────────────────────────────────────────────── */}
           {view === 'invite' && (
             <div>
               <BackButton onClick={() => setView('main')} />
@@ -255,7 +229,9 @@ export default function Login() {
 
         </div>
 
-        {/* Footer */}
+        {/* Help desk — universal, visible across all views */}
+        <HelpDesk />
+
         <p className="mt-4 text-center text-xs text-white/40">
           By signing in you agree to our{' '}
           <a href="/#/privacy" className="underline hover:text-white/60">Privacy Policy</a>

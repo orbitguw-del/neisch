@@ -24,41 +24,59 @@ serve(async (req) => {
   }
 
   try {
-    const { phone_number } = await req.json()
+    const { email, phone_number } = await req.json()
 
-    if (!phone_number) {
+    if (!email || !phone_number) {
       return new Response(
-        JSON.stringify({ error: "Missing phone_number" }),
+        JSON.stringify({ error: "Missing email or phone_number" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
-    // Look up user by phone number in auth.users
-    const { data: userData, error: lookupError } = await supabase
-      .rpc("get_auth_user_by_phone", { p_phone: phone_number })
+    // Generic response — never leaks whether the email/phone is registered.
+    const genericOk = new Response(
+      JSON.stringify({ success: true, message: "If the details are correct, an OTP has been sent." }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    )
 
-    if (lookupError || !userData || userData.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "No account found with this phone number. Sign in with email first and add your phone in settings." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
-    }
+    // Look up user via Auth Admin REST API (profiles don't store email)
+    const adminRes = await fetch(
+      `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(email)}&per_page=1`,
+      { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } }
+    )
+    const adminJson = await adminRes.json()
+    const authUser = adminJson?.users?.[0]
+    if (!authUser?.id) return genericOk
 
-    const user = { id: userData[0].user_id }
+    const user = { id: authUser.id }
+
+    // Phone-ownership binding: profile.phone must be set AND match.
+    // First-time enrollment goes through the dedicated enroll-phone-otp endpoint.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("phone")
+      .eq("id", user.id)
+      .single()
+    if (!profile?.phone || profile.phone !== phone_number) return genericOk
+
+    // Rate limit: reject if an unexpired OTP was issued in the last 60s.
+    const cutoff = new Date(Date.now() - 60_000).toISOString()
+    const { data: recent } = await supabase
+      .from("phone_verifications")
+      .select("id")
+      .eq("user_id", user.id)
+      .gt("created_at", cutoff)
+      .limit(1)
+      .maybeSingle()
+    if (recent) return genericOk
 
     const otp_code = Math.floor(100000 + Math.random() * 900000).toString()
-    const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes
 
     const { error: otpError } = await supabase
       .from("phone_verifications")
-      .insert([{ user_id: user.id, phone_number, otp_code, expires_at }])
+      .insert([{ user_id: user.id, phone_number, otp_code }])
 
-    if (otpError) {
-      return new Response(
-        JSON.stringify({ error: "Failed to generate OTP", detail: otpError.message }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
-    }
+    if (otpError) return genericOk
 
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`
     const authString = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)
@@ -84,10 +102,7 @@ serve(async (req) => {
       )
     }
 
-    return new Response(
-      JSON.stringify({ success: true, message: "OTP sent to phone" }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    )
+    return genericOk
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message }),

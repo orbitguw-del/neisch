@@ -23,7 +23,11 @@ export default function AuthCallback() {
 
     // ── OAuth error returned by Google / Supabase ───────────────────────────
     if (oauthErr) {
-      setError(`Sign-in failed: ${oauthDesc || oauthErr}`)
+      // Friendly mapping for the most common case — user denied consent.
+      const message = oauthErr === 'access_denied'
+        ? 'Sign-in was cancelled. You can try again or use another method.'
+        : `Sign-in failed: ${decodeURIComponent((oauthDesc || oauthErr).replace(/\+/g, ' '))}`
+      setError(message)
       return
     }
 
