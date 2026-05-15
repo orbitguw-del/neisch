@@ -134,7 +134,7 @@ export default function StoreKeeperDashboard() {
         ) : materials.length === 0 ? (
           <p className="px-5 py-8 text-sm text-gray-500">No materials tracked yet.</p>
         ) : (
-          <table className="min-w-full divide-y divide-gray-100">
+          <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
                 {['Material', 'Site', 'Available', 'Unit', 'Status'].map((h) => (
@@ -163,7 +163,7 @@ export default function StoreKeeperDashboard() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
     </div>

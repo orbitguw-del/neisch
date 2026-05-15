@@ -1,112 +1,243 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  Mail, Phone, Users, ChevronRight, ArrowLeft,
+  Building2, Chrome, CheckCircle2,
+} from 'lucide-react'
 import StoreyIcon from '@/components/brand/StoreyIcon'
 import HelpDesk from '@/components/auth/HelpDesk'
 import EmailPasswordLogin from './tabs/EmailPasswordLogin'
 import AcceptInviteTab from './tabs/AcceptInviteTab'
-import AdminSignupTab from './tabs/AdminSignupTab'
-import GoogleLoginButton from './tabs/GoogleLoginButton'
 import SMSOTPLogin from './tabs/SMSOTPLogin'
+import { supabase, authRedirectUrl } from '@/lib/supabase'
 
-const TABS = [
-  { key: 'signin',  label: 'Sign In' },
-  { key: 'invite',  label: 'Accept Invite' },
-  { key: 'admin',   label: 'Admin' },
-]
+// ── Google button (inline, no sub-component needed) ──────────────────────────
+function GoogleButton() {
+  const [err, setErr] = useState('')
+  const handleGoogle = async () => {
+    setErr('')
+    const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()
 
-export default function Login() {
-  const [tab, setTab] = useState('signin')
-
+    if (isNative) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: authRedirectUrl, skipBrowserRedirect: true },
+      })
+      if (error) { setErr(error.message); return }
+      if (data?.url) {
+        const { Browser } = await import('@capacitor/browser')
+        await Browser.open({ url: data.url, windowName: '_self' })
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: authRedirectUrl },
+      })
+      if (error) setErr(error.message)
+    }
+  }
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 to-gray-100 p-4">
-      <div className="w-full max-w-sm">
-
-        {/* Brand */}
-        <div className="mb-8 flex flex-col items-center gap-3">
-          <StoreyIcon size={48} />
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Georgia, ui-serif, serif' }}>Storey</h1>
-            <p className="text-sm text-gray-500">Construction, organised.</p>
-            <p className="mt-1 text-xs text-gray-400">ConTech ERP · real-time site decisions</p>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="mb-6 flex rounded-lg bg-gray-100 p-1">
-          {TABS.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setTab(key)}
-              className={`flex-1 rounded-md py-2 text-sm font-medium transition-all ${
-                tab === key
-                  ? 'bg-white text-gray-900 shadow'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Sign In */}
-        {tab === 'signin' && (
-          <div className="space-y-4">
-            <GoogleLoginButton />
-
-            <Divider />
-
-            <EmailPasswordLogin />
-
-            <Divider />
-
-            <SMSOTPLogin />
-
-            <p className="mt-5 text-center text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="font-medium text-brand-600 hover:text-brand-700">
-                Register your company
-              </Link>
-            </p>
-          </div>
-        )}
-
-        {/* Accept Invite */}
-        {tab === 'invite' && (
-          <div className="space-y-4">
-            <GoogleLoginButton label="Accept Invite with Google" />
-            <Divider />
-            <AcceptInviteTab />
-            <p className="mt-4 text-center text-sm text-gray-600">
-              Already have an account?{' '}
-              <button
-                type="button"
-                onClick={() => setTab('signin')}
-                className="font-medium text-brand-600 hover:text-brand-700"
-              >
-                Sign in instead
-              </button>
-            </p>
-          </div>
-        )}
-
-        {/* Admin */}
-        {tab === 'admin' && <AdminSignupTab />}
-
-        {/* Help desk — universal, visible across all tabs */}
-        <HelpDesk />
-
-      </div>
+    <div>
+      <button
+        type="button"
+        onClick={handleGoogle}
+        className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:border-gray-300 hover:shadow active:scale-[0.99]"
+      >
+        <svg className="h-5 w-5" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Continue with Google
+      </button>
+      {err && <p className="mt-2 text-xs text-red-600">{err}</p>}
     </div>
   )
 }
 
-function Divider() {
+function MethodCard({ icon: Icon, iconBg, title, subtitle, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white p-3.5 text-left transition-all hover:border-brand-300 hover:bg-brand-50/50 hover:shadow-sm active:scale-[0.99]"
+    >
+      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
+        <Icon className="h-4.5 w-4.5" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-gray-900">{title}</p>
+        <p className="text-xs text-gray-500 leading-snug">{subtitle}</p>
+      </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-400" />
+    </button>
+  )
+}
+
+function BackButton({ onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mb-5 flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+    >
+      <ArrowLeft className="h-4 w-4" />
+      Back
+    </button>
+  )
+}
+
+function Divider({ label = 'or' }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 border-t border-gray-200" />
-      <span className="text-xs text-gray-400 uppercase tracking-wide">or</span>
-      <div className="flex-1 border-t border-gray-200" />
+      <div className="flex-1 border-t border-gray-100" />
+      <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{label}</span>
+      <div className="flex-1 border-t border-gray-100" />
+    </div>
+  )
+}
+
+const FEATURES = ['Site tracking', 'Materials', 'Attendance', 'Reports']
+
+export default function Login() {
+  const [view, setView] = useState('main')
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-brand-950 to-slate-900 p-4">
+      <div className="w-full max-w-sm">
+
+        <div className="mb-7 flex flex-col items-center gap-3 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 shadow-lg backdrop-blur-sm ring-1 ring-white/20">
+            <StoreyIcon size={32} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Georgia, ui-serif, serif' }}>
+              Storey
+            </h1>
+            <p className="text-sm text-white/60">Construction, organised.</p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-1.5">
+            {FEATURES.map(f => (
+              <span key={f} className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-0.5 text-xs text-white/70 ring-1 ring-white/10">
+                <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                {f}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 p-6">
+
+          {view === 'main' && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Welcome back</h2>
+                <p className="text-sm text-gray-500">Choose how you'd like to sign in</p>
+              </div>
+              <GoogleButton />
+              <Divider label="or sign in with" />
+              <div className="space-y-2.5">
+                <MethodCard
+                  icon={Mail}
+                  iconBg="bg-blue-50 text-blue-600"
+                  title="Email & Password"
+                  subtitle="Use your registered email address"
+                  onClick={() => setView('email')}
+                />
+                <MethodCard
+                  icon={Phone}
+                  iconBg="bg-emerald-50 text-emerald-600"
+                  title="Phone OTP"
+                  subtitle="Receive a one-time code via SMS"
+                  onClick={() => setView('phone')}
+                />
+              </div>
+              <Divider label="new here" />
+              <div className="space-y-2.5">
+                <MethodCard
+                  icon={Users}
+                  iconBg="bg-violet-50 text-violet-600"
+                  title="Accept Team Invite"
+                  subtitle="Got an invite code from your contractor?"
+                  onClick={() => setView('invite')}
+                />
+                <Link
+                  to="/register"
+                  className="group flex w-full items-center gap-3 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-3.5 text-left transition-all hover:border-brand-300 hover:bg-brand-50/50"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50">
+                    <Building2 className="h-4.5 w-4.5 text-amber-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-gray-900">Register your company</p>
+                    <p className="text-xs text-gray-500 leading-snug">New contractor account</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-400" />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {view === 'email' && (
+            <div>
+              <BackButton onClick={() => setView('main')} />
+              <div className="mb-5">
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+                  <Mail className="h-5 w-5 text-blue-600" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900">Email & Password</h2>
+                <p className="text-sm text-gray-500">Sign in with your registered email</p>
+              </div>
+              <EmailPasswordLogin />
+            </div>
+          )}
+
+          {view === 'phone' && (
+            <div>
+              <BackButton onClick={() => setView('main')} />
+              <div className="mb-5">
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
+                  <Phone className="h-5 w-5 text-emerald-600" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900">Phone OTP</h2>
+                <p className="text-sm text-gray-500">Enter your phone number to receive a login code</p>
+              </div>
+              <SMSOTPLogin />
+              <p className="mt-4 text-xs text-gray-400 text-center">
+                Need to add your phone?{' '}
+                <Link to="/settings" className="text-brand-600 hover:underline">
+                  Go to Settings
+                </Link>
+              </p>
+            </div>
+          )}
+
+          {view === 'invite' && (
+            <div>
+              <BackButton onClick={() => setView('main')} />
+              <div className="mb-5">
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50">
+                  <Users className="h-5 w-5 text-violet-600" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900">Accept Team Invite</h2>
+                <p className="text-sm text-gray-500">Enter the invite code your contractor sent you</p>
+              </div>
+              <AcceptInviteTab />
+            </div>
+          )}
+
+        </div>
+
+        {/* Help desk — universal, visible across all views */}
+        <HelpDesk />
+
+        <p className="mt-4 text-center text-xs text-white/40">
+          By signing in you agree to our{' '}
+          <a href="/#/privacy" className="underline hover:text-white/60">Privacy Policy</a>
+        </p>
+
+      </div>
     </div>
   )
 }

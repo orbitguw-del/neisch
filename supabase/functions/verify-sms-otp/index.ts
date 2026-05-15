@@ -10,6 +10,8 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 const supabase = createClient(supabaseUrl, supabaseKey)
 
+const MAX_ATTEMPTS = 5
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
@@ -20,7 +22,8 @@ serve(async (req) => {
   }
 
   try {
-    const { email, phone_number, otp_code } = await req.json()
+    const { email, phone_number, otp_code, platform } = await req.json()
+    const isNative = platform === "native"
 
     if (!email || !phone_number || !otp_code) {
       return new Response(
@@ -36,18 +39,16 @@ serve(async (req) => {
     )
     const adminJson = await adminRes.json()
     const authUser = adminJson?.users?.[0]
-
     if (!authUser?.id) {
       return new Response(
-        JSON.stringify({ error: "User not found" }),
+        JSON.stringify({ error: "Invalid or expired OTP" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
-    const user = { id: authUser.id }
-    const MAX_ATTEMPTS = 5
+    const user = { id: authUser.id, email: authUser.email }
 
-    // Hard cap brute force on the most recent unverified record for this user+phone.
+    // Hard cap brute force on the most recent unverified record.
     const { data: latest } = await supabase
       .from("phone_verifications")
       .select("id, attempts")
@@ -66,7 +67,7 @@ serve(async (req) => {
     }
 
     // Phone-ownership binding: profile.phone must be set AND match.
-    // First-time enrollment is no longer allowed via the login flow.
+    // First-time enrollment is via dedicated enroll-phone-otp endpoint.
     const { data: profile } = await supabase
       .from("profiles")
       .select("phone")
@@ -79,6 +80,7 @@ serve(async (req) => {
       )
     }
 
+    // Verify OTP
     const { data: verification, error: verifyError } = await supabase
       .from("phone_verifications")
       .select("*")
@@ -98,34 +100,44 @@ serve(async (req) => {
           .update({ attempts: (latest.attempts || 0) + 1 })
           .eq("id", latest.id)
       }
-
       return new Response(
         JSON.stringify({ error: "Invalid or expired OTP" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
+    // Mark OTP as verified — DO NOT overwrite profile.phone (closed takeover vector).
     await supabase
       .from("phone_verifications")
       .update({ verified_at: new Date().toISOString() })
       .eq("id", verification.id)
 
     // Generate a magic-link token so the frontend can verifyOtp() and mint a session.
-    // Return only the hashed_token + type — never the full action_link URL.
+    const siteUrl    = (Deno.env.get("SITE_URL") ?? "https://storeyinfra.com").replace(/\/$/, "")
+    const redirectTo = isNative ? "storeyapp://auth/callback" : `${siteUrl}/auth/callback`
+
     const { data: magicData, error: magicError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
-      email,
+      email: user.email,
+      options: { redirectTo },
     })
 
-    const token_hash = magicError ? null : magicData?.properties?.hashed_token ?? null
+    if (magicError) console.error("Magic link error:", magicError.message)
 
+    const hashedToken = magicError ? null : magicData?.properties?.hashed_token ?? null
+
+    // Response includes BOTH `token_hash` (preferred — for verifyOtp) AND
+    // `hashed_token` alias for forward-compat with older callers.
+    // We intentionally DO NOT return `magic_link` (the full action URL) —
+    // that would leak a usable session credential in the response body.
     return new Response(
       JSON.stringify({
-        success: true,
-        user_id: user.id,
-        message: "Phone verified successfully",
-        token_hash,
-        otp_type: "magiclink",
+        success:      true,
+        user_id:      user.id,
+        message:      "Phone verified successfully",
+        token_hash:   hashedToken,
+        hashed_token: hashedToken,
+        otp_type:     "magiclink",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     )

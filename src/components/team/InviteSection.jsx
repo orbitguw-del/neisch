@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Mail, Send, Clock, CheckCircle } from 'lucide-react'
+import { Mail, Send, Clock, CheckCircle, Copy, Check } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 const ASSIGNABLE_ROLES = [
@@ -8,11 +8,30 @@ const ASSIGNABLE_ROLES = [
   { value: 'store_keeper', label: 'Store Keeper' },
 ]
 
-
 const ROLE_LABELS = {
   site_manager: 'Site Manager',
   supervisor:   'Supervisor',
   store_keeper: 'Store Keeper',
+}
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false)
+  const handle = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+  return (
+    <button
+      type="button"
+      onClick={handle}
+      className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 transition-colors"
+    >
+      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? 'Copied!' : 'Copy'}
+    </button>
+  )
 }
 
 export default function InviteSection({ sites = [] }) {
@@ -21,46 +40,41 @@ export default function InviteSection({ sites = [] }) {
   const [siteId,  setSiteId]  = useState(sites[0]?.id ?? '')
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
-  const [success, setSuccess] = useState(null)
   const [sent,    setSent]    = useState([])
 
-  // Sync siteId once sites load (they may arrive after initial render)
   useEffect(() => {
-    if (sites.length > 0 && !siteId) {
-      setSiteId(sites[0].id)
-    }
+    if (sites.length > 0 && !siteId) setSiteId(sites[0].id)
   }, [sites, siteId])
 
   const handleInvite = async (e) => {
     e.preventDefault()
     setError(null)
-    setSuccess(null)
     if (!email.trim()) return
 
     setLoading(true)
     try {
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData?.session?.access_token
+      const site  = sites.find(s => s.id === siteId)
 
       const { data, error: fnError } = await supabase.functions.invoke('invite-user', {
-        body: { email: email.trim(), role, site_id: siteId, tenant_id: sites.find(s => s.id === siteId)?.tenant_id },
+        body: { email: email.trim(), role, site_id: siteId, tenant_id: site?.tenant_id },
         headers: { Authorization: `Bearer ${token}` },
       })
 
       if (fnError) throw fnError
       if (data?.error) throw new Error(data.error)
 
-      const site = sites.find(s => s.id === siteId)
       setSent(prev => [{
-        id: Date.now(),
-        email: email.trim(),
+        id:          Date.now(),
+        email:       email.trim(),
         role,
-        site: site?.name ?? 'Unknown site',
-        status: 'pending',
-        sent: 'Just now',
+        site:        site?.name ?? 'Unknown site',
+        invite_code: data.invite_code,
+        sent:        'Just now',
+        accepted:    false,
       }, ...prev])
 
-      setSuccess(`Invite sent to ${email.trim()}`)
       setEmail('')
     } catch (err) {
       setError(err.message)
@@ -69,19 +83,17 @@ export default function InviteSection({ sites = [] }) {
     }
   }
 
-  const handleRevoke = (id) => {
-    setSent(prev => prev.filter(i => i.id !== id))
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="card">
-        <div className="flex items-center gap-2 mb-4">
-          <Mail className="h-5 w-5 text-brand-600" />
-          <h2 className="text-lg font-semibold text-gray-900">Invite Team Member</h2>
+    <div className="space-y-5">
+
+      {/* ── Send invite form ───────────────────────────────────────────────── */}
+      <div className="card p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <Mail className="h-4 w-4 text-brand-600" />
+          <h2 className="font-semibold text-gray-900">Invite a Team Member</h2>
         </div>
-        <p className="text-sm text-gray-500 mb-4">
-          They will receive an email invite. Role and site access are pre-assigned.
+        <p className="mb-4 text-sm text-gray-500">
+          They'll get an invite code to create their account. You can also share the code directly over WhatsApp.
         </p>
 
         {error && (
@@ -89,15 +101,10 @@ export default function InviteSection({ sites = [] }) {
             {error}
           </div>
         )}
-        {success && (
-          <div className="mb-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
-            {success}
-          </div>
-        )}
 
         <form onSubmit={handleInvite} className="space-y-4">
           <div>
-            <label className="label">Email Address *</label>
+            <label className="label">Email address *</label>
             <input
               type="email"
               required
@@ -117,7 +124,7 @@ export default function InviteSection({ sites = [] }) {
               </select>
             </div>
             <div>
-              <label className="label">Assign to Site *</label>
+              <label className="label">Site *</label>
               <select className="input" value={siteId} onChange={e => setSiteId(e.target.value)}>
                 {sites.map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -125,41 +132,48 @@ export default function InviteSection({ sites = [] }) {
               </select>
             </div>
           </div>
-          <button type="submit" disabled={loading} className="btn-primary flex items-center gap-2">
+          <button type="submit" disabled={loading || sites.length === 0} className="btn-primary flex items-center gap-2">
             <Send className="h-4 w-4" />
-            {loading ? 'Sending...' : 'Send Invite'}
+            {loading ? 'Sending…' : 'Send Invite'}
           </button>
         </form>
       </div>
 
+      {/* ── Sent invites ───────────────────────────────────────────────────── */}
       {sent.length > 0 && (
-        <div className="card">
-          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Sent Invites</h3>
+        <div className="card p-5">
+          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500">Sent Invites</h3>
           <div className="space-y-3">
             {sent.map(inv => (
-              <div key={inv.id} className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{inv.email}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {ROLE_LABELS[inv.role] ?? inv.role} - {inv.site} - {inv.sent}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {inv.status === 'accepted' ? (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-green-600 bg-green-50 border border-green-200 rounded-full px-2.5 py-1">
+              <div key={inv.id} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{inv.email}</p>
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      {ROLE_LABELS[inv.role] ?? inv.role} · {inv.site} · {inv.sent}
+                    </p>
+                  </div>
+                  {inv.accepted ? (
+                    <span className="flex shrink-0 items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-600">
                       <CheckCircle className="h-3 w-3" /> Accepted
                     </span>
                   ) : (
-                    <>
-                      <span className="flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
-                        <Clock className="h-3 w-3" /> Pending
-                      </span>
-                      <button type="button" onClick={() => handleRevoke(inv.id)} className="text-xs text-gray-400 hover:text-red-500 transition-colors">
-                        Revoke
-                      </button>
-                    </>
+                    <span className="flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600">
+                      <Clock className="h-3 w-3" /> Pending
+                    </span>
                   )}
                 </div>
+
+                {/* Invite code box */}
+                {inv.invite_code && !inv.accepted && (
+                  <div className="mt-3 flex items-center justify-between rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
+                    <div>
+                      <p className="text-xs text-brand-600 mb-0.5">Invite code — share this with them</p>
+                      <p className="font-mono text-base font-bold tracking-widest text-brand-800">{inv.invite_code}</p>
+                    </div>
+                    <CopyButton text={inv.invite_code} />
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -168,4 +182,3 @@ export default function InviteSection({ sites = [] }) {
     </div>
   )
 }
-

@@ -10,6 +10,9 @@ const useAuthStore = create((set, get) => ({
   _initPromise: null,
   _profileFetchInFlight: null,
 
+  /** Last fetch error, exposed for UI ('You may need to refresh' banners etc.). */
+  profileError: null,
+
   /** Bootstrap auth state from Supabase and subscribe to changes. */
   init: () => {
     // Memoised promise prevents the StrictMode double-invocation race:
@@ -19,26 +22,31 @@ const useAuthStore = create((set, get) => ({
     if (get()._authSubscription) return Promise.resolve()
 
     const promise = (async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      set({ session, user: session?.user ?? null, loading: session?.user ? true : false })
-
-      if (session?.user) {
-        await get().fetchProfile(session.user.id)
-      }
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        // INITIAL_SESSION fires immediately on subscribe — already handled above
-        if (event === 'INITIAL_SESSION') return
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        set({ session, user: session?.user ?? null, loading: session?.user ? true : false })
 
         if (session?.user) {
-          set({ session, user: session.user, loading: true })
           await get().fetchProfile(session.user.id)
-        } else {
-          set({ session: null, user: null, profile: null, loading: false })
         }
-      })
 
-      set({ _authSubscription: subscription, _initPromise: null })
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+          // INITIAL_SESSION fires immediately on subscribe — already handled above
+          if (event === 'INITIAL_SESSION') return
+
+          if (session?.user) {
+            set({ session, user: session.user, loading: true })
+            await get().fetchProfile(session.user.id)
+          } else {
+            set({ session: null, user: null, profile: null, loading: false })
+          }
+        })
+
+        set({ _authSubscription: subscription, _initPromise: null })
+      } catch (err) {
+        console.error('[authStore] init failed:', err)
+        set({ loading: false, _initPromise: null })
+      }
     })()
 
     set({ _initPromise: promise })
@@ -54,9 +62,6 @@ const useAuthStore = create((set, get) => ({
     }
   },
 
-  /** Last fetch error, exposed for UI ('You may need to refresh' banners etc.). */
-  profileError: null,
-
   fetchProfile: async (userId) => {
     // Coalesce concurrent fetches for the same user — back-to-back auth events
     // (e.g. SIGNED_IN immediately after a token refresh) should share one round-trip.
@@ -64,56 +69,61 @@ const useAuthStore = create((set, get) => ({
     if (inflight && inflight.userId === userId) return inflight.promise
 
     const promise = (async () => {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-
-      // PGRST116 = no rows — handle_new_user trigger didn't run for this account
-      // (common for Google OAuth users created before the trigger existed)
-      if (error?.code === 'PGRST116') {
-        const { data: { user } } = await supabase.auth.getUser()
-        const fullName = user?.user_metadata?.full_name
-          ?? user?.user_metadata?.name
-          ?? user?.email
-          ?? null
-
-        const { data: created, error: insertError } = await supabase
+      try {
+        const { data: profile, error } = await supabase
           .from('profiles')
-          .insert({ id: userId, full_name: fullName })
-          .select()
+          .select('*')
+          .eq('id', userId)
           .single()
 
-        if (insertError) {
-          console.error('[fetchProfile] backfill failed', insertError.code, insertError.message)
-          set({ profile: null, profileError: insertError, loading: false })
+        // PGRST116 = no rows — handle_new_user trigger didn't run for this account
+        // (common for Google OAuth users created before the trigger existed)
+        if (error?.code === 'PGRST116') {
+          const { data: { user } } = await supabase.auth.getUser()
+          const fullName = user?.user_metadata?.full_name
+            ?? user?.user_metadata?.name
+            ?? user?.email
+            ?? null
+
+          const { data: created, error: insertError } = await supabase
+            .from('profiles')
+            .insert({ id: userId, full_name: fullName })
+            .select()
+            .single()
+
+          if (insertError) {
+            console.error('[fetchProfile] backfill failed', insertError.code, insertError.message)
+            set({ profile: null, profileError: insertError, loading: false })
+            return
+          }
+
+          set({ profile: created ?? null, profileError: null, loading: false })
           return
         }
 
-        set({ profile: created ?? null, profileError: null, loading: false })
-        return
-      }
-
-      if (error) {
-        console.error('[fetchProfile]', error.code, error.message)
-        set({ profile: null, profileError: error, loading: false })
-        return
-      }
-
-      set({ profile: profile ?? null, profileError: null, loading: false })
-
-      if (profile?.tenant_id) {
-        const { data: tenant, error: tenantError } = await supabase
-          .from('tenants')
-          .select('name, plan')
-          .eq('id', profile.tenant_id)
-          .single()
-        if (tenantError) {
-          console.error('[fetchProfile] tenant fetch failed', tenantError.code, tenantError.message)
-        } else if (tenant) {
-          set((state) => ({ profile: state.profile ? { ...state.profile, tenant } : state.profile }))
+        if (error) {
+          console.error('[fetchProfile]', error.code, error.message)
+          set({ profile: null, profileError: error, loading: false })
+          return
         }
+
+        set({ profile: profile ?? null, profileError: null, loading: false })
+
+        if (profile?.tenant_id) {
+          const { data: tenant, error: tenantError } = await supabase
+            .from('tenants')
+            .select('name, plan')
+            .eq('id', profile.tenant_id)
+            .single()
+          if (tenantError) {
+            console.error('[fetchProfile] tenant fetch failed', tenantError.code, tenantError.message)
+          } else if (tenant) {
+            set((state) => ({ profile: state.profile ? { ...state.profile, tenant } : state.profile }))
+          }
+        }
+      } catch (err) {
+        console.error('[authStore] fetchProfile failed:', err)
+        set({ profile: null, profileError: err, loading: false })
       }
     })()
 
@@ -154,6 +164,20 @@ const useAuthStore = create((set, get) => ({
     return signInData
   },
 
+  /** Creates a tenant for a contractor who signed up via Google OAuth (tenant_id = null). */
+  createTenantForUser: async (tenantName) => {
+    const user = get().user
+    if (!user) throw new Error('Not authenticated')
+
+    const { error } = await supabase
+      .from('tenants')
+      .insert({ name: tenantName, owner_id: user.id })
+    if (error) throw error
+
+    // Re-fetch profile to pick up the new tenant_id set by link_owner_to_tenant trigger
+    await get().fetchProfile(user.id)
+  },
+
   signOut: async () => {
     // Keep the auth listener subscribed — onAuthStateChange will fire SIGNED_OUT
     // and clear state via the existing handler in init(). Unsubscribing here would
@@ -163,6 +187,3 @@ const useAuthStore = create((set, get) => ({
 }))
 
 export default useAuthStore
-
-
-

@@ -102,10 +102,7 @@ serve(async (req) => {
       )
     }
 
-    return new Response(
-      JSON.stringify({ success: true, message: "OTP sent to phone" }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    )
+    return genericOk
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message }),

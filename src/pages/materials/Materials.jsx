@@ -122,32 +122,34 @@ export default function Materials() {
         />
       ) : (
         <div className="card overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-100">
-            <thead className="bg-gray-50">
-              <tr>
-                {['Material', 'Unit', 'Available', 'Reorder at', 'Unit cost', 'Supplier'].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {materials.map((m) => (
-                <tr key={m.id} className={isLow(m) ? 'bg-red-50' : 'hover:bg-gray-50'}>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                    <div className="flex items-center gap-1.5">
-                      {isLow(m) && <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />}
-                      {m.name}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{m.unit}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{m.quantity_available ?? '—'}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{m.quantity_minimum ?? '—'}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{m.unit_cost ? formatINR(m.unit_cost) : '—'}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{m.supplier || '—'}</td>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-100">
+              <thead className="bg-gray-50">
+                <tr>
+                  {['Material', 'Unit', 'Available', 'Reorder at', 'Unit cost', 'Supplier'].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {materials.map((m) => (
+                  <tr key={m.id} className={isLow(m) ? 'bg-red-50' : 'hover:bg-gray-50'}>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                      <div className="flex items-center gap-1.5">
+                        {isLow(m) && <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />}
+                        {m.name}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{m.unit}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{m.quantity_available ?? '—'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{m.quantity_minimum ?? '—'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{m.unit_cost ? formatINR(m.unit_cost) : '—'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{m.supplier || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

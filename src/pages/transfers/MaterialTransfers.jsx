@@ -422,6 +422,7 @@ export default function MaterialTransfers() {
         />
       ) : (
         <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
@@ -495,6 +496,7 @@ export default function MaterialTransfers() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

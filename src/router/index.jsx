@@ -1,10 +1,14 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createHashRouter, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import RoleGuard from '@/components/auth/RoleGuard'
+import Landing from '@/pages/landing/Landing'
 import Login from '@/pages/auth/Login'
 import Register from '@/pages/auth/Register'
 import AuthCallback from '@/pages/auth/AuthCallback'
+import CreateCompany from '@/pages/auth/CreateCompany'
+import Privacy from '@/pages/Privacy'
+import ResetPassword from '@/pages/auth/ResetPassword'
 import Dashboard from '@/pages/dashboard/Dashboard'
 import Sites from '@/pages/sites/Sites'
 import SiteDetail from '@/pages/sites/SiteDetail'
@@ -30,10 +34,10 @@ const SUPERVISOR_UP    = ['superadmin', 'contractor', 'site_manager', 'superviso
 const STOREKEEPER_UP   = ['superadmin', 'contractor', 'site_manager', 'store_keeper']
 const ALL_ROLES        = ['superadmin', 'contractor', 'site_manager', 'supervisor', 'store_keeper']
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: '/',
-    element: <Navigate to="/dashboard" replace />,
+    element: <Landing />,
   },
   {
     path: '/login',
@@ -46,6 +50,19 @@ const router = createBrowserRouter([
   {
     path: '/auth/callback',
     element: <AuthCallback />,
+  },
+  {
+    // Onboarding: Google OAuth contractors who haven't created their company yet
+    path: '/create-company',
+    element: <CreateCompany />,
+  },
+  {
+    path: '/privacy',
+    element: <Privacy />,
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPassword />,
   },
   {
     element: (
