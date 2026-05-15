@@ -13,6 +13,8 @@ import StatCard from '@/components/ui/StatCard'
 import Modal from '@/components/ui/Modal'
 import PrintButton from '@/components/print/PrintButton'
 import PrintHeader from '@/components/print/PrintHeader'
+import AttendanceReportTab from './AttendanceReportTab'
+import SiteReportTab from './SiteReportTab'
 import { formatINR, formatDate, cn } from '@/lib/utils'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -502,9 +504,11 @@ function BudgetTab({ tenantId, sites }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'monthly',  label: 'Monthly Report' },
-  { id: 'budget',   label: 'Budget vs Actual' },
+  { id: 'overview',   label: 'Overview' },
+  { id: 'attendance', label: 'Attendance & Pay' },
+  { id: 'site',       label: 'Site Report' },
+  { id: 'monthly',    label: 'Materials' },
+  { id: 'budget',     label: 'Budget vs Actual' },
 ]
 
 export default function Reports() {
@@ -542,9 +546,11 @@ export default function Reports() {
         ))}
       </div>
 
-      {tab === 'overview' && <OverviewTab sites={sites} />}
-      {tab === 'monthly'  && <MonthlyTab  tenantId={tenantId} sites={sites} />}
-      {tab === 'budget'   && <BudgetTab   tenantId={tenantId} sites={sites} />}
+      {tab === 'overview'   && <OverviewTab sites={sites} />}
+      {tab === 'attendance' && <AttendanceReportTab sites={sites} />}
+      {tab === 'site'       && <SiteReportTab sites={sites} />}
+      {tab === 'monthly'    && <MonthlyTab  tenantId={tenantId} sites={sites} />}
+      {tab === 'budget'     && <BudgetTab   tenantId={tenantId} sites={sites} />}
     </div>
   )
 }
