@@ -57,22 +57,18 @@ export default function SMSOTPLogin() {
       return
     }
 
-    // Use the magic link returned by the edge function to create a real session
-    if (data.magic_link) {
-      const url = new URL(data.magic_link)
-      const token_hash = url.searchParams.get('token_hash')
-      const type = url.searchParams.get('type') ?? 'magiclink'
-
-      if (token_hash) {
-        const { error: sessionError } = await supabase.auth.verifyOtp({ token_hash, type })
-        if (!sessionError) {
-          navigate('/dashboard')
-          return
-        }
+    if (data.token_hash) {
+      const { error: sessionError } = await supabase.auth.verifyOtp({
+        token_hash: data.token_hash,
+        type: data.otp_type ?? 'magiclink',
+      })
+      if (!sessionError) {
+        navigate('/dashboard')
+        return
       }
     }
 
-    // Fallback: if magic link fails, user needs to sign in with password
+    // Fallback: if token exchange fails, user needs to sign in with password
     setError('Phone verified. Please sign in with your email and password.')
     setLoading(false)
   }

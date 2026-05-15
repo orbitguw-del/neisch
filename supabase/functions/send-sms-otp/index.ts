@@ -33,17 +33,42 @@ serve(async (req) => {
       )
     }
 
-    // Look up user via auth.admin (profiles don't store email)
-    const { data: authUser, error: userError } = await supabase.auth.admin.getUserByEmail(email)
+    // Generic response — never leaks whether the email/phone is registered.
+    const genericOk = new Response(
+      JSON.stringify({ success: true, message: "If the details are correct, an OTP has been sent." }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    )
 
-    if (userError || !authUser?.user) {
-      return new Response(
-        JSON.stringify({ error: "User not found" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
-    }
+    // Look up user via Auth Admin REST API (profiles don't store email)
+    const adminRes = await fetch(
+      `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(email)}&per_page=1`,
+      { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } }
+    )
+    const adminJson = await adminRes.json()
+    const authUser = adminJson?.users?.[0]
+    if (!authUser?.id) return genericOk
 
-    const user = { id: authUser.user.id }
+    const user = { id: authUser.id }
+
+    // Phone-ownership binding: profile.phone must be set AND match.
+    // First-time enrollment goes through the dedicated enroll-phone-otp endpoint.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("phone")
+      .eq("id", user.id)
+      .single()
+    if (!profile?.phone || profile.phone !== phone_number) return genericOk
+
+    // Rate limit: reject if an unexpired OTP was issued in the last 60s.
+    const cutoff = new Date(Date.now() - 60_000).toISOString()
+    const { data: recent } = await supabase
+      .from("phone_verifications")
+      .select("id")
+      .eq("user_id", user.id)
+      .gt("created_at", cutoff)
+      .limit(1)
+      .maybeSingle()
+    if (recent) return genericOk
 
     const otp_code = Math.floor(100000 + Math.random() * 900000).toString()
 
@@ -51,12 +76,7 @@ serve(async (req) => {
       .from("phone_verifications")
       .insert([{ user_id: user.id, phone_number, otp_code }])
 
-    if (otpError) {
-      return new Response(
-        JSON.stringify({ error: "Failed to generate OTP" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
-    }
+    if (otpError) return genericOk
 
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`
     const authString = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)

@@ -45,6 +45,39 @@ serve(async (req) => {
     }
 
     const user = { id: authUser.id }
+    const MAX_ATTEMPTS = 5
+
+    // Hard cap brute force on the most recent unverified record for this user+phone.
+    const { data: latest } = await supabase
+      .from("phone_verifications")
+      .select("id, attempts")
+      .eq("user_id", user.id)
+      .eq("phone_number", phone_number)
+      .is("verified_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (latest && (latest.attempts || 0) >= MAX_ATTEMPTS) {
+      return new Response(
+        JSON.stringify({ error: "Too many attempts. Request a new code." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
+    }
+
+    // Phone-ownership binding: profile.phone must be set AND match.
+    // First-time enrollment is no longer allowed via the login flow.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("phone")
+      .eq("id", user.id)
+      .single()
+    if (!profile?.phone || profile.phone !== phone_number) {
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired OTP" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
+    }
 
     const { data: verification, error: verifyError } = await supabase
       .from("phone_verifications")
@@ -59,17 +92,6 @@ serve(async (req) => {
       .single()
 
     if (verifyError || !verification) {
-      // Increment attempts on the most recent unverified record
-      const { data: latest } = await supabase
-        .from("phone_verifications")
-        .select("id, attempts")
-        .eq("user_id", user.id)
-        .eq("phone_number", phone_number)
-        .is("verified_at", null)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single()
-
       if (latest) {
         await supabase
           .from("phone_verifications")
@@ -88,24 +110,22 @@ serve(async (req) => {
       .update({ verified_at: new Date().toISOString() })
       .eq("id", verification.id)
 
-    await supabase
-      .from("profiles")
-      .update({ phone: phone_number, phone_verified: true, auth_method: "phone" })
-      .eq("id", user.id)
-
-    // Generate a magic link so the frontend can establish a real auth session
+    // Generate a magic-link token so the frontend can verifyOtp() and mint a session.
+    // Return only the hashed_token + type — never the full action_link URL.
     const { data: magicData, error: magicError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
       email,
     })
+
+    const token_hash = magicError ? null : magicData?.properties?.hashed_token ?? null
 
     return new Response(
       JSON.stringify({
         success: true,
         user_id: user.id,
         message: "Phone verified successfully",
-        // Include the magic link token so the frontend can sign in without a password
-        magic_link: magicError ? null : magicData?.properties?.action_link ?? null,
+        token_hash,
+        otp_type: "magiclink",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     )
