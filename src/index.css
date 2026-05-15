@@ -105,10 +105,23 @@
     page-break-inside: auto;
     width: 100%;
     border-collapse: collapse;
+    font-size: 9pt;
   }
   thead { display: table-header-group; }
   tfoot { display: table-row-group; }
   tr    { page-break-inside: avoid; page-break-after: auto; }
+  th, td { padding: 3pt 5pt !important; }
+
+  /* Sticky cells aren't needed on paper — restore normal positioning */
+  .sticky { position: static !important; }
+
+  /* Page-break helpers consumable from JSX */
+  .print-break-before { break-before: page; page-break-before: always; }
+  .print-break-after  { break-after:  page; page-break-after:  always; }
+  .print-avoid-break  { break-inside: avoid; page-break-inside: avoid; }
+
+  /* Wide attendance grid — let it overflow if needed (browser will scale) */
+  .print-allow-wide { overflow: visible !important; }
 
   /* Stat cards: stack horizontally cleanly */
   .grid {
