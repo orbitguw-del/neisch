@@ -4,6 +4,28 @@ Running list of follow-up items that aren't urgent enough to block ship but shou
 
 ---
 
+## ⚖️ Legal & compliance (added 2026-05-16)
+
+> NOTE: not legal advice — engage a CA + lawyer for India-specific items.
+
+- [ ] **🔴 Aadhaar/PAN storage** — `workers.id_proof_number` stores full ID numbers in
+  plain text. Under the Aadhaar Act / DPDP Act this is high-risk. Fix: store only the
+  last 4 digits, OR encrypt the column at rest, OR collect just a "verified" flag.
+  Claude can do this code change.
+- [ ] **Consolidate accounts to one company email** — currently split across
+  `orbitguw@gmail.com` and `karunroongta@gmail.com`. Create `admin@storeyinfra.com`
+  and transfer Play Console, Supabase, Vercel, GoDaddy, Resend ownership to it.
+- [ ] **Register a legal entity** (Pvt Ltd / LLP) via a CA — operating as an individual
+  means unlimited personal liability. Move all services under the entity once formed.
+- [ ] **Terms of Service** — write and add a `/terms` route (companion to `/privacy`).
+- [ ] **Trademark "Storey" / "Storey Infra"** — file in the relevant class(es) in India.
+- [x] **Privacy Policy** — full DPDP/Play-compliant version shipped (branch
+  `chore/privacy-policy`).
+- [ ] **Data Safety form** — fill in Play Console using the declared data types
+  (name, email, phone, address, worker ID-proof, app content; collected not shared).
+
+---
+
 ## 🔐 Security hygiene
 
 - [ ] **Rotate the Resend API key** — current key was pasted in Claude chat on 2026-05-15. Action:
