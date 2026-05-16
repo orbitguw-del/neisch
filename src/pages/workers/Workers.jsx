@@ -166,12 +166,21 @@ function WorkerForm({ sites, defaultSiteId, onSubmit, loading, onCancel }) {
             </select>
           </div>
           <div>
-            <label className="label">ID Number</label>
+            <label className="label">ID Number — last 4 digits only</label>
             <input
               className="input"
-              value={form.id_proof_number} onChange={set('id_proof_number')}
-              placeholder="XXXX XXXX XXXX"
+              inputMode="numeric"
+              maxLength={4}
+              value={form.id_proof_number}
+              onChange={(e) => setForm((f) => ({
+                ...f,
+                id_proof_number: e.target.value.replace(/\D/g, '').slice(0, 4),
+              }))}
+              placeholder="1234"
             />
+            <p className="mt-1 text-xs text-gray-400">
+              For privacy &amp; compliance, store only the last 4 digits — never the full number.
+            </p>
           </div>
         </div>
       </div>
@@ -282,7 +291,7 @@ function WorkerRow({ worker, onToggleStatus, siteName }) {
                 <p className="text-xs text-gray-400">ID Proof</p>
                 <p className="font-medium flex items-center gap-1">
                   {worker.id_proof_type
-                    ? <><CreditCard className="h-3 w-3 text-gray-400" />{proofLabel}{worker.id_proof_number ? ` · ${worker.id_proof_number}` : ''}</>
+                    ? <><CreditCard className="h-3 w-3 text-gray-400" />{proofLabel}{worker.id_proof_number ? ` · ···· ${worker.id_proof_number.slice(-4)}` : ''}</>
                     : '—'}
                 </p>
               </div>
