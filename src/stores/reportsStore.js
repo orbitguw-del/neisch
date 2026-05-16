@@ -294,6 +294,7 @@ const useReportsStore = create((set, get) => ({
       { data: receipts },
       { data: transfersOut },
       { data: transfersIn },
+      { data: expenses },
     ] = await Promise.all([
       supabase.from('sites').select('name, location, status, budget').eq('id', siteId).single(),
       supabase
@@ -342,6 +343,14 @@ const useReportsStore = create((set, get) => ({
         .eq('status', 'confirmed')
         .gte('created_at', startTs)
         .lte('created_at', endTs),
+      supabase
+        .from('site_expenses')
+        .select('expense_date, category, amount, paid_by, note, status')
+        .eq('tenant_id', tenantId)
+        .eq('site_id', siteId)
+        .gte('expense_date', startDate)
+        .lte('expense_date', endDate)
+        .order('expense_date', { ascending: false }),
     ])
 
     // ── Attendance summary ───
@@ -364,6 +373,15 @@ const useReportsStore = create((set, get) => ({
     const totalTransferOut = (transfersOut ?? []).reduce((s, t) => s + Number(t.quantity), 0)
     const totalTransferIn  = (transfersIn  ?? []).reduce((s, t) => s + Number(t.quantity), 0)
 
+    // ── Expenses summary (approved counts toward spend; pending shown apart) ──
+    const expRows = expenses ?? []
+    const expApproved = expRows
+      .filter((e) => e.status === 'approved')
+      .reduce((s, e) => s + Number(e.amount), 0)
+    const expPending = expRows
+      .filter((e) => e.status === 'pending')
+      .reduce((s, e) => s + Number(e.amount), 0)
+
     set({
       siteReportData: {
         startDate, endDate,
@@ -384,6 +402,13 @@ const useReportsStore = create((set, get) => ({
           totalTransferOut,
           totalTransferIn,
         },
+        expenses: {
+          rows: expRows,
+          approved: expApproved,
+          pending: expPending,
+        },
+        // True site spend = approved material cost + payroll + approved expenses
+        totalSpend: totalReceivedCost + attTotalPay + expApproved,
       },
       siteReportLoading: false,
     })
