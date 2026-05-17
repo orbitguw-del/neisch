@@ -18,6 +18,7 @@ import Materials from '@/pages/materials/Materials'
 import Expenses from '@/pages/expenses/Expenses'
 import Reports from '@/pages/reports/Reports'
 import Settings from '@/pages/settings/Settings'
+import Help from '@/pages/help/Help'
 import NotFound from '@/pages/NotFound'
 import Tenants from '@/pages/admin/Tenants'
 import Team from '@/pages/team/Team'
@@ -81,6 +82,7 @@ const router = createHashRouter([
       // ── Universal ───────────────────────────────────────────────────────────
       { path: '/dashboard', element: <Dashboard /> },
       { path: '/settings',  element: <Settings /> },
+      { path: '/help',      element: <Help /> },
 
       // ── SuperAdmin ──────────────────────────────────────────────────────────
       {
