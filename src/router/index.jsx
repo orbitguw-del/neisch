@@ -15,6 +15,7 @@ import SiteDetail from '@/pages/sites/SiteDetail'
 import Workers from '@/pages/workers/Workers'
 import Attendance from '@/pages/workers/Attendance'
 import Materials from '@/pages/materials/Materials'
+import Expenses from '@/pages/expenses/Expenses'
 import Reports from '@/pages/reports/Reports'
 import Settings from '@/pages/settings/Settings'
 import NotFound from '@/pages/NotFound'
@@ -49,6 +50,12 @@ const router = createHashRouter([
   },
   {
     path: '/auth/callback',
+    element: <AuthCallback />,
+  },
+  {
+    // Safety alias — some OAuth/deep-link paths resolve to /callback.
+    // AuthCallback reads the code/token from the URL regardless of path.
+    path: '/callback',
     element: <AuthCallback />,
   },
   {
@@ -163,6 +170,16 @@ const router = createHashRouter([
         element: (
           <RoleGuard roles={STOREKEEPER_UP}>
             <Materials />
+          </RoleGuard>
+        ),
+      },
+
+      // ── Site Expenses (supervisor and above) ────────────────────────────────
+      {
+        path: '/expenses',
+        element: (
+          <RoleGuard roles={SUPERVISOR_UP}>
+            <Expenses />
           </RoleGuard>
         ),
       },

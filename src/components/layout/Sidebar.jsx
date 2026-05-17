@@ -13,6 +13,7 @@ import {
   Warehouse,
   Wrench,
   CalendarCheck,
+  Wallet,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import useAuthStore from '@/stores/authStore'
@@ -34,6 +35,7 @@ const NAV_BY_ROLE = {
     { label: 'Receipts',   to: '/receipts',   icon: ClipboardCheck },
     { label: 'Transfers',  to: '/transfers',  icon: ArrowRightLeft },
     { label: 'Equipment',  to: '/equipment',  icon: Wrench },
+    { label: 'Expenses',   to: '/expenses',   icon: Wallet },
     { label: 'Reports',    to: '/reports',    icon: BarChart3 },
     { label: 'Team',       to: '/team',       icon: UserCog },
     { label: 'Settings',   to: '/settings',   icon: Settings },
@@ -47,6 +49,7 @@ const NAV_BY_ROLE = {
     { label: 'Receipts',   to: '/receipts',   icon: ClipboardCheck },
     { label: 'Transfers',  to: '/transfers',  icon: ArrowRightLeft },
     { label: 'Equipment',  to: '/equipment',  icon: Wrench },
+    { label: 'Expenses',   to: '/expenses',   icon: Wallet },
     { label: 'Daily Logs', to: '/logs',       icon: ClipboardList },
     { label: 'Settings',   to: '/settings',   icon: Settings },
   ],
@@ -54,6 +57,7 @@ const NAV_BY_ROLE = {
     { label: 'Dashboard',  to: '/dashboard',  icon: LayoutDashboard },
     { label: 'Workers',    to: '/workers',    icon: Users },
     { label: 'Attendance', to: '/attendance', icon: CalendarCheck },
+    { label: 'Expenses',   to: '/expenses',   icon: Wallet },
     { label: 'Daily Logs', to: '/logs',       icon: ClipboardList },
     { label: 'Settings',   to: '/settings',   icon: Settings },
   ],

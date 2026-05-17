@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import {
   Building2, CalendarDays, Users, Package, ArrowDown, ArrowUp,
-  IndianRupee, FileText, AlertCircle, Cloud,
+  IndianRupee, FileText, AlertCircle, Cloud, Wallet,
 } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
 import useReportsStore from '@/stores/reportsStore'
@@ -95,10 +95,10 @@ export default function SiteReportTab({ sites }) {
         <>
           {/* Top summary */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <StatCard label="Daily logs" value={d.logs.length} icon={FileText} color="brand" />
-            <StatCard label="Pay days"   value={d.attendance.totalPayDays.toFixed(1)} icon={Users} color="sage" />
-            <StatCard label="Payroll"    value={formatINR(d.attendance.totalPay)} icon={IndianRupee} color="red" />
-            <StatCard label="Material in" value={formatINR(d.materials.totalReceivedCost)} icon={Package} color="brand" />
+            <StatCard label="Payroll"      value={formatINR(d.attendance.totalPay)} icon={Users} color="sage" />
+            <StatCard label="Material in"  value={formatINR(d.materials.totalReceivedCost)} icon={Package} color="brand" />
+            <StatCard label="Expenses"     value={formatINR(d.expenses?.approved ?? 0)} icon={Wallet} color="brand" />
+            <StatCard label="Total spend"  value={formatINR(d.totalSpend ?? 0)} icon={IndianRupee} color="red" />
           </div>
 
           {/* ── Attendance summary ───────────────────────────────────────── */}
@@ -188,6 +188,59 @@ export default function SiteReportTab({ sites }) {
               />
             </Section>
           )}
+
+          {/* ── Site expenses ────────────────────────────────────────────── */}
+          <Section title="Site expenses" icon={Wallet} count={d.expenses?.rows.length ?? 0}>
+            {(!d.expenses || d.expenses.rows.length === 0) ? (
+              <p className="px-5 py-6 text-sm text-gray-500">No expenses recorded in this period.</p>
+            ) : (
+              <>
+                <table className="min-w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      {['Date', 'Category', 'Paid by', 'Status', 'Amount'].map((h) => (
+                        <th key={h} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {d.expenses.rows.map((e, i) => (
+                      <tr key={i} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 text-gray-600">{formatDate(e.expense_date)}</td>
+                        <td className="px-4 py-2 text-gray-900">{e.category}{e.note ? ` — ${e.note}` : ''}</td>
+                        <td className="px-4 py-2 text-gray-600">{e.paid_by || '—'}</td>
+                        <td className="px-4 py-2">
+                          <span className={
+                            e.status === 'approved' ? 'badge-green'
+                            : e.status === 'rejected' ? 'badge-red' : 'badge-yellow'
+                          }>{e.status}</span>
+                        </td>
+                        <td className="px-4 py-2 text-right font-medium text-gray-900">{formatINR(e.amount)}</td>
+                      </tr>
+                    ))}
+                    <tr className="bg-gray-50 font-semibold">
+                      <td colSpan={4} className="px-4 py-2 text-right text-gray-700">Approved total</td>
+                      <td className="px-4 py-2 text-right text-gray-900">{formatINR(d.expenses.approved)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                {d.expenses.pending > 0 && (
+                  <p className="px-5 py-2 text-xs text-amber-700">
+                    {formatINR(d.expenses.pending)} pending approval — not counted in total spend.
+                  </p>
+                )}
+              </>
+            )}
+          </Section>
+
+          {/* ── Total site spend ─────────────────────────────────────────── */}
+          <div className="card p-5 print-avoid-break">
+            <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Total site spend (this period)</p>
+            <p className="text-2xl font-bold text-gray-900">{formatINR(d.totalSpend ?? 0)}</p>
+            <p className="mt-1 text-xs text-gray-500">
+              Payroll {formatINR(d.attendance.totalPay)} + Materials {formatINR(d.materials.totalReceivedCost)} + Expenses {formatINR(d.expenses?.approved ?? 0)}
+            </p>
+          </div>
 
           {/* Print-only signature block */}
           <div className="print-only mt-8 pt-6 border-t border-gray-300">
