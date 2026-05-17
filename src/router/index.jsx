@@ -53,6 +53,12 @@ const router = createHashRouter([
     element: <AuthCallback />,
   },
   {
+    // Safety alias — some OAuth/deep-link paths resolve to /callback.
+    // AuthCallback reads the code/token from the URL regardless of path.
+    path: '/callback',
+    element: <AuthCallback />,
+  },
+  {
     // Onboarding: Google OAuth contractors who haven't created their company yet
     path: '/create-company',
     element: <CreateCompany />,

@@ -5,6 +5,26 @@
  * (Capacitor stubs resolve to no-ops when not running natively).
  */
 
+/**
+ * Convert a deep-link / launch URL into the in-app router path.
+ *
+ * Custom-scheme URLs are the tricky case: `new URL('storeyapp://auth/callback')`
+ * parses `auth` as the HOST and `/callback` as the pathname. If we used
+ * pathname alone we'd navigate to `/callback` — which has no route → 404.
+ * So for non-http(s) schemes we prepend the host segment back.
+ *
+ *   storeyapp://auth/callback?code=x   → /auth/callback?code=x
+ *   https://storeyinfra.com/auth/callback?code=x → /auth/callback?code=x
+ */
+function deepLinkToPath(url) {
+  const parsed = new URL(url)
+  if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+    return parsed.pathname + parsed.search + parsed.hash
+  }
+  // Custom scheme — host holds the first path segment.
+  return '/' + parsed.host + parsed.pathname + parsed.search + parsed.hash
+}
+
 export async function initCapacitor(router) {
   // Detect whether we're running inside a Capacitor native shell
   const isNative = typeof window !== 'undefined' &&
@@ -43,11 +63,8 @@ export async function initCapacitor(router) {
         await Browser.close()
       } catch { /* Browser may not be open — ignore */ }
 
-      // e.g. "storeyapp://auth/callback?code=abc123"
-      const parsed = new URL(url)
-      // Build the hash-router path: /auth/callback?code=abc123
-      const path = parsed.pathname + parsed.search + parsed.hash
-      router.navigate(path, { replace: true })
+      // e.g. "storeyapp://auth/callback?code=abc123" → "/auth/callback?code=abc123"
+      router.navigate(deepLinkToPath(url), { replace: true })
     })
 
     // Handle the URL that launched the app (cold-start deep link)
@@ -58,9 +75,7 @@ export async function initCapacitor(router) {
         const { Browser } = await import('@capacitor/browser')
         await Browser.close()
       } catch { /* ignore */ }
-      const parsed = new URL(launchUrl)
-      const path = parsed.pathname + parsed.search + parsed.hash
-      router.navigate(path, { replace: true })
+      router.navigate(deepLinkToPath(launchUrl), { replace: true })
     }
   } catch {}
 
