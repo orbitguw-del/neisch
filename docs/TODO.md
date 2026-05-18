@@ -152,6 +152,20 @@ Last reprioritised: 2026-05-18.
   Recommended: start with the read-only timeline. Could live as a Reports tab.
   Do NOT build until the 2026-05-18 build is verified (see P0).
 
+- [ ] **AI features — voice input first** _(v1.x / v2 — new feature)_ — explored
+  2026-05-18. Principle: add AI only where it removes real friction for
+  NE-India site users, never as decoration. Prioritised list:
+  • **1. Voice input for daily logs / notes** _(start here)_ — speech-to-text,
+    ideally Hindi/Assamese, so supervisors dictate instead of typing on a phone
+    on site. The strongest, most demo-able, most defensible AI feature.
+  • **2. Weekly AI digest for the contractor** — summarise all sites' daily logs
+    + pending approvals into one short briefing.
+  • **3. Anomaly flags in reports** — surface "labour cost up 30%", "worker
+    present at two sites same day", etc.
+  Avoid AI-washing: no generic chatbot, no "AI-powered" labels on plain rules,
+  no auto-BOQ. Build ONE genuinely useful AI feature, not AI everywhere.
+  Do NOT build until the 2026-05-18 build is verified (see P0).
+
 > _BOQ / quantity take-off — parked as a LONG-TERM idea (~2 years out), 2026-05-18.
 > Decided it is a specialised tool (Bluebeam/PlanSwift territory), a separate
 > product rather than part of Storey's site-operations scope. Not on the active
