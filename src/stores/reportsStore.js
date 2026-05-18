@@ -299,7 +299,7 @@ const useReportsStore = create((set, get) => ({
       supabase.from('sites').select('name, location, status, budget').eq('id', siteId).single(),
       supabase
         .from('daily_logs')
-        .select('id, log_date, workers_present, weather, work_done, issues, created_by')
+        .select('id, log_date, workers_present, weather, work_done, issues, created_by, photo_path')
         .eq('tenant_id', tenantId)
         .eq('site_id', siteId)
         .gte('log_date', startDate)

@@ -8,6 +8,7 @@ import PageHeader from '@/components/ui/PageHeader'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import PhotoCapture from '@/components/photo/PhotoCapture'
+import PhotoThumb from '@/components/photo/PhotoThumb'
 import { uploadPhoto } from '@/lib/photos'
 import { formatDate } from '@/lib/utils'
 
@@ -255,6 +256,11 @@ export default function DailyLogs() {
                 <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
                   <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
                   <p className="text-sm text-amber-800">{log.issues}</p>
+                </div>
+              )}
+              {log.photo_path && (
+                <div className="mt-3">
+                  <PhotoThumb path={log.photo_path} size={96} />
                 </div>
               )}
             </div>

@@ -8,6 +8,7 @@ import useReportsStore from '@/stores/reportsStore'
 import StatCard from '@/components/ui/StatCard'
 import PrintButton from '@/components/print/PrintButton'
 import PrintHeader from '@/components/print/PrintHeader'
+import PhotoThumb from '@/components/photo/PhotoThumb'
 import { formatINR, formatDate, cn } from '@/lib/utils'
 
 function todayISO() {
@@ -142,6 +143,11 @@ export default function SiteReportTab({ sites }) {
                         <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
                         <span>{log.issues}</span>
                       </p>
+                    )}
+                    {log.photo_path && (
+                      <div className="mt-2">
+                        <PhotoThumb path={log.photo_path} size={88} />
+                      </div>
                     )}
                   </li>
                 ))}

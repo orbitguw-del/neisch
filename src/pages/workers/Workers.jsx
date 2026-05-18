@@ -12,6 +12,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import StatCard from '@/components/ui/StatCard'
 import PhotoCapture from '@/components/photo/PhotoCapture'
+import PhotoThumb from '@/components/photo/PhotoThumb'
 import { uploadPhoto } from '@/lib/photos'
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -235,9 +236,13 @@ function WorkerRow({ worker, onToggleStatus, siteName }) {
       >
         <td className="px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
-              {worker.name.slice(0, 2).toUpperCase()}
-            </div>
+            {worker.photo_path ? (
+              <PhotoThumb path={worker.photo_path} size={32} className="!rounded-full flex-shrink-0" />
+            ) : (
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
+                {worker.name.slice(0, 2).toUpperCase()}
+              </div>
+            )}
             <div>
               <p className="text-sm font-medium text-gray-900">{worker.name}</p>
               <p className="text-xs text-gray-400">{worker.trade}</p>
