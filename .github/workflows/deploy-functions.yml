@@ -1,0 +1,34 @@
+name: Deploy Edge Functions
+
+# Auto-deploys all Supabase edge functions whenever a function changes on main.
+# Edge functions are NOT deployed by a normal git push / Vercel build — this
+# workflow closes that gap.
+#
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#   SUPABASE_ACCESS_TOKEN  - personal access token from supabase.com/dashboard/account/tokens
+#   SUPABASE_PROJECT_REF   - the project ref (e.g. zgvbogxibiilnblmuohg)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+  workflow_dispatch:        # allows manual runs from the Actions tab
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy all edge functions
+        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF:  ${{ secrets.SUPABASE_PROJECT_REF }}

@@ -86,17 +86,15 @@ Last reprioritised: 2026-05-18.
 
 ## 🟢 P3 — Lower (infra / devops / housekeeping)
 
-- [ ] **Automate edge function deployment** — GitHub Actions workflow
-  (`.github/workflows/deploy-functions.yml`) to auto-deploy all functions on
-  push to `main` when `supabase/functions/**` changes. Needs repo secrets
-  `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF`. Claude can build it.
+- [ ] **Add the 2 repo secrets for edge-function CI** — the workflow
+  `.github/workflows/deploy-functions.yml` is committed. To activate it, add in
+  GitHub → Settings → Secrets and variables → Actions:
+  `SUPABASE_ACCESS_TOKEN` (supabase.com/dashboard/account/tokens) and
+  `SUPABASE_PROJECT_REF` (`zgvbogxibiilnblmuohg`).
 
 - [ ] **SPF/DKIM warm-up for `noreply@storeyinfra.com`** — confirm green in
   Resend after first production sends; new domains get throttled by Gmail/Outlook
   for a few days.
-
-- [ ] **Untrack `dist/` from git** — it's in `.gitignore` but was committed
-  historically. One-time: `git rm -r --cached dist/` then commit.
 
 ---
 
