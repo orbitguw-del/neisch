@@ -132,6 +132,14 @@ export default function AttendanceReportTab({ sites }) {
         </div>
       )}
 
+      {/* Pending-confirmation flag */}
+      {attendanceData && attendanceData.pendingConfirmation > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+          ⚠ {attendanceData.pendingConfirmation} attendance entr{attendanceData.pendingConfirmation === 1 ? 'y is' : 'ies are'} still
+          awaiting Site Manager confirmation — included in payroll above, but not yet signed off.
+        </div>
+      )}
+
       {/* Grid — scrollable horizontally on screen, paged on print */}
       <div className="card overflow-hidden">
         <div className="border-b border-gray-200 px-5 py-4 flex items-center justify-between">

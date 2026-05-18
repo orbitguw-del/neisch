@@ -205,7 +205,7 @@ const useReportsStore = create((set, get) => ({
     // Attendance rows in range
     let attQuery = supabase
       .from('attendance')
-      .select('worker_id, site_id, date, status')
+      .select('worker_id, site_id, date, status, approval_status')
       .eq('tenant_id', tenantId)
       .gte('date', startDate)
       .lte('date', endDate)
@@ -215,11 +215,13 @@ const useReportsStore = create((set, get) => ({
       workersQuery, attQuery,
     ])
 
-    // Build worker_id -> { date -> status }
+    // Build worker_id -> { date -> status }; count entries still pending confirmation
     const byWorker = {}
+    let pendingConfirmation = 0
     ;(attendance ?? []).forEach((a) => {
       if (!byWorker[a.worker_id]) byWorker[a.worker_id] = {}
       byWorker[a.worker_id][a.date] = a.status
+      if (a.approval_status && a.approval_status !== 'confirmed') pendingConfirmation++
     })
 
     // Build list of dates in range (YYYY-MM-DD)
@@ -271,7 +273,7 @@ const useReportsStore = create((set, get) => ({
     )
 
     set({
-      attendanceData: { startDate, endDate, dates, rows, totals },
+      attendanceData: { startDate, endDate, dates, rows, totals, pendingConfirmation },
       attendanceLoading: false,
     })
   },
