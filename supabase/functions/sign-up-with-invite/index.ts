@@ -1,9 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
 }
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!
@@ -25,7 +25,7 @@ serve(async (req) => {
       )
     }
 
-    // ── 1. Look up the invite ────────────────────────────────────────────────
+    // â”€â”€ 1. Look up the invite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { data: invite, error: inviteErr } = await supabase
       .from("pending_invites")
       .select("*")
@@ -41,7 +41,7 @@ serve(async (req) => {
       )
     }
 
-    // ── 2. Email must match what the contractor invited ──────────────────────
+    // â”€â”€ 2. Email must match what the contractor invited â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (invite.email.toLowerCase() !== email.toLowerCase().trim()) {
       return new Response(
         JSON.stringify({ error: "This invite code was sent to a different email address. Use the email your contractor invited." }),
@@ -49,7 +49,7 @@ serve(async (req) => {
       )
     }
 
-    // ── 3. Create the auth user ──────────────────────────────────────────────
+    // â”€â”€ 3. Create the auth user â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { data: authData, error: createErr } = await supabase.auth.admin.createUser({
       email: email.toLowerCase().trim(),
       password,
@@ -66,7 +66,7 @@ serve(async (req) => {
 
     if (createErr) {
       if (createErr.message.toLowerCase().includes("already")) {
-        // User already exists — look up by email via auth.users (SECURITY DEFINER RPC)
+        // User already exists â€” look up by email via auth.users (SECURITY DEFINER RPC)
         // profiles table has no 'email' column, so we use a dedicated helper function.
         const { data: existingId } = await supabase
           .rpc("get_auth_user_id_by_email", { p_email: email.toLowerCase().trim() })
@@ -79,7 +79,7 @@ serve(async (req) => {
       }
     }
 
-    // ── 4. Set profile role + tenant (trigger may have already done this) ────
+    // â”€â”€ 4. Set profile role + tenant (trigger may have already done this) â”€â”€â”€â”€
     if (userId) {
       await supabase
         .from("profiles")
@@ -90,7 +90,7 @@ serve(async (req) => {
         })
         .eq("id", userId)
 
-      // ── 5. Create site assignment if a site was specified ──────────────────
+      // â”€â”€ 5. Create site assignment if a site was specified â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       if (invite.site_id) {
         await supabase
           .from("site_assignments")
@@ -103,7 +103,7 @@ serve(async (req) => {
       }
     }
 
-    // ── 6. Mark invite as accepted ───────────────────────────────────────────
+    // â”€â”€ 6. Mark invite as accepted â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     await supabase
       .from("pending_invites")
       .update({ accepted_at: new Date().toISOString() })

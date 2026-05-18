@@ -1,9 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
 }
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!
@@ -106,7 +106,7 @@ serve(async (req) => {
       )
     }
 
-    // Mark OTP as verified — DO NOT overwrite profile.phone (closed takeover vector).
+    // Mark OTP as verified â€” DO NOT overwrite profile.phone (closed takeover vector).
     await supabase
       .from("phone_verifications")
       .update({ verified_at: new Date().toISOString() })
@@ -126,9 +126,9 @@ serve(async (req) => {
 
     const hashedToken = magicError ? null : magicData?.properties?.hashed_token ?? null
 
-    // Response includes BOTH `token_hash` (preferred — for verifyOtp) AND
+    // Response includes BOTH `token_hash` (preferred â€” for verifyOtp) AND
     // `hashed_token` alias for forward-compat with older callers.
-    // We intentionally DO NOT return `magic_link` (the full action URL) —
+    // We intentionally DO NOT return `magic_link` (the full action URL) â€”
     // that would leak a usable session credential in the response body.
     return new Response(
       JSON.stringify({

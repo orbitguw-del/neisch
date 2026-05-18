@@ -1,9 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
 }
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!
@@ -22,7 +22,7 @@ serve(async (req) => {
     return new Response("Method not allowed", { status: 405, headers: corsHeaders })
   }
 
-  // ── Authenticate the calling user from their JWT ───────────────────────────
+  // â”€â”€ Authenticate the calling user from their JWT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const authHeader = req.headers.get("Authorization") ?? ""
   const jwt = authHeader.replace("Bearer ", "")
   if (!jwt) {
@@ -44,7 +44,7 @@ serve(async (req) => {
     const body = await req.json()
     const { action, phone_number, otp_code } = body
 
-    // ── STEP 1: send OTP ──────────────────────────────────────────────────────
+    // â”€â”€ STEP 1: send OTP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (action === "send") {
       if (!phone_number) {
         return new Response(
@@ -105,7 +105,7 @@ serve(async (req) => {
       )
     }
 
-    // ── STEP 2: verify OTP and link phone ─────────────────────────────────────
+    // â”€â”€ STEP 2: verify OTP and link phone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (action === "verify") {
       if (!phone_number || !otp_code) {
         return new Response(

@@ -1,9 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
 }
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!
@@ -25,7 +25,7 @@ serve(async (req) => {
     })
 
   try {
-    // Require an authenticated session — this is enrollment, not login.
+    // Require an authenticated session â€” this is enrollment, not login.
     const token = req.headers.get("Authorization")?.replace("Bearer ", "")
     if (!token) return json({ error: "Unauthorized" }, 401)
 
@@ -37,7 +37,7 @@ serve(async (req) => {
       return json({ error: "Provide phone in E.164 format, e.g. +919876543210" }, 400)
     }
 
-    // Block re-enrollment to a different number — must be done via a dedicated change flow.
+    // Block re-enrollment to a different number â€” must be done via a dedicated change flow.
     const { data: profile } = await admin
       .from("profiles")
       .select("phone")

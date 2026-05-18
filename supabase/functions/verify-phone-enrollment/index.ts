@@ -1,9 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
 }
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!
@@ -32,7 +32,7 @@ serve(async (req) => {
     const { phone_number, otp_code } = await req.json()
     if (!phone_number || !otp_code) return json({ error: "Missing phone_number or otp_code" }, 400)
 
-    // Re-check enrollment guard (defense in depth — send-side already rejects mismatch).
+    // Re-check enrollment guard (defense in depth â€” send-side already rejects mismatch).
     const { data: profile } = await admin
       .from("profiles")
       .select("phone")

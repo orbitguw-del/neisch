@@ -1,9 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
 }
 
 function generateCode(len = 8): string {
@@ -29,7 +29,7 @@ serve(async (req) => {
       throw new Error("email, role, site_id and tenant_id are all required")
     }
 
-    // ── Verify the caller is a contractor on this tenant ────────────────────
+    // â”€â”€ Verify the caller is a contractor on this tenant â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const supabaseUser = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
@@ -49,7 +49,7 @@ serve(async (req) => {
     if (profile.role !== "contractor") throw new Error("Only contractors can invite team members")
     if (profile.tenant_id !== tenant_id) throw new Error("Tenant mismatch")
 
-    // ── Use service role for admin operations ────────────────────────────────
+    // â”€â”€ Use service role for admin operations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -57,7 +57,7 @@ serve(async (req) => {
 
     const siteUrl = Deno.env.get("SITE_URL") ?? "https://storeyinfra.com"
 
-    // ── Create pending_invite record with a unique code ──────────────────────
+    // â”€â”€ Create pending_invite record with a unique code â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     let invite_code = generateCode()
     // Retry once if there's a collision (extremely rare)
     const { error: insertErr } = await supabaseAdmin
@@ -72,7 +72,7 @@ serve(async (req) => {
 
     if (insertErr) {
       if (insertErr.message.includes("unique") || insertErr.code === "23505") {
-        // Duplicate email for this tenant — update the existing invite instead
+        // Duplicate email for this tenant â€” update the existing invite instead
         invite_code = generateCode()
         await supabaseAdmin
           .from("pending_invites")
@@ -90,7 +90,7 @@ serve(async (req) => {
       }
     }
 
-    // ── Send Supabase native invite email (magic link) ───────────────────────
+    // â”€â”€ Send Supabase native invite email (magic link) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email.trim().toLowerCase(),
       {
@@ -104,7 +104,7 @@ serve(async (req) => {
     )
 
     if (inviteErr) {
-      // Non-fatal: magic link may fail for existing users — the code still works
+      // Non-fatal: magic link may fail for existing users â€” the code still works
       console.error("inviteUserByEmail error:", inviteErr.message)
     }
 

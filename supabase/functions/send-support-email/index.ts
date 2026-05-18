@@ -1,16 +1,16 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
 }
 
-// Required: set in Supabase Dashboard → Edge Functions → Secrets
+// Required: set in Supabase Dashboard â†’ Edge Functions â†’ Secrets
 //   RESEND_API_KEY        Your Resend API key (resend.com)
 // Optional:
 //   SUPPORT_TO_EMAIL      Inbox that receives requests (default: help@storeyinfra.com)
 //   SUPPORT_FROM_EMAIL    Verified sender on your Resend account
-//                         (default: noreply@storeyinfra.com — must be on a verified domain)
+//                         (default: noreply@storeyinfra.com â€” must be on a verified domain)
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")
 const SUPPORT_TO     = Deno.env.get("SUPPORT_TO_EMAIL")   ?? "help@storeyinfra.com"
 const SUPPORT_FROM   = Deno.env.get("SUPPORT_FROM_EMAIL") ?? "noreply@storeyinfra.com"
@@ -49,7 +49,7 @@ serve(async (req) => {
     }
 
     // If the email provider isn't configured, return a specific status so the
-    // client knows to fall back to mailto. NOT a generic 500 — we want this signal.
+    // client knows to fall back to mailto. NOT a generic 500 â€” we want this signal.
     if (!RESEND_API_KEY) {
       return json({ error: "Email provider not configured", fallback: "mailto" }, 503)
     }
