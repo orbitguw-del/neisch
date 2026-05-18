@@ -1,9 +1,10 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, Users, Plus, Calendar } from 'lucide-react'
+import { ClipboardList, Users, Plus, Calendar, Truck } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
 import useDailyLogStore from '@/stores/dailyLogStore'
+import useMaterialTransferStore from '@/stores/materialTransferStore'
 import PageHeader from '@/components/ui/PageHeader'
 import { formatDate } from '@/lib/utils'
 
@@ -23,12 +24,22 @@ export default function SupervisorDashboard() {
   const profile  = useAuthStore((s) => s.profile)
   const { sites, fetchSites } = useSiteStore()
   const { logs, fetchLogs }   = useDailyLogStore()
+  const { transfers, fetchTransfers } = useMaterialTransferStore()
 
   const tenantId = profile?.tenant_id
 
   useEffect(() => {
-    if (tenantId) fetchSites(tenantId)
-  }, [tenantId, fetchSites])
+    if (tenantId) {
+      fetchSites(tenantId)
+      fetchTransfers(tenantId).catch(() => {})
+    }
+  }, [tenantId, fetchSites, fetchTransfers])
+
+  // Transfers initiated for a site I supervise — I need to confirm dispatch.
+  const mySiteIds = sites.map((s) => s.id)
+  const awaitingDispatch = transfers.filter(
+    (t) => t.status === 'initiated' && mySiteIds.includes(t.from_site_id),
+  )
 
   // Load logs for first assigned site
   const primarySite = sites[0]
@@ -114,6 +125,25 @@ export default function SupervisorDashboard() {
           )}
         </div>
       </div>
+
+      {/* Transfers awaiting dispatch */}
+      {awaitingDispatch.length > 0 && (
+        <button
+          onClick={() => navigate('/transfers')}
+          className="mb-4 flex w-full items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-left hover:bg-amber-100 transition-colors"
+        >
+          <Truck className="h-5 w-5 flex-shrink-0 text-amber-600" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-amber-800">
+              {awaitingDispatch.length} transfer{awaitingDispatch.length > 1 ? 's' : ''} awaiting your dispatch
+            </p>
+            <p className="text-xs text-amber-600 truncate">
+              {awaitingDispatch.map((t) => t.material?.name ?? 'Material').join(', ')} — confirm dispatch details to send.
+            </p>
+          </div>
+          <span className="flex-shrink-0 text-xs font-medium text-amber-700">Open →</span>
+        </button>
+      )}
 
       {/* Recent logs */}
       <div className="card overflow-hidden">
