@@ -152,6 +152,19 @@ Last reprioritised: 2026-05-18.
   Recommended: start with the read-only timeline. Could live as a Reports tab.
   Do NOT build until the 2026-05-18 build is verified (see P0).
 
+- [ ] **Material master list** _(enhancement / hardening of the materials feature)_
+  — requested 2026-05-18. Today materials are free-typed per site, so the same
+  material gets inconsistent names ("Cement" / "cement" / "OPC Cement"). This
+  also quietly breaks transfers (the transfer code matches receiver material by
+  name + unit). Plan:
+  • a tenant-level `material_master` catalogue (name · unit · category · optional
+    default rate);
+  • when adding a material to a site, pick from the master list;
+  • an "add new" option that creates the master entry once, then reuses it.
+  Done = consistent material names across all sites; transfers match reliably.
+  Also seed the master list with common construction materials.
+  Do NOT build until the 2026-05-18 build is verified (see P0).
+
 - [ ] **AI features — voice input first** _(v1.x / v2 — new feature)_ — explored
   2026-05-18. Principle: add AI only where it removes real friction for
   NE-India site users, never as decoration. Prioritised list:
