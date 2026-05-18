@@ -121,6 +121,21 @@ Last reprioritised: 2026-05-18.
 
 ---
 
+## 🆕 New features — backlog (post-v1, tag before building)
+
+- [ ] **Notifications** _(v1.x / v2 — new feature)_ — requested by viewers at the
+  2026-05-18 presentation. Decide scope before building:
+  • **In-app notification centre** — a bell + list (task assigned, transfer
+    awaiting dispatch, item needs your confirmation). Lowest effort — the
+    underlying data already drives the dashboard widgets; this consolidates it.
+  • **Push notifications** — phone push via Capacitor + Firebase (FCM). Bigger:
+    FCM project, device tokens, permissions, an Android rebuild.
+  • **Email alerts** — via Resend (already wired) for key events.
+  Recommended start: in-app centre first (reuses existing data); push later.
+  Do NOT build until the 2026-05-18 build is verified (see P0).
+
+---
+
 ## ⚪ P4 — Nice to have (UX / telemetry)
 
 - [ ] **Inline "enroll your phone" hint in SMSOTPLogin** — after 2 failed sends,
