@@ -7,6 +7,19 @@ Last reprioritised: 2026-05-18.
 
 ## 🔴 P0 — Critical / blocking
 
+- [ ] **Verify the 2026-05-18 build end-to-end — NOT yet tested in the app.**
+  A large amount shipped on 2026-05-18 (offline mode, on-site photos, the
+  Task/Work-Assignment module, the 4-stage material-transfer redesign, the
+  attendance/daily-log confirmation layer). It all builds and the logic is
+  sound, but **none of it has been exercised by a real user.** Before relying
+  on it or adding anything new: walk each flow on `storeyinfra.com` —
+  task assign→update→submit→confirm; transfer initiate→dispatch→approve→receive;
+  attendance mark→confirm-day→payroll flag; photo capture (timestamp + zoom);
+  offline entry → reconnect → sync. Fix whatever breaks before further work.
+
+- [ ] **Upload `storey-v1.1.0.aab`** to Play Console (closed testing) — gets the
+  offline + photo features to testers.
+
 - [ ] **Fix broken IPv4 internet on the office network** — router gets IPv6 but
   no IPv4. PC has no IPv4 default gateway; `tracert 8.8.8.8` returns
   "destination net unreachable" at the router (`192.168.0.1`). IPv4-only
