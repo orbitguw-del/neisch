@@ -41,7 +41,7 @@ export async function capturePhoto() {
     const photo = await Camera.getPhoto({
       quality: 80,
       resultType: CameraResultType.Uri,
-      source: CameraSource.Prompt,   // camera or gallery
+      source: CameraSource.Camera,   // live camera only — no gallery
     })
     if (!photo?.webPath) return null
     const res = await fetch(photo.webPath)
