@@ -127,7 +127,7 @@ function WorkerAttendanceRow({ worker, status, onCycle, siteName }) {
 export default function Attendance() {
   const profile  = useAuthStore((s) => s.profile)
   const { sites, fetchSites } = useSiteStore()
-  const { workers, loading: workersLoading, fetchWorkers, fetchAttendance, saveAttendanceBulk } = useWorkerStore()
+  const { workers, loading: workersLoading, fetchWorkers, fetchAttendance, saveAttendanceBulk, confirmAttendanceDay } = useWorkerStore()
 
   const tenantId = profile?.tenant_id
 
@@ -138,6 +138,10 @@ export default function Attendance() {
   const [saving, setSaving]             = useState(false)
   const [saved, setSaved]               = useState(false)
   const [error, setError]               = useState(null)
+  const [dayConfirmed, setDayConfirmed] = useState(false)
+  const [confirming, setConfirming]     = useState(false)
+
+  const canConfirm = ['superadmin', 'contractor', 'site_manager'].includes(profile?.role)
 
   // Init sites
   useEffect(() => {
@@ -163,10 +167,12 @@ export default function Attendance() {
     setError(null)
     fetchAttendance(selectedSite, date)
       .then((data) => {
-        // data = { workerId: { id, status, notes } }
+        // data = { workerId: { id, status, notes, approval_status } }
         const map = {}
         Object.entries(data).forEach(([wId, rec]) => { map[wId] = rec.status })
         setRecords(map)
+        const recs = Object.values(data)
+        setDayConfirmed(recs.length > 0 && recs.every((r) => r.approval_status === 'confirmed'))
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoadingAtt(false))
@@ -205,10 +211,24 @@ export default function Attendance() {
 
       await saveAttendanceBulk({ siteId: selectedSite, tenantId, date, records: recordsToSave })
       setSaved(true)
+      setDayConfirmed(false)   // a fresh save needs (re-)confirmation
     } catch (err) {
       setError(err.message)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleConfirm = async () => {
+    setConfirming(true)
+    setError(null)
+    try {
+      await confirmAttendanceDay({ siteId: selectedSite, date, profileId: profile?.id })
+      setDayConfirmed(true)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setConfirming(false)
     }
   }
 
@@ -333,15 +353,26 @@ export default function Attendance() {
               {allMarked && <span className="ml-2 text-green-600 font-medium">✓ All marked</span>}
             </p>
             <div className="flex items-center gap-3">
-              {saved && <span className="text-sm text-green-600 font-medium">Saved ✓</span>}
+              {dayConfirmed
+                ? <span className="text-sm font-medium text-green-600">✓ Confirmed</span>
+                : saved && <span className="text-sm font-medium text-amber-600">Saved — pending confirmation</span>}
               <button
                 onClick={handleSave}
                 disabled={saving || markedCount === 0}
-                className="btn-primary flex items-center gap-2"
+                className="btn-secondary flex items-center gap-2"
               >
                 <Save className="h-4 w-4" />
                 {saving ? 'Saving…' : 'Save Attendance'}
               </button>
+              {canConfirm && (
+                <button
+                  onClick={handleConfirm}
+                  disabled={confirming || dayConfirmed || markedCount === 0}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  {confirming ? 'Confirming…' : dayConfirmed ? 'Confirmed' : 'Confirm Day'}
+                </button>
+              )}
             </div>
           </div>
         </>

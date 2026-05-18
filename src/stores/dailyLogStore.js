@@ -47,6 +47,7 @@ const useDailyLogStore = create((set) => ({
         id: offlineId(),
         created_at: new Date().toISOString(),
         created_by_profile: null,
+        approval_status: 'submitted',
         _pending: true,
       }
       set((s) => ({ logs: [optimistic, ...s.logs] }))
@@ -61,13 +62,27 @@ const useDailyLogStore = create((set) => ({
   },
 
   updateLog: async (logId, payload) => {
-    const { data, error } = await supabase.from('daily_logs').update(payload).eq('id', logId).select('*').single()
+    // An edit returns the log to 'submitted' — it needs (re-)confirmation.
+    const { data, error } = await supabase.from('daily_logs')
+      .update({ ...payload, approval_status: 'submitted', confirmed_by: null, confirmed_at: null })
+      .eq('id', logId).select('*').single()
     if (error) throw error
     const [enriched] = await attachCreators([data])
     set((s) => ({
       logs: s.logs.map((l) => (l.id === logId ? enriched : l)),
       activeLog: s.activeLog?.id === logId ? enriched : s.activeLog,
     }))
+    return enriched
+  },
+
+  /** Site Manager confirms a daily log. */
+  confirmLog: async (logId, profileId) => {
+    const { data, error } = await supabase.from('daily_logs')
+      .update({ approval_status: 'confirmed', confirmed_by: profileId, confirmed_at: new Date().toISOString() })
+      .eq('id', logId).select('*').single()
+    if (error) throw error
+    const [enriched] = await attachCreators([data])
+    set((s) => ({ logs: s.logs.map((l) => (l.id === logId ? enriched : l)) }))
     return enriched
   },
 

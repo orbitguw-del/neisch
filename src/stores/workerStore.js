@@ -51,15 +51,25 @@ const useWorkerStore = create((set, get) => ({
 
   // ── Attendance ─────────────────────────────────────────────────────────────
 
-  // Returns { [workerId]: { id, status, notes } } for a given site + date
+  // Returns { [workerId]: { id, status, notes, approval_status } } for a site + date
   fetchAttendance: async (siteId, date) => {
     const { data, error } = await supabase
       .from('attendance')
-      .select('id, worker_id, status, notes')
+      .select('id, worker_id, status, notes, approval_status, confirmed_at')
       .eq('site_id', siteId)
       .eq('date', date)
     if (error) throw error
     return Object.fromEntries((data ?? []).map((r) => [r.worker_id, r]))
+  },
+
+  // Confirm a whole site+date roster — Site Manager sign-off.
+  confirmAttendanceDay: async ({ siteId, date, profileId }) => {
+    const { error } = await supabase
+      .from('attendance')
+      .update({ approval_status: 'confirmed', confirmed_by: profileId, confirmed_at: new Date().toISOString() })
+      .eq('site_id', siteId)
+      .eq('date', date)
+    if (error) throw error
   },
 
   // Upsert a single worker's attendance for a date
@@ -79,6 +89,7 @@ const useWorkerStore = create((set, get) => ({
   // Bulk-save attendance map { workerId: { status, notes } } for a site + date
   saveAttendanceBulk: async ({ siteId, tenantId, date, records }) => {
     if (!records.length) return
+    // Every save (new or edit) marks the row 'submitted' — it needs (re-)confirmation.
     const rows = records.map(({ workerId, status, notes }) => ({
       worker_id: workerId,
       site_id: siteId,
@@ -86,6 +97,7 @@ const useWorkerStore = create((set, get) => ({
       date,
       status,
       notes: notes ?? null,
+      approval_status: 'submitted',
     }))
 
     // Offline: queue the upsert; it replays on reconnect.

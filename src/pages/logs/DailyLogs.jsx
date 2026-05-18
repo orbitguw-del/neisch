@@ -111,14 +111,23 @@ export default function DailyLogs() {
   const profile       = useAuthStore((s) => s.profile)
   const user          = useAuthStore((s) => s.user)
   const { sites, fetchSites } = useSiteStore()
-  const { logs, loading, fetchLogs, createLog } = useDailyLogStore()
+  const { logs, loading, fetchLogs, createLog, confirmLog } = useDailyLogStore()
 
   const [modalOpen,      setModalOpen]      = useState(false)
   const [saving,         setSaving]         = useState(false)
   const [error,          setError]          = useState(null)
   const [activeSiteId,   setActiveSiteId]   = useState(siteId ?? null)
+  const [confirmingId,   setConfirmingId]   = useState(null)
 
-  const tenantId = profile?.tenant_id
+  const tenantId  = profile?.tenant_id
+  const canConfirm = ['superadmin', 'contractor', 'site_manager'].includes(profile?.role)
+
+  const handleConfirmLog = async (logId) => {
+    setConfirmingId(logId)
+    try { await confirmLog(logId, profile?.id) }
+    catch (err) { setError(err.message) }
+    finally { setConfirmingId(null) }
+  }
 
   useEffect(() => {
     if (tenantId) fetchSites(tenantId)
@@ -229,7 +238,14 @@ export default function DailyLogs() {
             <div key={log.id} className="card p-5">
               <div className="flex items-start justify-between gap-4 mb-3">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{formatDate(log.log_date)}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-gray-900">{formatDate(log.log_date)}</p>
+                    {log.approval_status === 'confirmed' ? (
+                      <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">✓ Confirmed</span>
+                    ) : (
+                      <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Pending confirmation</span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500 mt-0.5">
                     Filed by {log.created_by_profile?.full_name ?? 'Unknown'}
                   </p>
@@ -261,6 +277,17 @@ export default function DailyLogs() {
               {log.photo_path && (
                 <div className="mt-3">
                   <PhotoThumb path={log.photo_path} size={96} />
+                </div>
+              )}
+              {canConfirm && log.approval_status !== 'confirmed' && !log._pending && (
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={() => handleConfirmLog(log.id)}
+                    disabled={confirmingId === log.id}
+                    className="btn-primary text-sm py-1.5"
+                  >
+                    {confirmingId === log.id ? 'Confirming…' : 'Confirm log'}
+                  </button>
                 </div>
               )}
             </div>
