@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Storey — Work Assignment Flow</title>
+<style>
+  :root{
+    --terra:#B85042; --terra-dk:#8f3d32; --sand:#E7E8D1; --sand-lt:#F4F2E9;
+    --sage:#A7BEAE; --dark:#2C1810; --mute:#8b7b72; --line:#e7e1d8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,Helvetica,sans-serif;background:var(--sand-lt);color:var(--dark);
+       padding:40px 20px;line-height:1.5}
+  .wrap{max-width:860px;margin:0 auto}
+  h1{font-family:Georgia,serif;font-size:30px;letter-spacing:.5px}
+  .sub{color:var(--mute);font-size:14px;margin:6px 0 32px}
+  .rule{width:60px;height:3px;background:var(--terra);margin:14px 0 26px;border-radius:2px}
+
+  .level{position:relative;background:#fff;border:1px solid var(--line);border-radius:14px;
+         padding:18px 20px;margin:0 auto;box-shadow:0 4px 14px rgba(0,0,0,.05)}
+  .level + .arrow{margin:0 auto}
+  .badge{display:inline-block;font-size:11px;font-weight:bold;letter-spacing:1px;
+         padding:4px 10px;border-radius:20px;margin-bottom:8px}
+  .role{font-family:Georgia,serif;font-size:20px;font-weight:bold}
+  .does{font-size:13.5px;color:#3a2a20;margin-top:6px}
+  .does b{color:var(--terra-dk)}
+  .arrow{width:2px;height:34px;background:var(--terra);position:relative;}
+  .arrow::after{content:"";position:absolute;left:-5px;bottom:-1px;width:0;height:0;
+       border-left:6px solid transparent;border-right:6px solid transparent;
+       border-top:9px solid var(--terra)}
+  .arrow span{position:absolute;left:14px;top:50%;transform:translateY(-50%);
+       white-space:nowrap;font-size:12px;color:var(--mute);font-style:italic}
+
+  .l1{border-left:5px solid var(--terra)}      .l1 .badge{background:#f4d9d2;color:var(--terra-dk)}
+  .l2{border-left:5px solid var(--sage)}       .l2 .badge{background:#dfe8e2;color:#4a6357}
+  .l3{border-left:5px solid #c89b3c}           .l3 .badge{background:#f0e3c4;color:#7a5e1e}
+  .l4{border-left:5px solid var(--mute)}       .l4 .badge{background:#e8e1da;color:#5e5048}
+
+  .note{background:#fff8f0;border:1px solid #f0d9c4;border-radius:10px;padding:12px 14px;
+        font-size:12.5px;color:#7a5e3a;margin-top:8px}
+
+  .section{font-family:Georgia,serif;font-size:18px;font-weight:bold;margin:40px 0 16px}
+  .lifecycle{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .pill{padding:7px 14px;border-radius:20px;font-size:13px;font-weight:bold;border:1.5px solid}
+  .p-pending{background:#f4f2e9;border-color:#d8d2c6;color:#8b7b72}
+  .p-prog{background:#fff8e8;border-color:#e8c97a;color:#9a7a1e}
+  .p-submit{background:#e9eef5;border-color:#9db6d6;color:#3f5e8c}
+  .p-done{background:#eaf5ee;border-color:#9fcfb0;color:#3f7d54}
+  .p-block{background:#fdeceb;border-color:#e8a59e;color:#a8453a}
+  .chev{color:var(--mute);font-size:16px}
+
+  .legend{font-size:13px;color:#3a2a20;margin-top:6px}
+  .legend div{margin:5px 0}
+  .rollup{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+          font-size:13.5px;box-shadow:0 4px 14px rgba(0,0,0,.05)}
+  .rollup b{color:var(--terra-dk)}
+  .foot{text-align:center;color:var(--mute);font-size:12px;margin-top:36px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Work Assignment — Flow</h1>
+  <div class="sub">Storey · cascading task assignment, contractor → worker</div>
+  <div class="rule"></div>
+
+  <!-- ─── Cascade ─── -->
+  <div class="level l1">
+    <span class="badge">LEVEL 1 · CONTRACTOR</span>
+    <div class="role">Contractor</div>
+    <div class="does">Creates a <b>top-level task</b> for a site (e.g. "Complete 2nd-floor slab")
+      and assigns it to a <b>Site Manager</b>.</div>
+  </div>
+  <div class="arrow"><span>assigns task →</span></div>
+
+  <div class="level l2">
+    <span class="badge">LEVEL 2 · SITE MANAGER</span>
+    <div class="role">Site Manager</div>
+    <div class="does">Opens the assigned task, <b>breaks it into sub-tasks</b>
+      (shuttering, reinforcement, pour…) and assigns each to a <b>Supervisor</b>.</div>
+  </div>
+  <div class="arrow"><span>divides → sub-tasks</span></div>
+
+  <div class="level l3">
+    <span class="badge">LEVEL 3 · SUPERVISOR</span>
+    <div class="role">Supervisor</div>
+    <div class="does">Opens each sub-task, <b>divides the work among Workers</b>, and
+      logs a <b>daily progress update</b> — note + date-stamped photo — every day
+      until the task is complete.</div>
+  </div>
+  <div class="arrow"><span>divides → worker tasks</span></div>
+
+  <div class="level l4">
+    <span class="badge">LEVEL 4 · WORKERS</span>
+    <div class="role">Workers</div>
+    <div class="does">Each worker has a unit of work. Workers <b>do not log in</b> —
+      the Supervisor records and updates their task status on their behalf.</div>
+    <div class="note">⚠️ Workers are records, not app users. The Supervisor is the
+      one who marks worker-level tasks done. (Worker logins could be a future option.)</div>
+  </div>
+
+  <!-- ─── Status lifecycle ─── -->
+  <div class="section">Status lifecycle (every task at every level)</div>
+  <div class="lifecycle">
+    <span class="pill p-pending">Pending</span>
+    <span class="chev">▶</span>
+    <span class="pill p-prog">In progress</span>
+    <span class="chev">▶</span>
+    <span class="pill p-submit">Submitted</span>
+    <span class="chev">▶</span>
+    <span class="pill p-done">Done</span>
+    <span class="chev">·</span>
+    <span class="pill p-block">Blocked</span>
+  </div>
+  <div class="legend">
+    <div><b>Pending</b> — assigned, not started</div>
+    <div><b>In progress</b> — work underway</div>
+    <div><b>Submitted</b> — the assignee marked it finished — awaiting confirmation</div>
+    <div><b>Done</b> — confirmed by the person who assigned it</div>
+    <div><b>Blocked</b> — stuck (material shortage, weather, dependency)</div>
+    <div style="margin-top:6px"><b style="color:#a8453a">⏱ Overdue</b> — a derived flag:
+      any task not <i>Done</i> past its due date. Not a manual status — the system sets it.</div>
+  </div>
+
+  <!-- ─── Confirmation / sign-off ─── -->
+  <div class="section">Confirmation / sign-off</div>
+  <div class="rollup">
+    <div>• Marking a task finished does <b>not</b> close it — it moves to
+      <b style="color:#3f5e8c">Submitted</b> and waits for the person who assigned it.</div>
+    <div>• The <b>Site Manager confirms</b> a Supervisor's submitted task — after
+      reviewing its photo timeline. Only then does it become <b style="color:#3f7d54">Done</b>.</div>
+    <div>• Same rule up the chain: the <b>Contractor confirms</b> a Site Manager's
+      task; the <b>Supervisor confirms</b> a Worker's task.</div>
+    <div>• If the work isn't acceptable, the confirmer <b>sends it back</b> →
+      returns to <i>In progress</i> for rework.</div>
+    <div style="margin-top:8px;color:var(--mute)">Same approve / reject pattern
+      already used for site expenses — the assigner signs off on the assignee's work.</div>
+  </div>
+
+  <!-- ─── Confirm rule applies to ALL supervisor work ─── -->
+  <div class="section">The confirm rule applies to <span style="color:var(--terra)">all</span> Supervisor work</div>
+  <div class="rollup">
+    <div>Nothing a Supervisor records is final on its own — the Site Manager
+      confirms it. Every supervisor entry is <b style="color:#3f5e8c">Submitted</b>
+      first, then <b style="color:#3f7d54">Confirmed</b>:</div>
+    <div style="margin-top:8px">• <b>Attendance</b> — Supervisor marks the daily roster →
+      Site Manager confirms → only then it counts toward <b>wages &amp; payroll</b>.</div>
+    <div>• <b>Daily logs</b> — Supervisor files the log → Site Manager confirms.</div>
+    <div>• <b>Tasks</b> — Supervisor submits a finished task → Site Manager confirms.</div>
+    <div>• <b>Site expenses</b> — already works this way (pending → approved).</div>
+    <div style="margin-top:8px;color:var(--mute)">One consistent rule across the app:
+      the Supervisor does the work, the Site Manager signs it off.</div>
+  </div>
+  <div class="note" style="max-width:none;margin-top:12px">
+    ⚠️ <b>Scope note:</b> adding confirmation to <b>attendance</b> and <b>daily logs</b>
+    changes existing modules — each needs a status column, a Site-Manager
+    "confirm" screen, and payroll/reports must count only <i>confirmed</i>
+    attendance. A bigger change than the task module alone — worth doing as its
+    own phase.
+  </div>
+
+  <!-- ─── Daily progress updates ─── -->
+  <div class="section">Daily progress tracking</div>
+  <div class="rollup">
+    <div>• Until a task is <i>Done</i>, the Supervisor logs a <b>daily update</b> on it:
+      a short note on what was done + a <b>date-stamped photo</b>.</div>
+    <div>• Each task builds a <b>day-by-day photo timeline</b> — visible proof of
+      how the work progressed.</div>
+    <div>• A task with <b>no update for 2+ days</b> is flagged
+      <b style="color:#a8453a">Stalled</b> — separate from "Overdue", it catches
+      work that quietly stops.</div>
+    <div>• Managers and the Contractor scroll a task's timeline to see exactly
+      what happened each day.</div>
+    <div style="margin-top:8px;color:var(--mute)">Stored as task updates
+      (date · note · photo) — one row per day, like a per-task daily log.</div>
+  </div>
+
+  <!-- ─── Time-bound & delay tracking ─── -->
+  <div class="section">Time-bound &amp; delay tracking</div>
+  <div class="rollup">
+    <div>• Every task is assigned with a <b>due date</b> by whoever assigns it
+      (optional <b>start date</b> too).</div>
+    <div>• A task past its due date and not <i>Done</i> is flagged
+      <b style="color:#a8453a">Overdue — "3 days late"</b> in red.</div>
+    <div>• Delay <b>rolls up</b>: if any sub-task is overdue, its parent is marked
+      <b style="color:#a8453a">At risk</b> — so a delay deep in the tree is visible at the top.</div>
+    <div>• <b>Dashboard</b> shows a "Delayed tasks" count; <b>Reports</b> get an
+      Overdue / On-time breakdown per site and per person.</div>
+    <div style="margin-top:8px;color:var(--mute)">Result: the Contractor sees at a glance
+      which site, which manager, and which task is slipping — and by how many days.</div>
+  </div>
+
+  <!-- ─── Roll-up ─── -->
+  <div class="section">Progress roll-up</div>
+  <div class="rollup">
+    As workers' tasks are marked done, the Supervisor's sub-task shows
+    <b>"4 / 6 done"</b>. As Supervisors finish, the Site Manager's task shows its
+    sub-task progress. The Contractor sees the top task roll up the same way —
+    <b>one glance, top to bottom</b>.
+  </div>
+
+  <!-- ─── Who assigns to whom ─── -->
+  <div class="section">Who can assign to whom</div>
+  <div class="rollup">
+    <div>• <b>Contractor</b> → assigns to Site Managers on the site</div>
+    <div>• <b>Site Manager</b> → assigns sub-tasks to Supervisors on the site</div>
+    <div>• <b>Supervisor</b> → assigns sub-tasks to Workers on the site</div>
+    <div style="margin-top:8px;color:var(--mute)">Each level can only assign one step down. Store Keeper is not in the work chain.</div>
+  </div>
+
+  <div class="foot">Storey — Construction, organised · review draft</div>
+</div>
+</body>
+</html>
