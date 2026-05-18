@@ -11,8 +11,32 @@ import { isOnline, queueWrite } from '@/lib/offlineWrite'
 
 const BUCKET = 'site-photos'
 
+/**
+ * Browser capture — a standard file input. On phones this still shows the
+ * "Camera / Photo Library" chooser. Used on the web where @capacitor/camera's
+ * getPhoto() is not available without extra PWA-element setup.
+ */
+function webCapture() {
+  return new Promise((resolve) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.setAttribute('capture', 'environment')
+    let settled = false
+    const done = (v) => { if (!settled) { settled = true; resolve(v) } }
+    input.addEventListener('change', () => done(input.files?.[0] ?? null))
+    input.addEventListener('cancel', () => done(null))
+    input.click()
+  })
+}
+
 /** Open the camera / picker and return a Blob, or null if cancelled. */
 export async function capturePhoto() {
+  // Native app → Capacitor camera. Web/mobile browser → file input.
+  const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()
+  if (!isNative) {
+    return webCapture()
+  }
   try {
     const photo = await Camera.getPhoto({
       quality: 80,
