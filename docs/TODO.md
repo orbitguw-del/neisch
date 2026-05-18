@@ -5,6 +5,22 @@ Last reprioritised: 2026-05-18.
 
 ---
 
+## ⚠️ Scope decision (2026-05-18)
+
+- [ ] **Decide: launch lean v1 now, or bundle the 2026-05-18 additions.**
+  The app was feature-complete and launchable *before* 2026-05-18. The work
+  done that day — offline mode, on-site photos, the Task/Work-Assignment
+  module, the 4-stage transfer redesign, the attendance/daily-log confirmation
+  layer — is genuinely **beyond original v1 scope** (effectively v1.5 / v2).
+  It is also untested (see P0 below). Decision needed:
+  • **Option A** — ship the original lean v1 now; treat the 2026-05-18 work as a
+    fast-follow once verified. Faster to market, less launch risk.
+  • **Option B** — fold everything into one bigger launch. More to test and
+    stabilise first; later launch.
+  Recommendation: A — don't let unverified v2 scope hold up a launchable v1.
+
+---
+
 ## 🔴 P0 — Critical / blocking
 
 - [ ] **Verify the 2026-05-18 build end-to-end — NOT yet tested in the app.**
