@@ -138,6 +138,20 @@ Last reprioritised: 2026-05-18.
 > module's existing `priority` field (low / normal / high) already covers urgent
 > work; a separate feature isn't needed._
 
+- [ ] **Project timeline / Gantt view** _(v1.x / v2 — new feature)_ — requested
+  at the 2026-05-18 presentation: track a project's time frame. Good news —
+  most of the data already exists: Task module tasks carry `start_date`,
+  `due_date`, a parent→sub-task hierarchy and status; sites carry start/end
+  dates. So this is mainly a **chart UI**, not new data work.
+  Scope options:
+  • **Read-only timeline** — tasks (and sub-tasks) drawn as bars on a date axis,
+    grouped by site, with a "today" line and overdue bars in red. Lower effort,
+    likely enough.
+  • **Full Gantt** — plus drag-to-reschedule and dependencies. Much heavier;
+    only if genuinely needed.
+  Recommended: start with the read-only timeline. Could live as a Reports tab.
+  Do NOT build until the 2026-05-18 build is verified (see P0).
+
 ---
 
 ## ⚪ P4 — Nice to have (UX / telemetry)
