@@ -62,6 +62,18 @@ const useAuthStore = create((set, get) => ({
       }
     })()
 
+    // Safety net — never let the bootstrap spinner hang forever. If init hasn't
+    // finished in 12s (e.g. the network is down mid-flap), release the loading
+    // screen so the app renders instead of freezing. init keeps running in the
+    // background; the auth subscription still attaches when the network returns.
+    const guard = setTimeout(() => {
+      if (get().loading) {
+        console.warn('[authStore] init timed out — releasing the loading screen')
+        set({ loading: false })
+      }
+    }, 12000)
+    promise.finally(() => clearTimeout(guard))
+
     set({ _initPromise: promise })
     return promise
   },

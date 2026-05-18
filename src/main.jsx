@@ -41,6 +41,16 @@ if (
     `
   }
 
+  // Safety net — if the sign-in exchange hangs (bad network), don't spin
+  // forever. Fall back to the login page after 15s.
+  const callbackGuard = setTimeout(() => {
+    go('/#/login?error=signin_timeout')
+  }, 15000)
+
+  // Navigate into the hash router, cancelling the safety-net timer first so a
+  // successful sign-in is never bounced to /login 15s later.
+  const go = (path) => { clearTimeout(callbackGuard); window.location.replace(path) }
+
   const params    = new URLSearchParams(window.location.search)
   const code      = params.get('code')
   const err       = params.get('error')
@@ -59,7 +69,7 @@ if (
   const postLogin  = isRecovery ? '/#/reset-password' : '/#/dashboard'
 
   if (err) {
-    window.location.replace(`/#/login?error=${encodeURIComponent(err)}`)
+    go(`/#/login?error=${encodeURIComponent(err)}`)
   } else if (tokenHash) {
     // Token-hash flow — verifyOtp needs NO stored PKCE verifier, so a recovery
     // or confirmation link works even when opened on a different device.
@@ -67,41 +77,41 @@ if (
       .then(({ data, error: vErr }) => {
         if (vErr || !data?.session) {
           console.error('[TokenHash] verifyOtp failed:', vErr?.message)
-          window.location.replace(isRecovery ? '/#/login?error=reset_link_expired' : '/#/login')
+          go(isRecovery ? '/#/login?error=reset_link_expired' : '/#/login')
         } else {
-          window.location.replace(postLogin)
+          go(postLogin)
         }
       })
-      .catch(() => window.location.replace('/#/login'))
+      .catch(() => go('/#/login'))
   } else if (code) {
     // PKCE flow (Google OAuth and PKCE password recovery)
     supabase.auth.exchangeCodeForSession(code)
       .then(({ data, error: exchErr }) => {
         if (exchErr || !data?.session) {
           console.error('[OAuth] exchange failed:', exchErr?.message)
-          window.location.replace(isRecovery ? '/#/login?error=reset_link_expired' : '/#/login')
+          go(isRecovery ? '/#/login?error=reset_link_expired' : '/#/login')
         } else {
-          window.location.replace(postLogin)
+          go(postLogin)
         }
       })
-      .catch(() => window.location.replace('/#/login'))
+      .catch(() => go('/#/login'))
   } else if (accessToken) {
     // Magic-link / implicit flow — also used for password recovery
     supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken ?? '' })
       .then(({ data, error: sessErr }) => {
         if (sessErr || !data?.session) {
           console.error('[MagicLink] setSession failed:', sessErr?.message)
-          window.location.replace(isRecovery ? '/#/login?error=reset_link_expired' : '/#/login')
+          go(isRecovery ? '/#/login?error=reset_link_expired' : '/#/login')
         } else {
-          window.location.replace(postLogin)
+          go(postLogin)
         }
       })
-      .catch(() => window.location.replace('/#/login'))
+      .catch(() => go('/#/login'))
   } else {
     // No code, no token, no error — check if a session already exists
     supabase.auth.getSession().then(({ data }) => {
-      window.location.replace(data?.session ? '/#/dashboard' : '/#/login')
-    }).catch(() => window.location.replace('/#/login'))
+      go(data?.session ? '/#/dashboard' : '/#/login')
+    }).catch(() => go('/#/login'))
   }
 } else {
   // Normal app startup
