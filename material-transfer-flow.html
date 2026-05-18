@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Storey — Material Transfer Flow</title>
+<style>
+  :root{--terra:#B85042;--terra-dk:#8f3d32;--sand:#E7E8D1;--sand-lt:#F4F2E9;
+        --sage:#A7BEAE;--dark:#2C1810;--mute:#8b7b72;--line:#e7e1d8;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,Helvetica,sans-serif;background:var(--sand-lt);color:var(--dark);
+       padding:40px 20px;line-height:1.5}
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-family:Georgia,serif;font-size:30px}
+  .sub{color:var(--mute);font-size:14px;margin:6px 0 22px}
+  .rule{width:60px;height:3px;background:var(--terra);margin:14px 0 26px;border-radius:2px}
+  .section{font-family:Georgia,serif;font-size:19px;font-weight:bold;margin:34px 0 14px}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+        box-shadow:0 4px 14px rgba(0,0,0,.05);font-size:13.5px}
+  .card b{color:var(--terra-dk)}
+
+  .step{position:relative;background:#fff;border:1px solid var(--line);border-radius:14px;
+        padding:16px 18px 16px 58px;box-shadow:0 4px 14px rgba(0,0,0,.05)}
+  .num{position:absolute;left:14px;top:16px;width:30px;height:30px;border-radius:50%;
+       background:var(--terra);color:#fff;font-weight:bold;display:flex;align-items:center;
+       justify-content:center;font-size:14px}
+  .who{display:inline-block;font-size:11px;font-weight:bold;letter-spacing:.5px;
+       background:var(--sand);color:var(--terra-dk);padding:3px 9px;border-radius:20px;margin-bottom:6px}
+  .stitle{font-family:Georgia,serif;font-size:17px;font-weight:bold}
+  .sdesc{font-size:13px;color:#3a2a20;margin-top:4px}
+  .arrow{width:2px;height:26px;background:var(--terra);margin:0 auto}
+
+  .pill{display:inline-block;padding:5px 12px;border-radius:20px;font-size:12.5px;font-weight:bold;
+        border:1.5px solid;margin:3px}
+  .p1{background:#f4f2e9;border-color:#d8d2c6;color:#8b7b72}
+  .p2{background:#fff8e8;border-color:#e8c97a;color:#9a7a1e}
+  .p3{background:#e9eef5;border-color:#9db6d6;color:#3f5e8c}
+  .p4{background:#eaf5ee;border-color:#9fcfb0;color:#3f7d54}
+  .px{background:#fdeceb;border-color:#e8a59e;color:#a8453a}
+
+  .note{background:#fff8f0;border:1px solid #f0d9c4;border-radius:10px;padding:12px 14px;
+        font-size:12.5px;color:#7a5e3a;margin-top:10px}
+  .foot{text-align:center;color:var(--mute);font-size:12px;margin-top:34px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Material Transfer — Flow</h1>
+  <div class="sub">Storey · revised inter-site transfer process</div>
+  <div class="rule"></div>
+
+  <!-- Store keeper role -->
+  <div class="section">The Store Keeper — central material oversight</div>
+  <div class="card">
+    <div>• The Store Keeper sees <b>all material stock &amp; movement across every
+      site and the warehouse</b> — a tenant-wide view, like the Contractor (today
+      they only see their assigned sites).</div>
+    <div style="margin-top:6px">• They watch stock levels everywhere and can
+      <b>initiate a transfer</b> to rebalance material between sites.</div>
+    <div style="margin-top:6px">• A <b>Supervisor cannot initiate a transfer</b> —
+      only a Store Keeper or Site Manager can. The Supervisor <b>executes</b> the
+      dispatch once asked.</div>
+  </div>
+
+  <!-- Lifecycle -->
+  <div class="section">Transfer lifecycle — 4 stages</div>
+
+  <div class="step">
+    <div class="num">1</div>
+    <span class="who">STORE KEEPER / SITE MANAGER</span>
+    <div class="stitle">Initiate</div>
+    <div class="sdesc">Raises a transfer request — from-site, to-site, material and
+      quantity to move. Status: <b>Initiated</b>.</div>
+  </div>
+  <div class="arrow"></div>
+
+  <div class="step">
+    <div class="num">2</div>
+    <span class="who">SUPERVISOR (from-site)</span>
+    <div class="stitle">Prepare &amp; confirm dispatch</div>
+    <div class="sdesc">The request appears on the from-site Supervisor's
+      <b>dashboard</b>. They fill the dispatch detail — actual quantity, vehicle
+      number, challan/LR — and confirm. Status: <b>Prepared</b>.</div>
+  </div>
+  <div class="arrow"></div>
+
+  <div class="step">
+    <div class="num">3</div>
+    <span class="who">STORE KEEPER / SITE MANAGER</span>
+    <div class="stitle">Approve dispatch</div>
+    <div class="sdesc">Reviews the prepared transfer and signs it off.
+      Status: <b>Approved</b> (or <b>Rejected</b> — sent back to the Supervisor).</div>
+  </div>
+  <div class="arrow"></div>
+
+  <div class="step">
+    <div class="num">4</div>
+    <span class="who">RECEIVING SITE</span>
+    <div class="stitle">Accept on receipt</div>
+    <div class="sdesc">The receiving site accepts the delivery, noting the quantity
+      actually received (discrepancy handling as today). <b>Stock arrives at the
+      to-site.</b> Status: <b>Received</b>.</div>
+  </div>
+
+  <!-- Status row -->
+  <div class="section">Statuses</div>
+  <div>
+    <span class="pill p1">Initiated</span>
+    <span class="pill p2">Prepared</span>
+    <span class="pill p3">Approved</span>
+    <span class="pill p4">Received</span>
+    <span class="pill px">Rejected</span>
+  </div>
+
+  <!-- Stock movement -->
+  <div class="section">When stock actually moves</div>
+  <div class="card">
+    <div>• <b>From-site stock decreases</b> at <b>Stage 2 — Prepared</b>, when the
+      Supervisor confirms dispatch (the material has physically left the site).</div>
+    <div style="margin-top:6px">• <b>To-site stock increases</b> at <b>Stage 4 — Received</b>
+      (quantity actually received).</div>
+    <div style="margin-top:6px">• Stage 3 — Approval — is a sign-off check; the
+      material is already in transit. A rejection there flags the transfer for a
+      correction/return rather than un-sending it.</div>
+    <div style="margin-top:6px">• Any gap between sent and received is recorded as a
+      discrepancy — same as the current receipt flow.</div>
+    <div style="margin-top:6px">• Every movement is written to the
+      <b>material ledger</b> with a running balance.</div>
+  </div>
+
+  <!-- Activity log -->
+  <div class="section">Activity log — who did what</div>
+  <div class="card">
+    <div>Every stage stamps the <b>person and the time</b> — so a transfer carries
+      its own audit trail:</div>
+    <div style="margin-top:8px">• <b>Initiated by</b> — name + time</div>
+    <div>• <b>Prepared / dispatched by</b> — Supervisor name + time</div>
+    <div>• <b>Approved (or rejected) by</b> — name + time</div>
+    <div>• <b>Received by</b> — name + time + quantity received</div>
+    <div style="margin-top:8px">The transfer detail shows this as a
+      <b>step-by-step activity trail</b> — no more "we can't tell who moved it".</div>
+    <div style="margin-top:6px;color:var(--mute)">Stored as <code>initiated_by</code>,
+      <code>prepared_by</code>, <code>approved_by</code>, <code>received_by</code>
+      (each with a timestamp) on the transfer row.</div>
+  </div>
+
+  <div class="note">
+    ⚠️ <b>Scope:</b> this changes (a) the Store Keeper's data access — tenant-wide
+    for material tables; (b) the transfer table — 4 statuses instead of 2, plus
+    dispatch-detail fields; (c) adds a Supervisor dashboard item; (d) RLS for who
+    can initiate / prepare / approve / accept. A real redesign of the transfer
+    module — best built as its own set of phases.
+  </div>
+
+  <div class="foot">Storey — Construction, organised · review draft</div>
+</div>
+</body>
+</html>
