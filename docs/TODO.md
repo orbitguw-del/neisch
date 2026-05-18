@@ -1,87 +1,115 @@
 # Operational TODOs
 
-Running list of follow-up items that aren't urgent enough to block ship but should be handled when convenient.
+Running list of follow-up items, ordered by priority (highest first).
+Last reprioritised: 2026-05-18.
 
 ---
 
-## ⚖️ Legal & compliance (added 2026-05-16)
+## 🔴 P0 — Critical / blocking
 
-> NOTE: not legal advice — engage a CA + lawyer for India-specific items.
+- [ ] **Fix broken IPv4 internet on the office network** — router gets IPv6 but
+  no IPv4. PC has no IPv4 default gateway; `tracert 8.8.8.8` returns
+  "destination net unreachable" at the router (`192.168.0.1`). IPv4-only
+  services (Supabase dashboard, `auth.supabase.io`) are unreachable. This blocks
+  the DB work below. Action: restart router → check WAN/IPv4 status in router
+  admin → call ISP for IPv4 / dual-stack (likely moved to IPv6-only or CGNAT).
 
-- [ ] **🔴 Aadhaar/PAN storage** — `workers.id_proof_number` stores full ID numbers in
-  plain text. Under the Aadhaar Act / DPDP Act this is high-risk. Fix: store only the
-  last 4 digits, OR encrypt the column at rest, OR collect just a "verified" flag.
-  Claude can do this code change.
-- [ ] **Consolidate accounts to one company email** — currently split across
-  `orbitguw@gmail.com` and `karunroongta@gmail.com`. Create `admin@storeyinfra.com`
-  and transfer Play Console, Supabase, Vercel, GoDaddy, Resend ownership to it.
-- [ ] **Register a legal entity** (Pvt Ltd / LLP) via a CA — operating as an individual
-  means unlimited personal liability. Move all services under the entity once formed.
-- [ ] **Terms of Service** — write and add a `/terms` route (companion to `/privacy`).
-- [ ] **Trademark "Storey" / "Storey Infra"** — file in the relevant class(es) in India.
-- [x] **Privacy Policy** — full DPDP/Play-compliant version shipped (branch
-  `chore/privacy-policy`).
-- [ ] **Data Safety form** — fill in Play Console using the declared data types
+---
+
+## 🟠 P1 — High (launch blockers + security)
+
+- [ ] **Audit other tables' RLS** for the `WITH CHECK` gap fixed on `profiles`
+  — candidates: `tenants`, `sites`, `pending_invites`, `budget_lines`.
+
+- [ ] **Play Store icon + screenshots upload** — manual upload via Play Console
+  (asset paths under `C:\consne\*`).
+
+- [ ] **Data Safety form** — fill in Play Console with declared data types
   (name, email, phone, address, worker ID-proof, app content; collected not shared).
 
----
-
-## 🔐 Security hygiene
-
-- [ ] **Rotate the Resend API key** — current key was pasted in Claude chat on 2026-05-15. Action:
-  1. Resend → API Keys → delete the existing `Storey Support` key
-  2. Create a new key with the same name + permissions (Sending access, all domains)
-  3. Run `supabase secrets set RESEND_API_KEY=<new-key>` (Claude can do this when you share the new key)
-  4. Confirm with a test send via curl
-
-- [ ] **Audit other tables' RLS** for the same `WITH CHECK` gap we fixed on `profiles` — candidates: `tenants`, `sites`, `pending_invites`, `budget_lines`
+- [ ] **Resolve frontend branch divergence from `main`** —
+  `claude/heuristic-kepler-947fd0` is behind. Rebase + resolve, or cherry-pick.
 
 ---
 
-## 🚀 Launch blockers
+## 🐞 P1.5 — Known bugs
 
-- [ ] **Play Store icon + screenshots upload** — automation paths exhausted. Manual upload via Play Console (see chat for the asset paths under `C:\consne\*`)
+- [ ] **Invite resend / revoke actions** — the Reports → Invites tab now lists
+  all pending invites (email, role, site, code, sent, expiry, status). Still
+  missing: resend and revoke buttons on the Team page (revoke DELETE policy is
+  already in place from migration 009).
 
-- [ ] **Resolve frontend branch divergence from `main`** — `claude/heuristic-kepler-947fd0` is 5 ahead, 43+ behind. Either rebase + manual conflict resolve OR cherry-pick security-only commits
-
----
-
-## ⚡ Performance / scale
-
-- [ ] **Add `phone_verifications` index** — prevents OTP rate-limit query slowdown at scale:
-  ```sql
-  CREATE INDEX IF NOT EXISTS phone_verifications_user_created_idx
-    ON phone_verifications(user_id, created_at DESC);
-  ```
-
----
-
-## 🎨 UX polish
-
-- [ ] **Inline "enroll your phone" hint in SMSOTPLogin** — when a user without an enrolled phone tries SMS OTP login, currently they get a silent generic success and no SMS. Add a one-line hint after 2 failed sends pointing them to Settings → Phone enrollment.
-
-- [ ] **Self-service phone change flow** — currently locked to support escalation. Build a verified flow where a user can change their phone using their existing one as a 2FA step.
+- [ ] **Invite allows already-registered emails** — `invite-user` creates a
+  `pending_invite` for any email without checking if it's already a registered
+  user. Result: existing users (in another role/tenant) get invited as if new,
+  which is confusing and may break on accept. Fix: in `invite-user`, look up the
+  email in `auth.users` first — if it already exists, either reject with a clear
+  message ("this email already has a Storey account") or handle re-assignment
+  deliberately. Decide the intended behaviour before coding.
 
 ---
 
-## 📨 Email / help desk
+## 🎯 P2 — Branding / polish
 
-- [ ] **Verify `help@storeyinfra.com` mailbox exists** — Resend can now send to it, but if the GoDaddy email account doesn't have it set up as a mailbox or alias, mail will bounce. Check Inbox or check GoDaddy email control panel.
-
-- [ ] **Switch `noreply@storeyinfra.com` to a real send domain SPF/DKIM** — confirm it shows green in Resend after first production sends; many providers (Gmail, Outlook) reject mail from new domains for a few days as a reputation cool-down.
-
----
-
-## 🧹 Housekeeping
-
-- [ ] **Formalise the manually-applied `006_budget_lines` migration history** — already reconciled via `supabase migration repair`, but worth documenting what other migrations may have been ad-hoc'd to avoid future "out of order" headaches.
-
-- [ ] **Add `dist/` to `.gitignore` (and untrack it)** — `dist/` is in `.gitignore` but was committed historically, so files still appear in `git status`. One-time cleanup: `git rm -r --cached dist/` then commit.
+- [ ] **Google sign-in shows Supabase domain** — the consent screen says
+  "continue to zgvbogxibiilnblmuohg.supabase.co". Branding (App name "STOREY" +
+  logo) is already set in Google Cloud Console, but the domain line only changes
+  once the OAuth app is **published + verified**. Google verification requires:
+  1. Verify `storeyinfra.com` ownership in Google Search Console
+  2. Add a visible privacy-policy link on the landing page (`Landing.jsx`)
+  3. Submit for verification → 2–3 business day review
+  App currently stays in **Testing** mode (fine — name/logo saved, nothing broken).
+  Alternative: Supabase custom auth domain add-on (paid) → `auth.storeyinfra.com`.
 
 ---
 
-## 📊 Telemetry / observability
+## 🟡 P2 — Medium (legal / business)
 
-- [ ] **Edge function status counters** — add a small dashboard or log dashboard for 200/400/401/429/500 responses on each function, so unusual error rates can be spotted.
+- [ ] **Register a legal entity** (Pvt Ltd / LLP) via a CA — operating as an
+  individual means unlimited personal liability. Move services under it once formed.
 
-- [ ] **`phone_verifications.attempts` distribution alert** — surface when a single user hits the 5-attempt cap repeatedly (indicates targeted brute-force attempt).
+- [ ] **Consolidate accounts to one company email** — split across
+  `orbitguw@gmail.com` and `karunroongta@gmail.com`. Create
+  `admin@storeyinfra.com`; transfer Play Console, Supabase, Vercel, GoDaddy,
+  Resend ownership to it.
+
+- [ ] **Terms of Service** — write and add a `/terms` route (companion to `/privacy`).
+
+- [ ] **Trademark "Storey" / "Storey Infra"** — file in the relevant class(es) in India.
+
+- [ ] **Verify `help@storeyinfra.com` mailbox exists** — Resend can send to it,
+  but if GoDaddy has no mailbox/alias, mail bounces. Check the GoDaddy email panel.
+
+> NOTE: legal items are not legal advice — engage a CA + lawyer for India-specific items.
+
+---
+
+## 🟢 P3 — Lower (infra / devops / housekeeping)
+
+- [ ] **Automate edge function deployment** — GitHub Actions workflow
+  (`.github/workflows/deploy-functions.yml`) to auto-deploy all functions on
+  push to `main` when `supabase/functions/**` changes. Needs repo secrets
+  `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF`. Claude can build it.
+
+- [ ] **SPF/DKIM warm-up for `noreply@storeyinfra.com`** — confirm green in
+  Resend after first production sends; new domains get throttled by Gmail/Outlook
+  for a few days.
+
+- [ ] **Untrack `dist/` from git** — it's in `.gitignore` but was committed
+  historically. One-time: `git rm -r --cached dist/` then commit.
+
+---
+
+## ⚪ P4 — Nice to have (UX / telemetry)
+
+- [ ] **Inline "enroll your phone" hint in SMSOTPLogin** — after 2 failed sends,
+  point users to Settings → Phone enrollment instead of a silent generic success.
+
+- [ ] **Self-service phone change flow** — verified flow using the existing
+  phone as a 2FA step (currently locked to support escalation).
+
+- [ ] **Edge function status counters** — dashboard for 200/400/401/429/500
+  responses per function, to spot unusual error rates.
+
+- [ ] **`phone_verifications.attempts` distribution alert** — surface when a
+  single user repeatedly hits the 5-attempt cap (brute-force signal).

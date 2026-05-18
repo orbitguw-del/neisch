@@ -15,6 +15,7 @@ import PrintButton from '@/components/print/PrintButton'
 import PrintHeader from '@/components/print/PrintHeader'
 import AttendanceReportTab from './AttendanceReportTab'
 import SiteReportTab from './SiteReportTab'
+import InvitesReportTab from './InvitesReportTab'
 import { formatINR, formatDate, cn } from '@/lib/utils'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -509,6 +510,7 @@ const TABS = [
   { id: 'site',       label: 'Site Report' },
   { id: 'monthly',    label: 'Materials' },
   { id: 'budget',     label: 'Budget vs Actual' },
+  { id: 'invites',    label: 'Invites' },
 ]
 
 export default function Reports() {
@@ -551,6 +553,7 @@ export default function Reports() {
       {tab === 'site'       && <SiteReportTab sites={sites} />}
       {tab === 'monthly'    && <MonthlyTab  tenantId={tenantId} sites={sites} />}
       {tab === 'budget'     && <BudgetTab   tenantId={tenantId} sites={sites} />}
+      {tab === 'invites'    && <InvitesReportTab tenantId={tenantId} />}
     </div>
   )
 }
