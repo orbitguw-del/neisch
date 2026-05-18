@@ -38,6 +38,9 @@ function ForgotPasswordForm({ onBack }) {
           <p className="mt-1 text-sm text-gray-500">
             We sent a password reset link to <span className="font-medium">{email}</span>
           </p>
+          <p className="mt-2 text-xs text-amber-600">
+            Don't see it? Check your <span className="font-medium">Spam</span> folder — the link can take a minute to arrive.
+          </p>
         </div>
         <button type="button" onClick={onBack}
           className="text-sm text-brand-600 hover:underline">
