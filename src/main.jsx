@@ -41,9 +41,11 @@ if (
     `
   }
 
-  const params = new URLSearchParams(window.location.search)
-  const code   = params.get('code')
-  const err    = params.get('error')
+  const params    = new URLSearchParams(window.location.search)
+  const code      = params.get('code')
+  const err       = params.get('error')
+  const tokenHash = params.get('token_hash')   // verifier-free recovery / confirm flow
+  const otpType   = params.get('type')         // 'recovery' | 'signup' | 'email' | ...
 
   // Also check hash fragment for access_token (magic-link / implicit flow)
   const rawHash    = window.location.hash
@@ -51,13 +53,26 @@ if (
   const accessToken  = hashParams.get('access_token')
   const refreshToken = hashParams.get('refresh_token')
 
-  // Password recovery can return via either flow. The marker is on the query
-  // string (added in resetPasswordForEmail's redirectTo) or in the hash.
-  const isRecovery = params.get('type') === 'recovery' || hashParams.get('type') === 'recovery'
+  // Password recovery can return via any flow. The marker is on the query
+  // string (token-hash / PKCE redirect) or in the hash (implicit flow).
+  const isRecovery = otpType === 'recovery' || hashParams.get('type') === 'recovery'
   const postLogin  = isRecovery ? '/#/reset-password' : '/#/dashboard'
 
   if (err) {
     window.location.replace(`/#/login?error=${encodeURIComponent(err)}`)
+  } else if (tokenHash) {
+    // Token-hash flow — verifyOtp needs NO stored PKCE verifier, so a recovery
+    // or confirmation link works even when opened on a different device.
+    supabase.auth.verifyOtp({ token_hash: tokenHash, type: otpType || 'recovery' })
+      .then(({ data, error: vErr }) => {
+        if (vErr || !data?.session) {
+          console.error('[TokenHash] verifyOtp failed:', vErr?.message)
+          window.location.replace(isRecovery ? '/#/login?error=reset_link_expired' : '/#/login')
+        } else {
+          window.location.replace(postLogin)
+        }
+      })
+      .catch(() => window.location.replace('/#/login'))
   } else if (code) {
     // PKCE flow (Google OAuth and PKCE password recovery)
     supabase.auth.exchangeCodeForSession(code)
