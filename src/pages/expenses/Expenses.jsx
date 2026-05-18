@@ -9,6 +9,7 @@ import PageHeader from '@/components/ui/PageHeader'
 import StatCard from '@/components/ui/StatCard'
 import Modal from '@/components/ui/Modal'
 import PhotoCapture from '@/components/photo/PhotoCapture'
+import ApprovalBadge from '@/components/ApprovalBadge'
 import { uploadPhoto } from '@/lib/photos'
 import { formatINR, formatDate, cn } from '@/lib/utils'
 
@@ -23,11 +24,6 @@ const CATEGORIES = [
   'Miscellaneous',
 ]
 
-const STATUS_BADGE = {
-  pending:  { label: 'Pending',  cls: 'badge-yellow', icon: Clock },
-  approved: { label: 'Approved', cls: 'badge-green',  icon: CheckCircle2 },
-  rejected: { label: 'Rejected', cls: 'badge-red',    icon: XCircle },
-}
 
 function todayISO() { return new Date().toISOString().slice(0, 10) }
 function firstOfMonthISO() {
@@ -260,7 +256,6 @@ export default function Expenses() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map((e) => {
-                  const sb = STATUS_BADGE[e.status] ?? STATUS_BADGE.pending
                   return (
                     <tr key={e.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(e.expense_date)}</td>
@@ -269,7 +264,7 @@ export default function Expenses() {
                       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{formatINR(e.amount)}</td>
                       <td className="px-4 py-3 text-gray-600">{e.paid_by || '—'}</td>
                       <td className="px-4 py-3">
-                        <span className={sb.cls}>{sb.label}</span>
+                        <ApprovalBadge status={e.status} labels={{ approved: 'Approved' }} />
                       </td>
                       <td className="px-4 py-3 text-gray-500 text-xs">{e.creator?.full_name ?? '—'}</td>
                       <td className="px-4 py-3 whitespace-nowrap">

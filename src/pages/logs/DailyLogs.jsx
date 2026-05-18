@@ -9,6 +9,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import PhotoCapture from '@/components/photo/PhotoCapture'
 import PhotoThumb from '@/components/photo/PhotoThumb'
+import ApprovalBadge from '@/components/ApprovalBadge'
 import { uploadPhoto } from '@/lib/photos'
 import { formatDate } from '@/lib/utils'
 
@@ -240,11 +241,7 @@ export default function DailyLogs() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold text-gray-900">{formatDate(log.log_date)}</p>
-                    {log.approval_status === 'confirmed' ? (
-                      <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">✓ Confirmed</span>
-                    ) : (
-                      <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Pending confirmation</span>
-                    )}
+                    <ApprovalBadge status={log.approval_status} />
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
                     Filed by {log.created_by_profile?.full_name ?? 'Unknown'}
