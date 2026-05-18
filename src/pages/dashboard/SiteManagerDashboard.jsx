@@ -1,11 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { HardHat, Users, Package, ClipboardList } from 'lucide-react'
+import { HardHat, Users, Package, ClipboardList, BellRing, ChevronRight } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
 import StatCard from '@/components/ui/StatCard'
 import PageHeader from '@/components/ui/PageHeader'
-import { formatDate, formatINR } from '@/lib/utils'
+import { formatINR } from '@/lib/utils'
 
 const STATUS_CLASS = {
   active:    'badge-green',
@@ -20,14 +21,40 @@ export default function SiteManagerDashboard() {
   const { sites, fetchSites } = useSiteStore()
 
   const tenantId = profile?.tenant_id
+  const [pending, setPending] = useState(null)
 
   useEffect(() => {
     // RLS will automatically restrict to assigned sites for site_manager role
     if (tenantId) fetchSites(tenantId)
   }, [tenantId, fetchSites])
 
+  // Counts of items awaiting this manager's confirmation (RLS scopes to their sites).
+  useEffect(() => {
+    if (!tenantId) return
+    const head = (table, col, val) =>
+      supabase.from(table).select('id', { count: 'exact', head: true }).eq(col, val)
+    Promise.all([
+      head('daily_logs',        'approval_status', 'submitted'),
+      head('attendance',        'approval_status', 'submitted'),
+      head('tasks',             'status',          'submitted'),
+      head('material_transfers','status',          'prepared'),
+      head('site_expenses',     'status',          'pending'),
+    ]).then(([l, a, t, tr, e]) => setPending({
+      logs: l.count ?? 0, attendance: a.count ?? 0, tasks: t.count ?? 0,
+      transfers: tr.count ?? 0, expenses: e.count ?? 0,
+    })).catch(() => {})
+  }, [tenantId])
+
   const activeSites = sites.filter((s) => s.status === 'active').length
   const firstName   = profile?.full_name?.split(' ')[0] ?? 'there'
+
+  const pendingItems = pending ? [
+    { key: 'attendance', n: pending.attendance, label: 'Attendance entries to confirm', to: '/attendance' },
+    { key: 'logs',       n: pending.logs,       label: 'Daily logs to confirm',         to: '/logs' },
+    { key: 'tasks',      n: pending.tasks,      label: 'Tasks submitted for sign-off',  to: '/tasks' },
+    { key: 'transfers',  n: pending.transfers,  label: 'Transfers to approve',          to: '/transfers' },
+    { key: 'expenses',   n: pending.expenses,   label: 'Expenses to approve',           to: '/expenses' },
+  ].filter((i) => i.n > 0) : []
 
   return (
     <div>
@@ -42,6 +69,28 @@ export default function SiteManagerDashboard() {
         <StatCard label="Workers"        value="—"            icon={Users}        color="sage" />
         <StatCard label="Logs Today"     value="—"            icon={ClipboardList} color="red"  />
       </div>
+
+      {/* Needs your confirmation */}
+      {pendingItems.length > 0 && (
+        <div className="card overflow-hidden mb-4 border-amber-200">
+          <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-5 py-3">
+            <BellRing className="h-4 w-4 text-amber-600" />
+            <h2 className="text-sm font-semibold text-amber-800">Needs your confirmation</h2>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {pendingItems.map((i) => (
+              <button key={i.key} onClick={() => navigate(i.to)}
+                className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-gray-50">
+                <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-amber-100 px-2 text-sm font-bold text-amber-700">
+                  {i.n}
+                </span>
+                <span className="flex-1 text-sm text-gray-800">{i.label}</span>
+                <ChevronRight className="h-4 w-4 text-gray-300" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Assigned sites */}
       <div className="card overflow-hidden mb-4">
