@@ -134,6 +134,14 @@ Last reprioritised: 2026-05-18.
   Recommended start: in-app centre first (reuses existing data); push later.
   Do NOT build until the 2026-05-18 build is verified (see P0).
 
+- [ ] **Emergency work assignment** _(v1.x / v2 — new feature)_ — extend the Task
+  module for urgent work. Scope to confirm with the owner before building:
+  • skip the cascade — assign urgent work straight to a supervisor/worker
+    rather than contractor→manager→supervisor; and/or
+  • an 'emergency' priority above 'high' that stands out and triggers an
+    immediate notification to the assignee (ties into Notifications above).
+  Likely depends on Notifications being built first.
+
 ---
 
 ## ⚪ P4 — Nice to have (UX / telemetry)
