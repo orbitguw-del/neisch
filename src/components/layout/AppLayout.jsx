@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 import Sidebar from './Sidebar'
 import Header from './Header'
+import OfflineBanner from '@/components/OfflineBanner'
 import useAuthStore from '@/stores/authStore'
 
 export default function AppLayout() {
@@ -26,6 +27,7 @@ export default function AppLayout() {
         <div className="no-print">
           <Header onMenuClick={() => setSidebarOpen(true)} />
         </div>
+        <OfflineBanner />
         {profileError && (
           <div className="no-print border-b border-amber-200 bg-amber-50 px-6 py-2 text-sm text-amber-800 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 flex-shrink-0" />

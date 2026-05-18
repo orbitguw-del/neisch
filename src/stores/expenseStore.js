@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { isOnline, queueWrite, offlineId } from '@/lib/offlineWrite'
 
 const useExpenseStore = create((set, get) => ({
   expenses: [],
@@ -28,9 +29,30 @@ const useExpenseStore = create((set, get) => ({
   },
 
   createExpense: async (payload) => {
+    const row = { ...payload, status: 'pending' }
+
+    // Offline: queue the insert and show an optimistic row immediately.
+    if (!isOnline()) {
+      await queueWrite({
+        table: 'site_expenses',
+        op: 'insert',
+        payload: row,
+        label: `Expense — ${row.expense_date ?? ''}`,
+      })
+      const optimistic = {
+        ...row,
+        id: offlineId(),
+        created_at: new Date().toISOString(),
+        sites: null, creator: null, approver: null,
+        _pending: true,
+      }
+      set((s) => ({ expenses: [optimistic, ...s.expenses] }))
+      return optimistic
+    }
+
     const { data, error } = await supabase
       .from('site_expenses')
-      .insert({ ...payload, status: 'pending' })
+      .insert(row)
       .select('*, sites(name), creator:created_by(full_name), approver:approved_by(full_name)')
       .single()
     if (error) throw error

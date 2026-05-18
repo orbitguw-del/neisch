@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { isOnline, queueWrite } from '@/lib/offlineWrite'
 
 const useWorkerStore = create((set, get) => ({
   workers: [],
@@ -86,6 +87,19 @@ const useWorkerStore = create((set, get) => ({
       status,
       notes: notes ?? null,
     }))
+
+    // Offline: queue the upsert; it replays on reconnect.
+    if (!isOnline()) {
+      await queueWrite({
+        table: 'attendance',
+        op: 'upsert',
+        payload: rows,
+        upsertOpts: { onConflict: 'worker_id,date' },
+        label: `Attendance — ${date} (${rows.length} workers)`,
+      })
+      return
+    }
+
     const { error } = await supabase
       .from('attendance')
       .upsert(rows, { onConflict: 'worker_id,date' })

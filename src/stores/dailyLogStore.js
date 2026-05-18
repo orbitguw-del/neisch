@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { isOnline, queueWrite, offlineId } from '@/lib/offlineWrite'
 
 async function attachCreators(logs) {
   const ids = [...new Set(logs.map(l => l.created_by).filter(Boolean))]
@@ -33,6 +34,25 @@ const useDailyLogStore = create((set) => ({
   },
 
   createLog: async (payload) => {
+    // Offline: queue the insert and show an optimistic row immediately.
+    if (!isOnline()) {
+      await queueWrite({
+        table: 'daily_logs',
+        op: 'insert',
+        payload,
+        label: `Daily log — ${payload.log_date ?? ''}`,
+      })
+      const optimistic = {
+        ...payload,
+        id: offlineId(),
+        created_at: new Date().toISOString(),
+        created_by_profile: null,
+        _pending: true,
+      }
+      set((s) => ({ logs: [optimistic, ...s.logs] }))
+      return optimistic
+    }
+
     const { data, error } = await supabase.from('daily_logs').insert(payload).select('*').single()
     if (error) throw error
     const [enriched] = await attachCreators([data])
