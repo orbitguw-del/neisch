@@ -31,14 +31,25 @@ should expect Claude to enforce them even when not reminded.
 5. **One change in flight at a time.** Finish (build + test + commit) before starting the next.
 
 ### Scope control
-1. **Define "done" before starting.** Write the one-line acceptance check first
-   ("done = a supervisor can mark attendance and a manager can confirm it").
+First, **classify every request** — they are not all "scope creep":
+- **Bug fix** — something built is broken. Always in scope.
+- **Hardening / checks & balances** — adding a control, approval, audit trail or
+  validation to a feature that *already exists* (e.g. "attendance now needs
+  manager confirmation"). This is legitimate v1 work — it makes v1 sturdier, in
+  line with the "integrity and sturdiness" philosophy. Not scope creep.
+- **New feature** — a net-new capability/module that didn't exist (e.g. the Task
+  module, offline mode, on-site photos). This *is* scope and must be tagged.
+
+Rules:
+1. **Define "done" before starting** — for *any* of the three. Write the one-line
+   acceptance check first.
 2. **When a new "also…" request appears mid-feature, write it to `docs/TODO.md`
    — do not build it now.** Finish the current thing first.
-3. **Tag every new request: v1 / v1.x / v2.** Do not silently grow v1. If a
-   request is beyond v1, say so and let the owner decide.
-4. **A feature is not done until a real user has tested it.** "Built" and
-   "shipped" are different states — track them separately.
+3. **Tag new *features* (only): v1 / v1.x / v2.** Don't silently grow v1 with
+   net-new modules. Hardening and bug fixes don't need a version tag — but they
+   still need rule 1 and a test.
+4. **A change is not done until a real user has tested it** — feature *or*
+   hardening. "Built" and "shipped" are different states.
 5. Prefer **shipping a smaller verified thing** over a larger unverified one.
 
 ### Building technical depth (for the owner)
