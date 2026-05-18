@@ -11,6 +11,8 @@ import PageHeader from '@/components/ui/PageHeader'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import StatCard from '@/components/ui/StatCard'
+import PhotoCapture from '@/components/photo/PhotoCapture'
+import { uploadPhoto } from '@/lib/photos'
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -57,6 +59,7 @@ function WorkerForm({ sites, defaultSiteId, onSubmit, loading, onCancel }) {
     joined_at:        new Date().toISOString().slice(0, 10),
   })
 
+  const [photo, setPhoto] = useState(null)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
   const handleSubmit = (e) => {
@@ -71,6 +74,7 @@ function WorkerForm({ sites, defaultSiteId, onSubmit, loading, onCancel }) {
       id_proof_number: form.id_proof_number.trim() || null,
       address:         form.address.trim()  || null,
       emergency_contact: form.emergency_contact.trim() || null,
+      _photo:          photo,
     })
   }
 
@@ -204,6 +208,8 @@ function WorkerForm({ sites, defaultSiteId, onSubmit, loading, onCancel }) {
           />
         </div>
       </div>
+
+      <PhotoCapture value={photo} onChange={setPhoto} label="Worker photo" />
 
       <div className="flex justify-end gap-2 pt-1 border-t border-gray-100">
         <button type="button" onClick={onCancel} className="btn-secondary">Cancel</button>
@@ -370,11 +376,17 @@ export default function Workers() {
     return { active, inactive, vendors, direct }
   }, [workers])
 
-  const handleCreate = async (payload) => {
+  const handleCreate = async ({ _photo, ...payload }) => {
     setSaving(true)
     setSaveError(null)
     try {
-      await createWorker({ ...payload, tenant_id: tenantId })
+      let photo_path = null
+      if (_photo) {
+        photo_path = await uploadPhoto({
+          blob: _photo, tenantId, siteId: payload.site_id, entity: 'worker',
+        })
+      }
+      await createWorker({ ...payload, photo_path, tenant_id: tenantId })
       setModalOpen(false)
     } catch (err) {
       setSaveError(err.message)

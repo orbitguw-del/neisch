@@ -7,6 +7,8 @@ import useMaterialReceiptStore from '@/stores/materialReceiptStore'
 import PageHeader from '@/components/ui/PageHeader'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
+import PhotoCapture from '@/components/photo/PhotoCapture'
+import { uploadPhoto } from '@/lib/photos'
 
 const STATUS_BADGE = {
   pending:  'badge-yellow',
@@ -42,6 +44,7 @@ function ReceiptForm({ sites, onSubmit, loading }) {
     vehicle_number: '',
     note: '',
   })
+  const [photo, setPhoto] = useState(null)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
   // Load materials for selected site
@@ -71,6 +74,7 @@ function ReceiptForm({ sites, onSubmit, loading }) {
           unit_cost:  form.unit_cost  || null,
           lr_date:    form.lr_date    || null,
           challan_date: form.challan_date || null,
+          _photo: photo,
         })
       }}
       className="space-y-4"
@@ -164,6 +168,8 @@ function ReceiptForm({ sites, onSubmit, loading }) {
           <input className="input" value={form.note} onChange={set('note')} placeholder="Optional remarks" />
         </div>
       </div>
+
+      <PhotoCapture value={photo} onChange={setPhoto} label="Challan / delivery photo" />
 
       <div className="flex justify-end pt-1">
         <button type="submit" disabled={loading} className="btn-primary">
@@ -524,10 +530,16 @@ export default function MaterialReceipts() {
 
   const pendingCount = receipts.filter((r) => r.status === 'pending').length
 
-  const handleCreate = async (payload) => {
+  const handleCreate = async ({ _photo, ...payload }) => {
     setSaving(true); setError(null)
     try {
-      await createReceipt({ ...payload, created_by: profile?.id })
+      let photo_path = null
+      if (_photo) {
+        photo_path = await uploadPhoto({
+          blob: _photo, tenantId: payload.tenant_id, siteId: payload.site_id, entity: 'receipt',
+        })
+      }
+      await createReceipt({ ...payload, photo_path, created_by: profile?.id })
       setCreateOpen(false)
     } catch (err) { setError(err.message) }
     finally { setSaving(false) }

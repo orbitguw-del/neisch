@@ -7,6 +7,8 @@ import useDailyLogStore from '@/stores/dailyLogStore'
 import PageHeader from '@/components/ui/PageHeader'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
+import PhotoCapture from '@/components/photo/PhotoCapture'
+import { uploadPhoto } from '@/lib/photos'
 import { formatDate } from '@/lib/utils'
 
 const WEATHER_OPTIONS = [
@@ -30,6 +32,7 @@ function LogForm({ sites, onSubmit, loading, userId }) {
     work_done: '',
     issues: '',
   })
+  const [photo, setPhoto] = useState(null)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
   return (
@@ -41,6 +44,7 @@ function LogForm({ sites, onSubmit, loading, userId }) {
           workers_present: form.workers_present ? Number(form.workers_present) : null,
           created_by: userId,
           tenant_id: sites.find((s) => s.id === form.site_id)?.tenant_id,
+          _photo: photo,
         })
       }}
       className="space-y-4"
@@ -88,6 +92,9 @@ function LogForm({ sites, onSubmit, loading, userId }) {
             placeholder="Equipment breakdown, material shortage, safety incident, etc. (leave blank if none)"
           />
         </div>
+        <div className="col-span-2">
+          <PhotoCapture value={photo} onChange={setPhoto} label="Site progress photo" />
+        </div>
       </div>
       <div className="flex justify-end pt-1">
         <button type="submit" disabled={loading} className="btn-primary">
@@ -129,11 +136,17 @@ export default function DailyLogs() {
 
   const canCreateLog = ['superadmin', 'contractor', 'site_manager', 'supervisor'].includes(profile?.role)
 
-  const handleCreate = async (payload) => {
+  const handleCreate = async ({ _photo, ...payload }) => {
     setSaving(true)
     setError(null)
     try {
-      await createLog(payload)
+      let photo_path = null
+      if (_photo) {
+        photo_path = await uploadPhoto({
+          blob: _photo, tenantId: payload.tenant_id, siteId: payload.site_id, entity: 'daily-log',
+        })
+      }
+      await createLog({ ...payload, photo_path })
       setModalOpen(false)
       // Refresh logs if the log was for a different site
       if (payload.site_id !== activeSiteId) {

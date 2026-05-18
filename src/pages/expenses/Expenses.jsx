@@ -8,6 +8,8 @@ import useExpenseStore from '@/stores/expenseStore'
 import PageHeader from '@/components/ui/PageHeader'
 import StatCard from '@/components/ui/StatCard'
 import Modal from '@/components/ui/Modal'
+import PhotoCapture from '@/components/photo/PhotoCapture'
+import { uploadPhoto } from '@/lib/photos'
 import { formatINR, formatDate, cn } from '@/lib/utils'
 
 const CATEGORIES = [
@@ -43,6 +45,7 @@ function ExpenseForm({ sites, defaultSiteId, onSubmit, loading, onCancel }) {
     paid_by:      '',
     note:         '',
   })
+  const [photo, setPhoto] = useState(null)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
   const handleSubmit = (e) => {
@@ -55,6 +58,7 @@ function ExpenseForm({ sites, defaultSiteId, onSubmit, loading, onCancel }) {
       amount:       Number(form.amount),
       paid_by:      form.paid_by.trim() || null,
       note:         form.note.trim() || null,
+      _photo:       photo,
     })
   }
 
@@ -92,6 +96,9 @@ function ExpenseForm({ sites, defaultSiteId, onSubmit, loading, onCancel }) {
           <label className="label">Note</label>
           <input className="input" value={form.note} onChange={set('note')}
             placeholder="What was this for?" />
+        </div>
+        <div className="col-span-2">
+          <PhotoCapture value={photo} onChange={setPhoto} label="Bill photo" />
         </div>
       </div>
       <p className="text-xs text-gray-500">
@@ -149,10 +156,16 @@ export default function Expenses() {
     return { approved, pending, count: expenses.length }
   }, [expenses])
 
-  const handleAdd = async (payload) => {
+  const handleAdd = async ({ _photo, ...payload }) => {
     setSaving(true); setError(null)
     try {
-      await createExpense({ ...payload, tenant_id: tenantId, created_by: profile?.id })
+      let photo_path = null
+      if (_photo) {
+        photo_path = await uploadPhoto({
+          blob: _photo, tenantId, siteId: payload.site_id, entity: 'expense',
+        })
+      }
+      await createExpense({ ...payload, photo_path, tenant_id: tenantId, created_by: profile?.id })
       setModalOpen(false)
     } catch (err) {
       setError(err.message)
