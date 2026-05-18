@@ -30,15 +30,28 @@ const useAuthStore = create((set, get) => ({
           await get().fetchProfile(session.user.id)
         }
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-          // INITIAL_SESSION fires immediately on subscribe — already handled above
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+          // INITIAL_SESSION fires immediately on subscribe — already handled above.
           if (event === 'INITIAL_SESSION') return
 
-          if (session?.user) {
-            set({ session, user: session.user, loading: true })
-            await get().fetchProfile(session.user.id)
-          } else {
+          // Signed out / no session — clear everything.
+          if (event === 'SIGNED_OUT' || !newSession?.user) {
             set({ session: null, user: null, profile: null, loading: false })
+            return
+          }
+
+          const prevUserId = get().user?.id
+
+          // Always keep the session token fresh — but QUIETLY. A background
+          // TOKEN_REFRESHED (fires hourly / on tab focus / on reconnect) must
+          // never blank the app into the loading spinner.
+          set({ session: newSession, user: newSession.user })
+
+          // Only (re)fetch the profile when the actual user changed — a real
+          // sign-in — not on every token refresh. No `loading: true` here:
+          // the app is already rendered; the profile updates in place.
+          if (newSession.user.id !== prevUserId) {
+            await get().fetchProfile(newSession.user.id)
           }
         })
 
