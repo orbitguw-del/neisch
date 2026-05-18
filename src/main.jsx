@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom'
 import router from './router'
 import './index.css'
 import { initCapacitor } from './lib/capacitor'
+import { initOfflineSync } from './lib/syncEngine'
 import ErrorBoundary from './components/ErrorBoundary'
 import { supabase } from './lib/supabase'
 
@@ -89,6 +90,7 @@ if (
 } else {
   // Normal app startup
   initCapacitor(router)
+  initOfflineSync()
 
   ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
