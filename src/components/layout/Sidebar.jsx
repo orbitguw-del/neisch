@@ -14,6 +14,7 @@ import {
   Wrench,
   CalendarCheck,
   Wallet,
+  ListTodo,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import useAuthStore from '@/stores/authStore'
@@ -29,6 +30,7 @@ const NAV_BY_ROLE = {
     { label: 'Dashboard',  to: '/dashboard',  icon: LayoutDashboard },
     { label: 'Sites',      to: '/sites',      icon: HardHat },
     { label: 'Workers',    to: '/workers',    icon: Users },
+    { label: 'Tasks',      to: '/tasks',      icon: ListTodo },
     { label: 'Attendance', to: '/attendance', icon: CalendarCheck },
     { label: 'Daily Logs', to: '/logs',       icon: ClipboardList },
     { label: 'Inventory',  to: '/inventory',  icon: Warehouse },
@@ -44,6 +46,7 @@ const NAV_BY_ROLE = {
     { label: 'Dashboard',  to: '/dashboard',  icon: LayoutDashboard },
     { label: 'My Sites',   to: '/sites',      icon: HardHat },
     { label: 'Workers',    to: '/workers',    icon: Users },
+    { label: 'Tasks',      to: '/tasks',      icon: ListTodo },
     { label: 'Attendance', to: '/attendance', icon: CalendarCheck },
     { label: 'Inventory',  to: '/inventory',  icon: Warehouse },
     { label: 'Receipts',   to: '/receipts',   icon: ClipboardCheck },
@@ -56,6 +59,7 @@ const NAV_BY_ROLE = {
   supervisor: [
     { label: 'Dashboard',  to: '/dashboard',  icon: LayoutDashboard },
     { label: 'Workers',    to: '/workers',    icon: Users },
+    { label: 'Tasks',      to: '/tasks',      icon: ListTodo },
     { label: 'Attendance', to: '/attendance', icon: CalendarCheck },
     { label: 'Expenses',   to: '/expenses',   icon: Wallet },
     { label: 'Daily Logs', to: '/logs',       icon: ClipboardList },
