@@ -305,14 +305,15 @@ export default function MaterialTransfers() {
   const role     = profile?.role
 
   const canCreate  = ['superadmin', 'contractor', 'site_manager'].includes(role)
-  const canConfirm = ['superadmin', 'contractor', 'site_manager'].includes(role)
+  // A transfer is approved (confirmed) by a Site Manager OR Store Keeper.
+  const canConfirm = ['superadmin', 'contractor', 'site_manager', 'store_keeper'].includes(role)
 
   useEffect(() => {
     if (!tenantId) return
     fetchSites(tenantId)
     fetchTransfers(tenantId)
-    // For site managers, get their assigned site IDs
-    if (role === 'site_manager') {
+    // Site managers / store keepers can only approve transfers to their sites.
+    if (role === 'site_manager' || role === 'store_keeper') {
       supabase
         .from('site_assignments')
         .select('site_id')
@@ -327,10 +328,12 @@ export default function MaterialTransfers() {
 
   const pendingCount = transfers.filter((t) => t.status === 'pending').length
 
-  // Site manager can only confirm transfers TO their sites
+  // Site manager / store keeper can only confirm transfers TO their sites
   const canConfirmTransfer = (transfer) => {
     if (['superadmin', 'contractor'].includes(role)) return true
-    if (role === 'site_manager') return myAssignedSiteIds.includes(transfer.to_site_id)
+    if (role === 'site_manager' || role === 'store_keeper') {
+      return myAssignedSiteIds.includes(transfer.to_site_id)
+    }
     return false
   }
 
