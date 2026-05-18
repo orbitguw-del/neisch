@@ -18,6 +18,11 @@ async function applyMutation(m) {
   } else if (m.op === 'upsert') {
     const { error } = await supabase.from(m.table).upsert(m.payload, m.upsertOpts)
     if (error) throw error
+  } else if (m.op === 'storage') {
+    const { error } = await supabase.storage
+      .from(m.bucket)
+      .upload(m.path, m.blob, { contentType: m.contentType ?? 'image/jpeg', upsert: true })
+    if (error) throw error
   } else {
     throw new Error(`Unknown offline op: ${m.op}`)
   }
