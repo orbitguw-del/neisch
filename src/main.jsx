@@ -51,33 +51,34 @@ if (
   const accessToken  = hashParams.get('access_token')
   const refreshToken = hashParams.get('refresh_token')
 
+  // Password recovery can return via either flow. The marker is on the query
+  // string (added in resetPasswordForEmail's redirectTo) or in the hash.
+  const isRecovery = params.get('type') === 'recovery' || hashParams.get('type') === 'recovery'
+  const postLogin  = isRecovery ? '/#/reset-password' : '/#/dashboard'
+
   if (err) {
     window.location.replace(`/#/login?error=${encodeURIComponent(err)}`)
   } else if (code) {
-    // PKCE flow (Google OAuth)
+    // PKCE flow (Google OAuth and PKCE password recovery)
     supabase.auth.exchangeCodeForSession(code)
       .then(({ data, error: exchErr }) => {
         if (exchErr || !data?.session) {
           console.error('[OAuth] exchange failed:', exchErr?.message)
-          window.location.replace('/#/login')
+          window.location.replace(isRecovery ? '/#/login?error=reset_link_expired' : '/#/login')
         } else {
-          window.location.replace('/#/dashboard')
+          window.location.replace(postLogin)
         }
       })
       .catch(() => window.location.replace('/#/login'))
   } else if (accessToken) {
     // Magic-link / implicit flow — also used for password recovery
-    const tokenType = hashParams.get('type') // 'recovery' | 'signup' | null
     supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken ?? '' })
       .then(({ data, error: sessErr }) => {
         if (sessErr || !data?.session) {
           console.error('[MagicLink] setSession failed:', sessErr?.message)
-          window.location.replace('/#/login')
-        } else if (tokenType === 'recovery') {
-          // Password reset flow — send to reset page
-          window.location.replace('/#/reset-password')
+          window.location.replace(isRecovery ? '/#/login?error=reset_link_expired' : '/#/login')
         } else {
-          window.location.replace('/#/dashboard')
+          window.location.replace(postLogin)
         }
       })
       .catch(() => window.location.replace('/#/login'))

@@ -15,8 +15,12 @@ function ForgotPasswordForm({ onBack }) {
     e.preventDefault()
     setLoading(true)
     setError('')
+    // Tag the callback URL so main.jsx routes the return to /reset-password
+    // (not /dashboard) — the marker survives both the PKCE ?code and the
+    // implicit #access_token return modes.
+    const redirectTo = `${authRedirectUrl}${authRedirectUrl.includes('?') ? '&' : '?'}type=recovery`
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: authRedirectUrl,
+      redirectTo,
     })
     setLoading(false)
     if (err) { setError(err.message); return }
