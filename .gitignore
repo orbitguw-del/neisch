@@ -10,3 +10,6 @@ dist/
 CREDENTIALS-INVENTORY.md
 *.jks
 key.properties
+
+# Local-only
+_trash/
