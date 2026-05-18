@@ -152,17 +152,10 @@ Last reprioritised: 2026-05-18.
   Recommended: start with the read-only timeline. Could live as a Reports tab.
   Do NOT build until the 2026-05-18 build is verified (see P0).
 
-- [ ] **Bill of Quantities (BOQ)** _(v2 — new feature, large)_ — requested at the
-  2026-05-18 presentation as "BOQ from drawing". Honest scoping:
-  • **A. Manual BOQ builder** — enter line items (item · unit · qty · rate →
-    amount · total), per site/project. Feasible, useful, moderate effort.
-    RECOMMENDED if BOQ is pursued.
-  • **B. Drawing-assisted take-off** — upload a drawing, user marks
-    lengths/areas, app computes quantities. Much bigger — needs a measurement UI.
-  • **C. AI auto-BOQ from a drawing** — NOT reliably solvable today; quantity
-    take-off is a specialised field (Bluebeam/PlanSwift territory). Would be
-    unreliable and effectively a separate product. Do not promise this.
-  Decision needed on whether BOQ belongs in Storey at all, and if so, scope A.
+> _BOQ / quantity take-off — parked as a LONG-TERM idea (~2 years out), 2026-05-18.
+> Decided it is a specialised tool (Bluebeam/PlanSwift territory), a separate
+> product rather than part of Storey's site-operations scope. Not on the active
+> roadmap. Revisit only as a deliberate future product decision._
 
 ---
 
