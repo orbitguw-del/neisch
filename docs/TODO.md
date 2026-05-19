@@ -183,7 +183,7 @@ Last reprioritised: 2026-05-18.
   Also seed the master list with common construction materials.
   Do NOT build until the 2026-05-18 build is verified (see P0).
 
-- [ ] **Team activity log** _(v1.x / v2 — new feature)_ — requested 2026-05-19.
+- [ ] **Team activity log** _(v2 — new feature)_ — requested 2026-05-19.
   A contractor should see what their team is doing (attendance marked, logs
   filed, tasks updated, transfers actioned), and the same view cascades down
   the hierarchy — a Site Manager sees their site team's activity, etc. Likely
