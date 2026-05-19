@@ -47,9 +47,6 @@ Last reprioritised: 2026-05-18.
 
 ## 🟠 P1 — High (launch blockers + security)
 
-- [ ] **Audit other tables' RLS** for the `WITH CHECK` gap fixed on `profiles`
-  — candidates: `tenants`, `sites`, `pending_invites`, `budget_lines`.
-
 - [ ] **Play Store icon + screenshots upload** — manual upload via Play Console
   (asset paths under `C:\consne\*`).
 
