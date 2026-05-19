@@ -183,6 +183,16 @@ Last reprioritised: 2026-05-18.
   Also seed the master list with common construction materials.
   Do NOT build until the 2026-05-18 build is verified (see P0).
 
+- [ ] **Task update cadence** _(enhancement of the Task module)_ — discussed
+  2026-05-19. When a task is assigned, the assigner sets a required update
+  interval (every 1h / 2h / 4h / 8h / daily / none). Plan:
+  • add `tasks.update_interval_hours`;
+  • assign form gets an "update every" dropdown;
+  • next-update-due = last task_update time (or task start) + interval; if past
+    due → an "Update overdue" flag on the task card, detail and "My Tasks"
+    widget. Makes the vague "stalled" idea precise.
+  Reminders/notifications for due updates build on this via the Notifications item.
+
 - [ ] **Team activity log** _(v2 — new feature)_ — requested 2026-05-19.
   A contractor should see what their team is doing (attendance marked, logs
   filed, tasks updated, transfers actioned), and the same view cascades down
