@@ -152,6 +152,15 @@ Last reprioritised: 2026-05-18.
   Recommended: start with the read-only timeline. Could live as a Reports tab.
   Do NOT build until the 2026-05-18 build is verified (see P0).
 
+- [ ] **"Return material" action** _(enhancement / hardening of the materials flow)_
+  — when material is over-allocated to a work item, the leftover must go back to
+  stock. Allocations are immutable (correct — like the ledger), so the fix is
+  NOT editing/deleting the allocation. The `material_transactions` schema
+  already has a `return` txn_type ("unused material returned to stock"); it
+  just needs a UI action: pick the material + quantity returned + (optionally)
+  link the originating allocation → posts a `return` transaction → stock rises.
+  Closes RLS-audit finding #5.
+
 - [ ] **Stock-adjustment approval workflow** _(enhancement / hardening)_ — the
   material ledger is now append-only (migration 20260519030000). The only way
   to correct stock outside normal receipts/transfers/consumption is an
