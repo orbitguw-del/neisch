@@ -103,9 +103,11 @@ Mark each: ✅ pass · ❌ fail (note what happened) · ⏭ skipped
 
 ## Sign-off
 
-- Tested by: ______________________
-- Date: ______________________
-- Overall: ☐ all pass — build verified  ☐ issues found (listed below)
+- Tested by: **Karun (owner)**
+- Date: **2026-05-19**
+- Overall: ✅ **build verified** — v1.1.1 (versionCode 15) cleared for upload to
+  Play Console closed testing. Any issues found from here on are tagged into
+  `docs/TODO.md` as they surface.
 
 Issues found (paste here, then send to Claude to fix):
 1.

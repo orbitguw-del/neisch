@@ -5,36 +5,16 @@ Last reprioritised: 2026-05-18.
 
 ---
 
-## ⚠️ Scope decision (2026-05-18)
-
-- [ ] **Decide: launch lean v1 now, or bundle the 2026-05-18 additions.**
-  The app was feature-complete and launchable *before* 2026-05-18. The work
-  done that day — offline mode, on-site photos, the Task/Work-Assignment
-  module, the 4-stage transfer redesign, the attendance/daily-log confirmation
-  layer — is genuinely **beyond original v1 scope** (effectively v1.5 / v2).
-  It is also untested (see P0 below). Decision needed:
-  • **Option A** — ship the original lean v1 now; treat the 2026-05-18 work as a
-    fast-follow once verified. Faster to market, less launch risk.
-  • **Option B** — fold everything into one bigger launch. More to test and
-    stabilise first; later launch.
-  Recommendation: A — don't let unverified v2 scope hold up a launchable v1.
+> _Scope decision (2026-05-18) — RESOLVED 2026-05-19: bundled. v1.1.1 ships the
+> 2026-05-18 work (offline, photos, tasks, transfer redesign, confirmation
+> layer) together. Build verified by the owner; uploading v1.1.1 to Play
+> closed testing._
+> _Build verified 2026-05-19 — see docs/VERIFICATION-2026-05-18.md. Any issues
+> found from here on are tagged and added below as they surface._
 
 ---
 
 ## 🔴 P0 — Critical / blocking
-
-- [ ] **Verify the 2026-05-18 build end-to-end — NOT yet tested in the app.**
-  A large amount shipped on 2026-05-18 (offline mode, on-site photos, the
-  Task/Work-Assignment module, the 4-stage material-transfer redesign, the
-  attendance/daily-log confirmation layer). It all builds and the logic is
-  sound, but **none of it has been exercised by a real user.** Before relying
-  on it or adding anything new: walk each flow on `storeyinfra.com` —
-  task assign→update→submit→confirm; transfer initiate→dispatch→approve→receive;
-  attendance mark→confirm-day→payroll flag; photo capture (timestamp + zoom);
-  offline entry → reconnect → sync. Fix whatever breaks before further work.
-
-- [ ] **Upload `storey-v1.1.0.aab`** to Play Console (closed testing) — gets the
-  offline + photo features to testers.
 
 - [ ] **Fix broken IPv4 internet on the office network** — router gets IPv6 but
   no IPv4. PC has no IPv4 default gateway; `tracert 8.8.8.8` returns
