@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Storey — Verification Checklist (2026-05-18 build)</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #2C1810; font-size: 11pt;
+         line-height: 1.45; margin: 0; }
+  h1 { font-family: Georgia, serif; font-size: 21pt; margin: 0; }
+  h2 { font-family: Georgia, serif; font-size: 13pt; margin: 18px 0 8px;
+       border-bottom: 2px solid #B85042; padding-bottom: 3px; }
+  .sub { color: #8b7b72; font-size: 10pt; margin: 4px 0 2px; }
+  .hdr { border-bottom: 3px solid #B85042; padding-bottom: 10px; margin-bottom: 14px; }
+  .hdr .brand { color: #B85042; font-weight: bold; letter-spacing: 2px; font-size: 10pt; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0; }
+  th, td { border: 1px solid #d8d2c6; padding: 5px 8px; text-align: left; font-size: 10pt; }
+  th { background: #F4F2E9; }
+  .ok { color: #3f7d54; font-weight: bold; }
+  .test { border: 1px solid #e7e1d8; border-radius: 6px; padding: 9px 12px; margin: 9px 0;
+          page-break-inside: avoid; }
+  .test .t { font-weight: bold; font-size: 10.5pt; }
+  .cb { display: inline-block; width: 11px; height: 11px; border: 1.5px solid #8b7b72;
+        border-radius: 2px; margin-right: 7px; vertical-align: -1px; }
+  .step { margin: 3px 0; }
+  .exp { color: #8f3d32; font-style: italic; }
+  .res { margin-top: 6px; border-top: 1px dashed #d8d2c6; padding-top: 5px; font-size: 9.5pt;
+         color: #8b7b72; }
+  .line { display: inline-block; border-bottom: 1px solid #b9aa9e; min-width: 220px; }
+  .signoff { border: 1px solid #d8d2c6; border-radius: 6px; padding: 12px; margin-top: 14px; }
+  .muted { color: #8b7b72; font-size: 9.5pt; }
+</style>
+</head>
+<body>
+
+  <div class="hdr">
+    <div class="brand">STOREY · CONSTRUCTION, ORGANISED</div>
+    <h1>Verification Checklist</h1>
+    <div class="sub">2026-05-18 build — offline mode · on-site photos · Task module ·
+      4-stage material transfer · attendance &amp; daily-log confirmation · spinner &amp;
+      password-reset fixes</div>
+    <div class="sub">Walk each test on storeyinfra.com. Tick the box, note anything that breaks.</div>
+  </div>
+
+  <h2>Part 1 — Backend &amp; deployment (already verified)</h2>
+  <table>
+    <tr><th>Check</th><th>Result</th></tr>
+    <tr><td>Web app live (storeyinfra.com)</td><td class="ok">PASS — HTTP 200</td></tr>
+    <tr><td>Edge functions responding</td><td class="ok">PASS — HTTP 200</td></tr>
+    <tr><td>All migrations applied to live DB (009 … 20260518170000)</td><td class="ok">PASS</td></tr>
+    <tr><td>New tables tasks, task_updates exist</td><td class="ok">PASS</td></tr>
+    <tr><td>attendance / daily_logs / material_transfers columns applied</td><td class="ok">PASS</td></tr>
+    <tr><td>site-photos storage bucket migration applied</td><td class="ok">PASS</td></tr>
+  </table>
+
+  <h2>Part 2 — Manual UI tests</h2>
+  <div class="muted">Mark each test: pass / fail (note what happened) / skipped.</div>
+
+  <div class="test">
+    <div class="t">T1 — Tasks: cascade assignment</div>
+    <div class="step"><span class="cb"></span>Contractor creates a task, assigns to a Site Manager</div>
+    <div class="step"><span class="cb"></span>Site Manager adds a sub-task, assigns to a Supervisor</div>
+    <div class="step"><span class="cb"></span>Supervisor adds a sub-task assigned to a Worker</div>
+    <div class="step exp">Expected: the assignee dropdown shows only the next role down each time</div>
+    <div class="res">Result: <span class="line">&nbsp;</span>&nbsp;&nbsp;Notes: <span class="line">&nbsp;</span></div>
+  </div>
+
+  <div class="test">
+    <div class="t">T2 — Tasks: daily update + status</div>
+    <div class="step"><span class="cb"></span>Log a daily update on a task with a note + photo</div>
+    <div class="step"><span class="cb"></span>Move Pending → In progress → Submitted</div>
+    <div class="step"><span class="cb"></span>As the assigner, Confirm it → becomes Done</div>
+    <div class="step"><span class="cb"></span>"Send back" a Submitted task → returns to In progress</div>
+    <div class="step exp">Expected: overdue tasks show a red "N days late" badge</div>
+    <div class="res">Result: <span class="line">&nbsp;</span>&nbsp;&nbsp;Notes: <span class="line">&nbsp;</span></div>
+  </div>
+
+  <div class="test">
+    <div class="t">T3 — Material transfer: 4 stages</div>
+    <div class="step"><span class="cb"></span>Store Keeper / Site Manager initiates a transfer</div>
+    <div class="step"><span class="cb"></span>From-site Supervisor confirms dispatch — from-site stock drops</div>
+    <div class="step"><span class="cb"></span>Store Keeper / Site Manager approves it</div>
+    <div class="step"><span class="cb"></span>Receiving site accepts with quantity — to-site stock rises</div>
+    <div class="step exp">Expected: the Activity log shows who did each stage + when</div>
+    <div class="res">Result: <span class="line">&nbsp;</span>&nbsp;&nbsp;Notes: <span class="line">&nbsp;</span></div>
+  </div>
+
+  <div class="test">
+    <div class="t">T4 — Attendance confirmation</div>
+    <div class="step"><span class="cb"></span>Supervisor marks attendance → shows "pending confirmation"</div>
+    <div class="step"><span class="cb"></span>Site Manager → "Confirm Day" → shows Confirmed</div>
+    <div class="step"><span class="cb"></span>Reports → Attendance: unconfirmed day shows the amber "pending" banner</div>
+    <div class="res">Result: <span class="line">&nbsp;</span>&nbsp;&nbsp;Notes: <span class="line">&nbsp;</span></div>
+  </div>
+
+  <div class="test">
+    <div class="t">T5 — Daily log confirmation</div>
+    <div class="step"><span class="cb"></span>Supervisor files a daily log → badge "Pending"</div>
+    <div class="step"><span class="cb"></span>Site Manager confirms → badge "Confirmed"</div>
+    <div class="step"><span class="cb"></span>Edit a confirmed log → returns to "Pending"</div>
+    <div class="res">Result: <span class="line">&nbsp;</span>&nbsp;&nbsp;Notes: <span class="line">&nbsp;</span></div>
+  </div>
+
+  <div class="test">
+    <div class="t">T6 — On-site photos</div>
+    <div class="step"><span class="cb"></span>Add a photo on a daily log / expense / receipt / worker</div>
+    <div class="step"><span class="cb"></span>Camera opens (not gallery first) on a phone</div>
+    <div class="step"><span class="cb"></span>Saved photo shows a date-time stamp in the corner</div>
+    <div class="step"><span class="cb"></span>Tap a thumbnail → opens full-size; tap / close to dismiss</div>
+    <div class="res">Result: <span class="line">&nbsp;</span>&nbsp;&nbsp;Notes: <span class="line">&nbsp;</span></div>
+  </div>
+
+  <div class="test">
+    <div class="t">T7 — Offline mode</div>
+    <div class="step"><span class="cb"></span>Turn off the network (airplane mode)</div>
+    <div class="step"><span class="cb"></span>Mark attendance / file a daily log / add an expense</div>
+    <div class="step"><span class="cb"></span>Offline banner appears; the entry saves locally</div>
+    <div class="step"><span class="cb"></span>Turn the network back on → banner syncs → data appears server-side</div>
+    <div class="res">Result: <span class="line">&nbsp;</span>&nbsp;&nbsp;Notes: <span class="line">&nbsp;</span></div>
+  </div>
+
+  <div class="test">
+    <div class="t">T8 — Loading spinner</div>
+    <div class="step"><span class="cb"></span>Use the app a while; switch browser tabs and back</div>
+    <div class="step exp">Expected: no endless "Loading Storey…" spinner; no full-screen
+      blank-out on a background token refresh</div>
+    <div class="res">Result: <span class="line">&nbsp;</span>&nbsp;&nbsp;Notes: <span class="line">&nbsp;</span></div>
+  </div>
+
+  <div class="test">
+    <div class="t">T9 — Password reset</div>
+    <div class="step"><span class="cb"></span>Login → Forgot password → enter email</div>
+    <div class="step"><span class="cb"></span>"Check your email (incl. spam)" message shows</div>
+    <div class="step"><span class="cb"></span>Email arrives from noreply@storeyinfra.com</div>
+    <div class="step"><span class="cb"></span>Link opens the Set-new-password page (not login/dashboard)</div>
+    <div class="step"><span class="cb"></span>New password set → lands in the dashboard</div>
+    <div class="res">Result: <span class="line">&nbsp;</span>&nbsp;&nbsp;Notes: <span class="line">&nbsp;</span></div>
+  </div>
+
+  <div class="test">
+    <div class="t">T10 — Dashboards</div>
+    <div class="step"><span class="cb"></span>Supervisor dashboard shows "transfers awaiting your dispatch"</div>
+    <div class="step"><span class="cb"></span>Site Manager dashboard shows the "Needs your confirmation" panel</div>
+    <div class="res">Result: <span class="line">&nbsp;</span>&nbsp;&nbsp;Notes: <span class="line">&nbsp;</span></div>
+  </div>
+
+  <h2>Sign-off</h2>
+  <div class="signoff">
+    <p>Tested by: <span class="line">&nbsp;</span>&nbsp;&nbsp;&nbsp;
+       Date: <span class="line" style="min-width:140px">&nbsp;</span></p>
+    <p>Overall:&nbsp;&nbsp;<span class="cb"></span> All pass — build verified&nbsp;&nbsp;&nbsp;&nbsp;
+       <span class="cb"></span> Issues found (list below)</p>
+    <p class="muted">Issues found — paste this list to Claude to fix:</p>
+    <p>1. <span class="line" style="min-width:430px">&nbsp;</span></p>
+    <p>2. <span class="line" style="min-width:430px">&nbsp;</span></p>
+    <p>3. <span class="line" style="min-width:430px">&nbsp;</span></p>
+  </div>
+
+</body>
+</html>
