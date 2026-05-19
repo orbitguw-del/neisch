@@ -183,6 +183,18 @@ Last reprioritised: 2026-05-18.
   Also seed the master list with common construction materials.
   Do NOT build until the 2026-05-18 build is verified (see P0).
 
+- [ ] **Team activity log** _(v1.x / v2 — new feature)_ — requested 2026-05-19.
+  A contractor should see what their team is doing (attendance marked, logs
+  filed, tasks updated, transfers actioned), and the same view cascades down
+  the hierarchy — a Site Manager sees their site team's activity, etc. Likely
+  an `activity_log` table written by triggers / app events, with a per-role
+  scoped feed. Sizeable — needs its own plan.
+
+- [ ] **Team view down the hierarchy** _(enhancement)_ — the Team page (with the
+  new member roster: name · role · email · phone) is currently contractor-only.
+  Extend it so a Site Manager can see the contact details of their own site
+  team (supervisors / store keepers on their assigned sites), scoped by RLS.
+
 - [ ] **AI features — voice input first** _(v1.x / v2 — new feature)_ — explored
   2026-05-18. Principle: add AI only where it removes real friction for
   NE-India site users, never as decoration. Prioritised list:

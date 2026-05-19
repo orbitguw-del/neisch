@@ -89,7 +89,7 @@ export default function Team() {
 
     supabase
       .from('profiles')
-      .select('id, full_name, role')
+      .select('id, full_name, role, email, phone, phone_verified')
       .eq('tenant_id', tenantId)
       .neq('role', 'contractor')
       .then(({ data, error }) => {
@@ -149,6 +149,39 @@ export default function Team() {
       {tenantMembers.length === 0 && (
         <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
           No team members found. Team members must register with their company email and you can assign them here once their accounts exist.
+        </div>
+      )}
+
+      {/* Team members roster — name, role, email, phone */}
+      {tenantMembers.length > 0 && (
+        <div className="card overflow-hidden mb-6">
+          <div className="border-b border-gray-200 bg-gray-50 px-5 py-3">
+            <p className="text-sm font-semibold text-gray-900">Team Members</p>
+            <p className="text-xs text-gray-500">
+              {tenantMembers.length} member{tenantMembers.length > 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {tenantMembers.map((m) => (
+              <div key={m.id} className="flex items-center gap-3 px-5 py-3">
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
+                  {(m.full_name ?? '?').slice(0, 2).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900 truncate">{m.full_name ?? 'Unnamed'}</p>
+                  <p className="text-xs text-gray-500">{ROLE_LABELS[m.role] ?? m.role}</p>
+                </div>
+                <div className="text-right text-xs">
+                  {m.email
+                    ? <p className="text-gray-700 truncate max-w-[180px]">{m.email}</p>
+                    : <p className="text-gray-400">no email</p>}
+                  {m.phone
+                    ? <p className="text-gray-600">{m.phone}{m.phone_verified ? ' ✓' : ''}</p>
+                    : <p className="text-gray-400">no phone</p>}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
