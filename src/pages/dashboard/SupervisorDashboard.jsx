@@ -5,6 +5,7 @@ import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
 import useDailyLogStore from '@/stores/dailyLogStore'
 import useMaterialTransferStore from '@/stores/materialTransferStore'
+import MyTasksWidget from '@/components/dashboard/MyTasksWidget'
 import PageHeader from '@/components/ui/PageHeader'
 import { formatDate } from '@/lib/utils'
 
@@ -125,6 +126,9 @@ export default function SupervisorDashboard() {
           )}
         </div>
       </div>
+
+      {/* My tasks */}
+      <MyTasksWidget profileId={profile?.id} />
 
       {/* Transfers awaiting dispatch */}
       {awaitingDispatch.length > 0 && (

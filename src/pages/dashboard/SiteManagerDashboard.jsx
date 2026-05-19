@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
 import StatCard from '@/components/ui/StatCard'
+import MyTasksWidget from '@/components/dashboard/MyTasksWidget'
 import PageHeader from '@/components/ui/PageHeader'
 import { formatINR } from '@/lib/utils'
 
@@ -69,6 +70,9 @@ export default function SiteManagerDashboard() {
         <StatCard label="Workers"        value="—"            icon={Users}        color="sage" />
         <StatCard label="Logs Today"     value="—"            icon={ClipboardList} color="red"  />
       </div>
+
+      {/* My tasks */}
+      <MyTasksWidget profileId={profile?.id} />
 
       {/* Needs your confirmation */}
       {pendingItems.length > 0 && (
