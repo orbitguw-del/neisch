@@ -152,6 +152,18 @@ Last reprioritised: 2026-05-18.
   Recommended: start with the read-only timeline. Could live as a Reports tab.
   Do NOT build until the 2026-05-18 build is verified (see P0).
 
+- [ ] **Stock-adjustment approval workflow** _(enhancement / hardening)_ — the
+  material ledger is now append-only (migration 20260519030000). The only way
+  to correct stock outside normal receipts/transfers/consumption is an
+  `adjustment` transaction. Per owner decision (2026-05-19), adjustments are an
+  *audit* action and must be **approved by the Contractor**. Plan:
+  • a store keeper / site manager *proposes* an adjustment (proposed quantity +
+    reason), it does not change stock yet;
+  • the Contractor reviews and approves → only then the `adjustment` ledger
+    entry posts and stock updates;
+  • rejected proposals are recorded but post nothing.
+  Until built, treat `adjustment` as contractor-only by convention.
+
 - [ ] **Material master list** _(enhancement / hardening of the materials feature)_
   — requested 2026-05-18. Today materials are free-typed per site, so the same
   material gets inconsistent names ("Cement" / "cement" / "OPC Cement"). This
