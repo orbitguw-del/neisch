@@ -165,11 +165,11 @@ const router = createHashRouter([
         ),
       },
 
-      // ── Materials (role-scoped) ─────────────────────────────────────────────
+      // ── Materials (role-scoped — all ops roles see materials at their sites) ─
       {
         path: '/materials',
         element: (
-          <RoleGuard roles={STOREKEEPER_UP}>
+          <RoleGuard roles={ALL_ROLES}>
             <Materials />
           </RoleGuard>
         ),
@@ -213,41 +213,43 @@ const router = createHashRouter([
         ),
       },
 
-      // ── Inventory ───────────────────────────────────────────────────────────
+      // ── Inventory (all ops roles — RLS scopes to their sites) ───────────────
       {
         path: '/inventory',
         element: (
-          <RoleGuard roles={STOREKEEPER_UP}>
+          <RoleGuard roles={ALL_ROLES}>
             <Inventory />
           </RoleGuard>
         ),
       },
 
-      // ── Material Receipts (inward register) ──────────────────────────────────
+      // ── Material Receipts (inward register — all ops roles) ──────────────────
       {
         path: '/receipts',
         element: (
-          <RoleGuard roles={STOREKEEPER_UP}>
+          <RoleGuard roles={ALL_ROLES}>
             <MaterialReceipts />
           </RoleGuard>
         ),
       },
 
-      // ── Material Transfers (inter-site) ──────────────────────────────────────
+      // ── Material Transfers (4-stage flow — every role has a step) ────────────
+      // store_keeper/site_manager initiate · supervisor prepares dispatch ·
+      // store_keeper/site_manager approve · supervisor/site_manager receive.
       {
         path: '/transfers',
         element: (
-          <RoleGuard roles={MANAGER_UP}>
+          <RoleGuard roles={ALL_ROLES}>
             <MaterialTransfers />
           </RoleGuard>
         ),
       },
 
-      // ── Equipment & Assets ────────────────────────────────────────────────────
+      // ── Equipment & Assets (all ops roles see assets at their sites) ─────────
       {
         path: '/equipment',
         element: (
-          <RoleGuard roles={STOREKEEPER_UP}>
+          <RoleGuard roles={ALL_ROLES}>
             <EquipmentAssets />
           </RoleGuard>
         ),
@@ -257,7 +259,7 @@ const router = createHashRouter([
       {
         path: '/inventory/:materialId/ledger',
         element: (
-          <RoleGuard roles={STOREKEEPER_UP}>
+          <RoleGuard roles={ALL_ROLES}>
             <MaterialLedger />
           </RoleGuard>
         ),
