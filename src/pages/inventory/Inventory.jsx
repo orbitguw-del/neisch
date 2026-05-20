@@ -247,7 +247,10 @@ export default function Inventory() {
   const canAddMaterial = ['superadmin', 'contractor', 'site_manager', 'store_keeper'].includes(role)
   const canConsume     = ['superadmin', 'site_manager'].includes(role)
   const canAdjust      = ['superadmin', 'contractor', 'site_manager', 'store_keeper'].includes(role)
-  const canAllocate    = ['superadmin', 'contractor', 'site_manager'].includes(role)
+  // Supervisor added 2026-05-20 — they're the on-site role who actually
+  // consumes material against work. RLS in 20260520020000_supervisor_can_allocate
+  // enforces site-assignment scoping at the DB layer.
+  const canAllocate    = ['superadmin', 'contractor', 'site_manager', 'supervisor'].includes(role)
 
   useEffect(() => { if (tenantId) fetchSites(tenantId) }, [tenantId, fetchSites])
 
