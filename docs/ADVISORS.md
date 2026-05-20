@@ -40,7 +40,7 @@ Statuses: **Target** → **Reached out** → **Met** → **Engaged** → **Passe
 |---|---|---|---|---|---|
 | **Avinash Chirania** — Founder, Architect, **4Line Designs** | 1 — Construction (+ also 3 — NE network) | _own contact_ | Target | _tbd_ | Architect-founder — strong site/process insight + a natural route to contractor introductions (his clients). Slot #1 priority. |
 |  | 1 — Construction |  | Target |  |  |
-|  | 2 — B2B SaaS |  | Target |  |  |
+| **Upmanyu Sharma** — _company / role tbd_ | 2 — B2B SaaS | _friend (own contact)_ | Target | _tbd_ | Friend — easy to start the conversation. **Check fit:** is his SaaS experience SMB-India / vertical, or enterprise/different market? That determines the lens he brings. |
 |  | 2 — B2B SaaS |  | Target |  |  |
 |  | 3 — NE network |  | Target |  |  |
 |  | 4 — Sales/GTM |  | Target |  |  |
