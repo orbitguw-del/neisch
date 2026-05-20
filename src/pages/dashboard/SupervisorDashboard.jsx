@@ -6,6 +6,8 @@ import useSiteStore from '@/stores/siteStore'
 import useDailyLogStore from '@/stores/dailyLogStore'
 import useMaterialTransferStore from '@/stores/materialTransferStore'
 import MyTasksWidget from '@/components/dashboard/MyTasksWidget'
+import AllocationsTodayWidget from '@/components/dashboard/AllocationsTodayWidget'
+import SiteStockWidget from '@/components/dashboard/SiteStockWidget'
 import PageHeader from '@/components/ui/PageHeader'
 import { formatDate } from '@/lib/utils'
 
@@ -129,6 +131,12 @@ export default function SupervisorDashboard() {
 
       {/* My tasks */}
       <MyTasksWidget profileId={profile?.id} />
+
+      {/* Material allocated by you today */}
+      <AllocationsTodayWidget profileId={profile?.id} />
+
+      {/* Stock at a glance (lowest first across my sites) */}
+      <SiteStockWidget />
 
       {/* Transfers awaiting dispatch */}
       {awaitingDispatch.length > 0 && (
