@@ -38,7 +38,7 @@ Statuses: **Target** → **Reached out** → **Met** → **Engaged** → **Passe
 
 | Name | Expertise area | Intro source | Status | Ask (time / equity) | Notes |
 |---|---|---|---|---|---|
-|  | 1 — Construction |  | Target |  |  |
+| **Avinash Chirania** — Founder, Architect, **4Line Designs** | 1 — Construction (+ also 3 — NE network) | _own contact_ | Target | _tbd_ | Architect-founder — strong site/process insight + a natural route to contractor introductions (his clients). Slot #1 priority. |
 |  | 1 — Construction |  | Target |  |  |
 |  | 2 — B2B SaaS |  | Target |  |  |
 |  | 2 — B2B SaaS |  | Target |  |  |
