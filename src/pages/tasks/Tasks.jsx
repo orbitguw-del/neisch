@@ -197,7 +197,14 @@ function TaskDetail({ task, allTasks, profile, sites, onOpenTask, onClose }) {
   const taskUpdates = updates[task.id] ?? []
   const subtasks    = allTasks.filter((t) => t.parent_task_id === task.id)
   const subDone     = subtasks.filter((t) => t.status === 'done').length
-  const canSub      = ASSIGNS_TO[profile?.role] && task.assigned_to_profile  // can't sub-divide a worker leaf
+  // Sub-tasks blocked on closed parents:
+  //   - 'submitted' = assignee marked finished, in review → no new scope
+  //   - 'done'      = senior confirmed, hard close → no new scope
+  // Mirrors the DB trigger in 20260520010000_block_subtasks_on_closed_parent.sql.
+  const canSub      = ASSIGNS_TO[profile?.role]
+                      && task.assigned_to_profile
+                      && task.status !== 'submitted'
+                      && task.status !== 'done'
 
   useEffect(() => { fetchUpdates(task.id) }, [task.id, fetchUpdates])
 
