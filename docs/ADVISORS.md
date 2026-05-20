@@ -40,8 +40,9 @@ Statuses: **Target** → **Reached out** → **Met** → **Engaged** → **Passe
 |---|---|---|---|---|---|
 | **Avinash Chirania** — Founder, Architect, **4Line Designs** | 1 — Construction (+ also 3 — NE network) | _own contact_ | Target | _tbd_ | Architect-founder — strong site/process insight + a natural route to contractor introductions (his clients). Slot #1 priority. |
 |  | 1 — Construction |  | Target |  |  |
-| **Upmanyu Sharma** — _company / role tbd_ | 2 — B2B SaaS | _friend (own contact)_ | Target | _tbd_ | Friend — easy to start the conversation. **Check fit:** is his SaaS experience SMB-India / vertical, or enterprise/different market? That determines the lens he brings. |
-|  | 2 — B2B SaaS |  | Target |  |  |
+|  | 2 — B2B SaaS (SMB India) |  | Target |  |  |
+|  | 2 — B2B SaaS (SMB India) |  | Target |  |  |
+| **Upmanyu Sharma** — ERP Architect, London | **7 — Technical / ERP architecture** | _friend (own contact)_ | Target | _tbd_ | Enterprise ERP architecture lens: workflow engine, multi-tenancy, data model, audit/ledger patterns. Strong for *system design* questions as Storey scales — NOT for SMB-India GTM. Different role from slot #2; slot #2 still open. |
 |  | 3 — NE network |  | Target |  |  |
 |  | 4 — Sales/GTM |  | Target |  |  |
 |  | 5 — Legal |  | Target |  |  |
@@ -97,6 +98,13 @@ The skill you need is "sell software to small businesses who don't want software
 - An **ex-founder** who has *recently* closed a pre-seed or seed in India — the playbook changes yearly
 - A **VC associate/principal** at an Indian early-stage fund — for the lens, not the money (yet)
 - **Only relevant when you're <90 days from raising** — too early and they ghost; too late and you're behind
+
+### 7 — Technical / architecture sounding-board *(useful, not urgent)*
+- An **enterprise ERP architect** — workflow engines, multi-tenancy, audit/ledger
+  patterns. Storey is becoming a vertical ERP; one good architect can prevent
+  6 months of avoidable mistakes (Upmanyu fits)
+- A **principal engineer / CTO** from a multi-tenant SaaS — for scaling questions
+- Not the same as slot 2 (which is *go-to-market*, not architecture)
 
 ### Cross-cutting bonuses (not separate slots — added value if a candidate has them)
 - **Hindi / Assamese** language fluency — for product UX feedback
