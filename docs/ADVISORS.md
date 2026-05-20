@@ -52,6 +52,59 @@ Statuses: **Target** → **Reached out** → **Met** → **Engaged** → **Passe
 
 ---
 
+## Specific specializations to look for
+
+Not just *"a construction person"* — these are the concrete profiles, ranked by
+real value to Storey today.
+
+### 1 — Construction industry  *(highest leverage right now)*
+- **Active general contractor** running 3+ sites — feels the pain you're solving daily
+- **Practising architect / PMC** overseeing multiple builds — sees the whole flow (Avinash fits)
+- **Civil/site engineer** with 10+ yrs on site, ideally now in a management role
+- **Real-estate developer** with multi-project ops (their site teams are your buyer)
+- **Quantity surveyor** — for the BOQ/cost angle (only if you ever revive BOQ; long-term)
+- **Avoid:** retired veterans 10+ yrs out — context is stale
+
+### 2 — B2B SaaS that *actually* sells to SMBs in India
+The skill you need is "sell software to small businesses who don't want software" — that's a *specific* operator profile.
+- A **founder / first-10 operator** from Khatabook · OkCredit · Vyapar · Tally · Marg ERP · MyBillBook · ClearTax · Zoho (SMB lines)
+- A **VP Product** or **Head of Customer Success** from any vertical SaaS that scaled in India (Drip Capital, Procol, Infra.Market — adjacent)
+- **Ideal:** someone who has shipped Hindi/regional-language UI to small-business users — that's a hard-won lesson set
+- **Avoid:** enterprise-only B2B operators (Salesforce alums etc.) — different game
+
+### 3 — NE-India network
+- A **respected contractor / developer** with PWD/RWD/govt work in Assam / Meghalaya / Nagaland
+- A **CREDAI Assam** chapter member
+- A **senior banker** at HDFC / SBI / Axis corporate banking, Guwahati branch
+- An **IIT Guwahati / NIT** faculty member with industry links
+- A **state PWD / urban-development** retired senior officer
+- Look for someone who can place a call and get a meeting — that's the asset
+
+### 4 — B2B sales / GTM to SMB *(not "marketing")*
+- A **field-sales head** from Tally / Marg ERP / Vyapar — they cracked SMB selling
+- A **channel-sales** operator who used dealer/CA networks to distribute SaaS
+- A **sales-led pricing** specialist — contractors haggle; the pricing playbook matters
+- **Avoid:** digital marketers / growth hackers — your buyer doesn't see ads
+
+### 5 — Legal / regulatory (sequence matters)
+- **CA (Chartered Accountant) FIRST** — entity registration, GST, tax, vendor contracts. Cheapest to engage.
+- **Startup lawyer SECOND** — once you raise: equity, ESOP pool, term-sheet, FAST agreements
+- **DPDP / data-privacy lawyer** — only when you cross 50k+ users or take enterprise contracts
+- You don't need all three on retainer; one CA + one startup lawyer on call covers 90%
+
+### 6 — Finance / fundraising
+- An **active angel** with 5+ Indian SaaS investments in the past 3 years (not someone who invested once in 2018)
+- An **ex-founder** who has *recently* closed a pre-seed or seed in India — the playbook changes yearly
+- A **VC associate/principal** at an Indian early-stage fund — for the lens, not the money (yet)
+- **Only relevant when you're <90 days from raising** — too early and they ghost; too late and you're behind
+
+### Cross-cutting bonuses (not separate slots — added value if a candidate has them)
+- **Hindi / Assamese** language fluency — for product UX feedback
+- **Female advisor** for board balance and a different lens — actively under-represented in ConTech
+- **Government procurement** experience — if you ever sell to PSUs or state-tied work
+
+---
+
 ## What to offer (norms, not rules)
 
 - **Time:** 30–60 minutes a month, plus ad-hoc messages. Set the expectation up front.
