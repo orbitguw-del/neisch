@@ -44,7 +44,39 @@
         </provider>
     </application>
 
-    <!-- Permissions -->
+    <!-- ── Permissions ─────────────────────────────────────────────────── -->
 
+    <!-- Network -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Camera (added 2026-05-22 — was missing, app crashed when invoking camera) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Photo storage — split by Android version per Google's guidelines -->
+    <!-- Android 12 and below: legacy external-storage read -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- Android 13+: scoped media access -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- Camera hardware is required but the feature is OPTIONAL so the app
+         installs on tablets without a rear camera. -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
+    <!-- ── Package visibility (Android 11+) ──────────────────────────────
+         Without this, ACTION_IMAGE_CAPTURE returns null on Android 11+ and
+         the Capacitor camera plugin crashes. -->
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.PICK" />
+            <data android:mimeType="image/*" />
+        </intent>
+    </queries>
+
 </manifest>

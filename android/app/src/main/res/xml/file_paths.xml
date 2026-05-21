@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  FileProvider paths used by the Capacitor camera plugin.
+
+  Updated 2026-05-22 — added internal + cache paths required by Capacitor 8
+  on Android 13+ where the legacy external-path is restricted by scoped
+  storage and the camera plugin crashes when writing the captured photo.
+-->
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-path name="my_images" path="." />
-    <cache-path name="my_cache_images" path="." />
+    <!-- Capacitor camera writes captured photos to one of these. -->
+    <files-path           name="my_files"          path="." />
+    <cache-path           name="my_cache"          path="." />
+    <external-files-path  name="my_external_files" path="." />
+    <external-cache-path  name="my_external_cache" path="." />
+
+    <!-- Legacy external storage — Android 12 and below only. -->
+    <external-path        name="my_images"         path="." />
 </paths>
