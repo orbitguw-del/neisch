@@ -61,6 +61,10 @@ function WorkerForm({ sites, defaultSiteId, onSubmit, loading, onCancel }) {
   })
 
   const [photo, setPhoto] = useState(null)
+  // Progressive disclosure — only show the 5 essential fields by default.
+  // Hides: joined date, employment type, vendor, ID proof, address,
+  // emergency contact. Power users expand via the toggle.
+  const [showMore, setShowMore] = useState(false)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
   const handleSubmit = (e) => {
@@ -82,135 +86,140 @@ function WorkerForm({ sites, defaultSiteId, onSubmit, loading, onCancel }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
 
-      {/* Basic info */}
-      <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Basic Info</p>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2">
-            <label className="label">Full name *</label>
-            <input
-              className="input" required
-              value={form.name} onChange={set('name')}
-              placeholder="e.g. Biren Das"
-            />
-          </div>
-          <div>
-            <label className="label">Trade / Skill *</label>
-            <select className="input" value={form.trade} onChange={set('trade')}>
-              {TRADE_OPTIONS.map((t) => <option key={t}>{t}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="label">Daily wage (₹)</label>
-            <input
-              className="input" type="number" min="0" step="50"
-              value={form.daily_wage} onChange={set('daily_wage')}
-              placeholder="600"
-            />
-          </div>
-          <div>
-            <label className="label">Phone</label>
-            <input
-              className="input" type="tel"
-              value={form.phone} onChange={set('phone')}
-              placeholder="+91 98XXXXXXXX"
-            />
-          </div>
-          <div>
-            <label className="label">Joined date</label>
-            <input className="input" type="date" value={form.joined_at} onChange={set('joined_at')} />
-          </div>
-        </div>
-      </div>
-
-      {/* Site assignment */}
-      <div>
-        <label className="label">Assign to Site *</label>
-        <select className="input" value={form.site_id} onChange={set('site_id')} required>
-          {sites.map((s) => (
-            <option key={s.id} value={s.id}>{s.name}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Employment type */}
-      <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Employment</p>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label">Employment Type</label>
-            <select className="input" value={form.employment_type} onChange={set('employment_type')}>
-              {EMPLOYMENT_TYPES.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
-            </select>
-          </div>
-          {form.employment_type === 'vendor' && (
-            <div>
-              <label className="label">Vendor / Contractor Name *</label>
-              <input
-                className="input"
-                required={form.employment_type === 'vendor'}
-                value={form.vendor_name} onChange={set('vendor_name')}
-                placeholder="e.g. Sharma Labour Supply"
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ID proof */}
-      <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">ID Proof</p>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label">Proof Type</label>
-            <select className="input" value={form.id_proof_type} onChange={set('id_proof_type')}>
-              <option value="">— Select —</option>
-              {ID_PROOF_TYPES.map((p) => (
-                <option key={p.value} value={p.value}>{p.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label">ID Number — last 4 digits only</label>
-            <input
-              className="input"
-              inputMode="numeric"
-              maxLength={4}
-              value={form.id_proof_number}
-              onChange={(e) => setForm((f) => ({
-                ...f,
-                id_proof_number: e.target.value.replace(/\D/g, '').slice(0, 4),
-              }))}
-              placeholder="1234"
-            />
-            <p className="mt-1 text-xs text-gray-400">
-              For privacy &amp; compliance, store only the last 4 digits — never the full number.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Address + emergency */}
-      <div className="grid grid-cols-1 gap-3">
-        <div>
-          <label className="label">Home address</label>
+      {/* ── Essential fields (always visible) ─────────────────────── */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="col-span-2">
+          <label className="label">Full name *</label>
           <input
-            className="input"
-            value={form.address} onChange={set('address')}
-            placeholder="Village / Town, District"
+            className="input" required
+            value={form.name} onChange={set('name')}
+            placeholder="e.g. Biren Das"
           />
         </div>
         <div>
-          <label className="label">Emergency contact</label>
+          <label className="label">Trade / Skill *</label>
+          <select className="input" value={form.trade} onChange={set('trade')}>
+            {TRADE_OPTIONS.map((t) => <option key={t}>{t}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="label">Daily wage (₹)</label>
+          <input
+            className="input" type="number" min="0" step="50"
+            value={form.daily_wage} onChange={set('daily_wage')}
+            placeholder="600"
+          />
+        </div>
+        <div className="col-span-2">
+          <label className="label">Phone</label>
           <input
             className="input" type="tel"
-            value={form.emergency_contact} onChange={set('emergency_contact')}
-            placeholder="+91 98XXXXXXXX (family member)"
+            value={form.phone} onChange={set('phone')}
+            placeholder="+91 98XXXXXXXX"
           />
+        </div>
+        <div className="col-span-2">
+          <label className="label">Assign to Site *</label>
+          <select className="input" value={form.site_id} onChange={set('site_id')} required>
+            {sites.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 
       <PhotoCapture value={photo} onChange={setPhoto} label="Worker photo" />
+
+      {/* ── Show more details toggle ────────────────────────────── */}
+      <button
+        type="button"
+        onClick={() => setShowMore((v) => !v)}
+        className="w-full rounded-md border border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-600 hover:border-brand-400 hover:text-brand-600 transition-colors"
+      >
+        {showMore
+          ? '− Hide extra details'
+          : '+ Add more details (ID proof, address, employment type)'}
+      </button>
+
+      {/* ── Hidden by default — joined date, employment, ID, address ─ */}
+      {showMore && (
+        <div className="space-y-5 border-t border-gray-100 pt-4">
+          {/* Joined date + employment */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Joined date</label>
+              <input className="input" type="date" value={form.joined_at} onChange={set('joined_at')} />
+            </div>
+            <div>
+              <label className="label">Employment Type</label>
+              <select className="input" value={form.employment_type} onChange={set('employment_type')}>
+                {EMPLOYMENT_TYPES.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
+              </select>
+            </div>
+            {form.employment_type === 'vendor' && (
+              <div className="col-span-2">
+                <label className="label">Vendor / Contractor Name *</label>
+                <input
+                  className="input"
+                  required={form.employment_type === 'vendor'}
+                  value={form.vendor_name} onChange={set('vendor_name')}
+                  placeholder="e.g. Sharma Labour Supply"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* ID proof */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">ID Proof Type</label>
+              <select className="input" value={form.id_proof_type} onChange={set('id_proof_type')}>
+                <option value="">— Select —</option>
+                {ID_PROOF_TYPES.map((p) => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">ID Number — last 4 digits</label>
+              <input
+                className="input"
+                inputMode="numeric"
+                maxLength={4}
+                value={form.id_proof_number}
+                onChange={(e) => setForm((f) => ({
+                  ...f,
+                  id_proof_number: e.target.value.replace(/\D/g, '').slice(0, 4),
+                }))}
+                placeholder="1234"
+              />
+              <p className="mt-1 text-xs text-gray-400">
+                For privacy, store only the last 4 digits.
+              </p>
+            </div>
+          </div>
+
+          {/* Address + emergency */}
+          <div className="grid grid-cols-1 gap-3">
+            <div>
+              <label className="label">Home address</label>
+              <input
+                className="input"
+                value={form.address} onChange={set('address')}
+                placeholder="Village / Town, District"
+              />
+            </div>
+            <div>
+              <label className="label">Emergency contact</label>
+              <input
+                className="input" type="tel"
+                value={form.emergency_contact} onChange={set('emergency_contact')}
+                placeholder="+91 98XXXXXXXX (family member)"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-1 border-t border-gray-100">
         <button type="button" onClick={onCancel} className="btn-secondary">Cancel</button>
