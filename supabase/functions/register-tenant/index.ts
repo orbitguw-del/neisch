@@ -1,4 +1,4 @@
-﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
@@ -28,7 +28,46 @@ serve(async (req) => {
       return json({ error: "Missing email, password, or tenant_name" }, 400)
     }
 
-    // Step 1: create auth user (email_confirm true so they can sign in immediately).
+    // ── Step 0: detect orphan / existing user before trying to create.
+    // An "orphan" is an auth.users row created earlier (often by a half-finished
+    // registration or invite flow) that has no profile + no tenant attached.
+    // The user can never sign in or reset their password — they need cleanup
+    // before re-registering.
+    //
+    // We look up the user by email via the admin API.
+    const { data: lookup } = await admin
+      .from("profiles")
+      .select("id, tenant_id")
+      .ilike("email", email)
+      .maybeSingle()
+      .catch(() => ({ data: null }))
+
+    const { data: existingList } = await admin.auth.admin.listUsers({
+      page: 1,
+      perPage: 200,
+    })
+    const existing = existingList?.users?.find(
+      (u) => (u.email ?? "").toLowerCase() === email.toLowerCase(),
+    )
+
+    if (existing && lookup?.tenant_id) {
+      // Real complete account — should sign in, not register.
+      return json({
+        error:
+          "This email already has a Storey account. Please sign in instead — use 'Forgot password' if you need to reset.",
+        code: "EMAIL_EXISTS_WITH_TENANT",
+      }, 409)
+    }
+
+    if (existing && !lookup?.tenant_id) {
+      // Orphan — clean it up so the user can register fresh.
+      await admin.auth.admin.deleteUser(existing.id).catch((e) =>
+        console.error("Failed to delete orphan user", existing.id, e),
+      )
+      // Fall through to the regular create flow below.
+    }
+
+    // ── Step 1: create auth user (email_confirm true so they can sign in immediately).
     const { data: userData, error: createError } = await admin.auth.admin.createUser({
       email,
       password,
@@ -36,11 +75,19 @@ serve(async (req) => {
       user_metadata: { full_name: full_name ?? null },
     })
     if (createError || !userData?.user) {
-      return json({ error: createError?.message ?? "Failed to create account" }, 400)
+      // Surface the actual Supabase error message instead of a generic one.
+      const msg = createError?.message ?? "Failed to create account"
+      const isDuplicate = /already.*regist|already.*exist|duplicate/i.test(msg)
+      return json({
+        error: isDuplicate
+          ? "This email is already registered. Please sign in instead."
+          : msg,
+        code: isDuplicate ? "EMAIL_EXISTS" : "AUTH_CREATE_FAILED",
+      }, isDuplicate ? 409 : 400)
     }
     createdUserId = userData.user.id
 
-    // Step 2: insert tenant â€” owned by the new user.
+    // ── Step 2: insert tenant — owned by the new user.
     const { error: tenantError } = await admin
       .from("tenants")
       .insert({ name: tenant_name, owner_id: createdUserId })
@@ -48,9 +95,12 @@ serve(async (req) => {
     if (tenantError) {
       // Rollback: delete the orphaned auth user.
       await admin.auth.admin.deleteUser(createdUserId).catch((e) =>
-        console.error("Rollback failed for user", createdUserId, e)
+        console.error("Rollback failed for user", createdUserId, e),
       )
-      return json({ error: `Failed to create company: ${tenantError.message}` }, 400)
+      return json({
+        error: `Failed to create company: ${tenantError.message}`,
+        code: "TENANT_INSERT_FAILED",
+      }, 400)
     }
 
     return json({ success: true, user_id: createdUserId })
@@ -58,9 +108,12 @@ serve(async (req) => {
     // Best-effort rollback on any unexpected error after user creation.
     if (createdUserId) {
       await admin.auth.admin.deleteUser(createdUserId).catch((e) =>
-        console.error("Rollback failed for user", createdUserId, e)
+        console.error("Rollback failed for user", createdUserId, e),
       )
     }
-    return json({ error: (error as Error).message }, 500)
+    return json({
+      error: (error as Error).message,
+      code: "UNEXPECTED",
+    }, 500)
   }
 })

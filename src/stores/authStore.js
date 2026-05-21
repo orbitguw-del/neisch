@@ -179,7 +179,20 @@ const useAuthStore = create((set, get) => ({
         tenant_name: tenantName,
       },
     })
-    if (error) throw new Error(error.message || 'Registration failed')
+    if (error) {
+      // supabase-js wraps non-2xx responses as FunctionsHttpError with a generic
+      // message ("Edge Function returned a non-2xx status code"). The actual
+      // error from our function lives in error.context — read it and surface
+      // the friendly message to the user instead of the generic one.
+      let serverMessage = null
+      try {
+        const body = await error.context?.json?.()
+        serverMessage = body?.error
+      } catch (_) {
+        /* ignore — fall back to generic message */
+      }
+      throw new Error(serverMessage || error.message || 'Registration failed')
+    }
     if (!data?.success) throw new Error(data?.error || 'Registration failed')
 
     // Sign in normally to establish a session in the browser.
