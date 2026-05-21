@@ -30,43 +30,23 @@ function webCapture() {
   })
 }
 
-/** Open the camera / picker and return a Blob, or null if cancelled. */
+/** Open the camera / picker and return a Blob, or null if cancelled.
+ *
+ *  v1.1.5 — Switched to the file-input path on Android too. The native
+ *  @capacitor/camera plugin (8.2.0) crashes the WebView on Android 16 +
+ *  targetSdk 36 when Camera.getPhoto() is invoked — confirmed via the
+ *  v1.1.4-debug build (crash between step [3] "about to call Camera.getPhoto"
+ *  and step [4] "returned"). Tracked as a v1.x cleanup in docs/TODO.md
+ *  ("revisit native camera plugin"). Until then, the file-input flow is
+ *  the same code path that already works on storeyinfra.com mobile browser:
+ *  proven, no plugin dependency, no crash surface.
+ *
+ *  The file input with capture="environment" prompts the system camera
+ *  app on Android, which returns a JPEG file the same way our existing
+ *  pipeline expects. Date-time stamping in stampTimestamp() is unchanged.
+ */
 export async function capturePhoto() {
-  // Native app → Capacitor camera. Web/mobile browser → file input.
-  const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()
-  if (!isNative) {
-    return webCapture()
-  }
-  try {
-    // CameraResultType.Base64 — returns the photo as a base64 string directly.
-    // We deliberately AVOID CameraResultType.Uri here because on Capacitor 8 +
-    // Android 13+ (targetSdk 36) the returned `capacitor://localhost/_capacitor_file_...`
-    // URI fails to fetch from the WebView and the native exception crashes
-    // the whole app (bypasses any JS try/catch). Base64 sidesteps the file
-    // system entirely — slightly more memory but bulletproof on Android 13+.
-    const photo = await Camera.getPhoto({
-      quality: 80,
-      resultType: CameraResultType.Base64,
-      source: CameraSource.Camera,   // live camera only — no gallery
-      saveToGallery: false,          // we don't want copies in the user's gallery
-    })
-    if (!photo?.base64String) return null
-
-    // Convert base64 → Blob without a fetch round-trip.
-    const byteString = atob(photo.base64String)
-    const bytes = new Uint8Array(byteString.length)
-    for (let i = 0; i < byteString.length; i++) bytes[i] = byteString.charCodeAt(i)
-    const mime = photo.format ? `image/${photo.format}` : 'image/jpeg'
-    return new Blob([bytes], { type: mime })
-  } catch (err) {
-    // User cancelled the picker — not an error.
-    const msg = String(err?.message ?? err).toLowerCase()
-    if (msg.includes('cancel') || msg.includes('user cancelled')) return null
-    // Re-throw so the calling component can surface the error to the user.
-    // We never want an unhandled exception here — the PhotoCapture component
-    // catches and displays the message.
-    throw err
-  }
+  return webCapture()
 }
 
 /** Compress an image Blob/File for upload (site photos are large). */
