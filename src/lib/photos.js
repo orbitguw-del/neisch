@@ -38,17 +38,33 @@ export async function capturePhoto() {
     return webCapture()
   }
   try {
+    // CameraResultType.Base64 — returns the photo as a base64 string directly.
+    // We deliberately AVOID CameraResultType.Uri here because on Capacitor 8 +
+    // Android 13+ (targetSdk 36) the returned `capacitor://localhost/_capacitor_file_...`
+    // URI fails to fetch from the WebView and the native exception crashes
+    // the whole app (bypasses any JS try/catch). Base64 sidesteps the file
+    // system entirely — slightly more memory but bulletproof on Android 13+.
     const photo = await Camera.getPhoto({
       quality: 80,
-      resultType: CameraResultType.Uri,
+      resultType: CameraResultType.Base64,
       source: CameraSource.Camera,   // live camera only — no gallery
+      saveToGallery: false,          // we don't want copies in the user's gallery
     })
-    if (!photo?.webPath) return null
-    const res = await fetch(photo.webPath)
-    return await res.blob()
+    if (!photo?.base64String) return null
+
+    // Convert base64 → Blob without a fetch round-trip.
+    const byteString = atob(photo.base64String)
+    const bytes = new Uint8Array(byteString.length)
+    for (let i = 0; i < byteString.length; i++) bytes[i] = byteString.charCodeAt(i)
+    const mime = photo.format ? `image/${photo.format}` : 'image/jpeg'
+    return new Blob([bytes], { type: mime })
   } catch (err) {
     // User cancelled the picker — not an error.
-    if (String(err?.message ?? err).toLowerCase().includes('cancel')) return null
+    const msg = String(err?.message ?? err).toLowerCase()
+    if (msg.includes('cancel') || msg.includes('user cancelled')) return null
+    // Re-throw so the calling component can surface the error to the user.
+    // We never want an unhandled exception here — the PhotoCapture component
+    // catches and displays the message.
     throw err
   }
 }
