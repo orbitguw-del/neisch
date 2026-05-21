@@ -182,3 +182,154 @@ Vendor fills public registration form (no login needed) →
 | `supabase/functions/` | Edge functions |
 | `vite.config.js` | Build config — mind the `base` setting |
 | `vercel.json` | Vercel routing — mind asset serving order |
+
+---
+
+## Visual-first UX — non-negotiable design principle (set 2026-05-20)
+
+The Storey user is a **NE-India construction supervisor in his 40s, with
+5th–10th class education, working on a 4-year-old Android phone on a dusty
+site**. He does not *read* — he **recognises**. If a screen forces him to
+read English text, he closes it and calls his boss.
+
+Every UI change in this codebase must hold to:
+
+### 1. Picture beats text
+- A **line illustration** of the work beats the word "Railing"
+- A **colour stripe** down the side of a card beats a text status badge
+- A **big number with an icon** beats a label-value pair
+- A **worker avatar (coloured initials circle, or a real photo when one exists)** beats a name string
+- An **emoji** in a status chip is communication, not decoration
+
+### 1a. Three visual tiers — pick the smallest tier that does the job
+
+**Tier 1 — ICON** (~16–32px, Lucide-style, monochrome single-stroke symbol)
+- Use for: nav items · status chip icons · ledger row markers · small avatars · inline metadata
+- Source: **Lucide React** (already in the project)
+- File size: ~0.5 KB
+
+**Tier 2 — LINE ILLUSTRATION** (~60–120px, custom inline SVG, terracotta stroke ~3px on sand frame)
+- Use for: task category · material category · empty-state visual · onboarding screens · card thumbnails where an icon alone feels thin
+- Source: **custom inline-SVG components** under `src/components/illustrations/*.jsx`
+- File size: ~1–2 KB
+
+**Tier 3 — PHOTO** (real image, ~30–80 KB JPG, variable size)
+- Use **only for real evidence**: site-visit documentation, worker ID, delivery proof, damage record. The image IS the data.
+- Source: the existing photo pipeline (`src/lib/photos.js`)
+- File size: ~30–80 KB compressed
+
+**Hard rules:**
+- **Never mix two tiers in the same card.** Pick one.
+- **Default upward, not downward** — start with Tier 1 (icon). Move to Tier 2 only when an icon feels thin at the size needed. Move to Tier 3 only when nothing else is the data.
+- **Never use AI-generated photo imagery.** Reads fake instantly to contractors who know real sites.
+- **Brand discipline applies to Tiers 1 & 2** — terracotta and sand only. No third-party blue/green icons.
+
+**Reference renderings:**
+- `C:\consne\mockup-visual-tiers.jpg` — the three tiers side by side
+- `C:\consne\mockup-line-vs-photo.jpg` — line illustration vs photo deep-dive
+- `C:\consne\mockup-visual-first-dashboard.jpg` — both surfaces, full dashboard
+
+### 2. Status = colour, never just text
+- 🟢 Green   = done / good / on track
+- 🟡 Amber   = in progress / pending action
+- 🔴 Red     = blocked / overdue / problem
+- 🔵 Blue    = submitted / awaiting confirmation
+- ⚪ Gray    = inactive / not started
+
+A supervisor must be able to identify status from across the room without
+zooming in. Status badges should always have **colour + icon + (optional) text**,
+never text alone.
+
+### 3. English is the default, language is the user's choice (NOT ours)
+- **Default UI is English.** Most NE-India contractors use Tally,
+  WhatsApp Business, GST portal, and banking apps in English — and they
+  feel respected by that posture. Defaulting an app to Hindi/Hinglish
+  reads as condescension ("we assume you can't handle English") and
+  signals downmarket positioning. Don't do it.
+- **Hindi / Assamese support is a Settings TOGGLE**, planned for v1.x.
+  The contractor enables it for their team's phones if and when they
+  want to. We never make the choice for them.
+- Until the toggle ships, use **short, plain English** — verbs over
+  jargon. "Mark done" not "Confirm completion". "Add worker" not
+  "Onboard new resource". Concise English + visuals is more
+  accessible than verbose English + visuals, AND respects the user.
+
+### 4. Numbers are visual elements
+- Big bold numbers (40px+) carry meaning. "2" in amber = "2 days left, hurry".
+  "100%" in green = "this is done". The number itself does the work.
+
+### 5. Empty states must illustrate the next action
+- Never a blank page. Always: **icon in a coloured circle + 1-line Hindi/Hinglish
+  prompt + a single big button that creates the missing thing.**
+
+### 6. Avoid in this audience
+- Long English paragraphs in body copy
+- Status badges that are *only* text ("Pending" with no colour stripe)
+- Drop-downs with text-only options when icons would do
+- Multi-step forms when a single bottom-sheet picker would do
+- Drag-and-drop on phone (it fails for fat fingers on smudged screens)
+- Modals that block the whole screen for non-critical actions
+
+### 7. Apply this lens *before* committing any UI work
+Before writing a new screen or changing an existing one, ask:
+- Can a supervisor with 8th-class English understand this in 2 seconds?
+- Where can I replace a word with an icon, a colour, a photo, or a number?
+- What's the worst-case 4G phone going to render of this screen?
+
+If the answer to any of these is bad, redesign before coding.
+
+**Reference rendering:** `C:\consne\mockup-visual-first.jpg` shows the
+principle applied to the Tasks list — text-heavy vs visual-first
+side-by-side. This is the standard.
+
+---
+
+## Diary auto-commit at session start (set 2026-05-21)
+
+The `diary/` folder is Karun's founder journey record. Entries get written
+during sessions but often aren't committed immediately. Karun has asked that
+**any new Claude session that finds uncommitted diary changes must commit
+them within the first response of that session** — so nothing gets lost when
+the laptop reboots, the worktree gets cleaned, or the next session starts on
+a different machine.
+
+**Trigger on every new session:**
+
+1. Run `git status diary/` *(silently, in the same turn as your first
+   substantive action — don't ask permission, this is non-negotiable
+   maintenance)*
+2. If there are uncommitted changes in `diary/`:
+   - Stage `diary/`
+   - Commit with a message describing what changed (use the filenames as
+     hints: `diary: capture YYYY-MM-DD entry` for daily files,
+     `diary: stats snapshot Day-N` for STATS files)
+   - Push to origin
+3. If `diary/` is clean, do nothing — don't mention it
+
+**Do not block** Karun's actual request to perform this housekeeping. Run
+the diary commit in parallel / between substantive tool calls. Mention it in
+one line at the end of your reply ("also auto-committed diary entry from
+last session"), not as a centrepiece.
+
+This rule is the diary analogue of the project memory refresh — same posture,
+same non-negotiable maintenance.
+
+---
+
+## Project memory refresh cadence (set 2026-05-20)
+
+Karun has asked for the project memory at
+`C:\Users\model\.claude\projects\C--consne\memory\project_consne.md`
+to be refreshed every **2 days**. When that file's `nextUpdateDue` date is
+today or in the past — OR when Karun says *"update project memory"* (or any
+similar phrase like "refresh project context", "memory update", "project
+status update") — perform the refresh without further prompting:
+
+1. `git log --since="3 days ago" --oneline` for recent commits
+2. Read `docs/TODO.md` for new entries since `lastUpdated`
+3. Update sections: Recent changes · Active blockers · v1.2 status · Pilot prospects
+4. Bump YAML `lastUpdated` to today and `nextUpdateDue` to today+2
+5. Keep file under ~200 lines (it's a map, not a history)
+6. Report what changed in 3–5 bullets
+
+This is non-negotiable maintenance — don't ask, just do it.
