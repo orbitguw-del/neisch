@@ -128,12 +128,31 @@ function RecordForm({ material, type, onSubmit, loading }) {
 }
 
 // ─── Allocate to Work Form ─────────────────────────────────────────────────────
-function AllocateForm({ material, onSubmit, loading }) {
+function AllocateForm({ material, onSubmit, loading, success }) {
   const [form, setForm] = useState({ work_description: '', quantity_allocated: '', allocated_date: new Date().toISOString().slice(0, 10), note: '' })
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
+  const available = Number(material.quantity_available ?? 0)
+  const enteredQty = Number(form.quantity_allocated || 0)
+  const exceedsStock = enteredQty > 0 && enteredQty > available
+
+  // Show success card briefly — the parent auto-closes the modal after.
+  if (success) {
+    return (
+      <div className="space-y-3 py-4 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+          <svg className="h-7 w-7 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <p className="text-base font-semibold text-gray-900">{success}</p>
+        <p className="text-xs text-gray-500">Stock updated. Closing…</p>
+      </div>
+    )
+  }
+
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
+    <form onSubmit={(e) => { e.preventDefault(); if (!exceedsStock) onSubmit(form) }} className="space-y-4">
       <div className="rounded-lg bg-gray-50 px-4 py-3">
         <p className="text-sm font-medium text-gray-900">{material.name}</p>
         <p className="text-xs text-gray-500">
@@ -148,8 +167,22 @@ function AllocateForm({ material, onSubmit, loading }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label">Quantity ({material.unit}) *</label>
-          <input className="input" type="number" min="0.01" step="any" required
-            value={form.quantity_allocated} onChange={set('quantity_allocated')} placeholder="0" />
+          <input
+            className={`input ${exceedsStock ? 'border-red-400 focus:border-red-500' : ''}`}
+            type="number"
+            min="0.01"
+            step="any"
+            max={available || undefined}
+            required
+            value={form.quantity_allocated}
+            onChange={set('quantity_allocated')}
+            placeholder="0"
+          />
+          {exceedsStock && (
+            <p className="mt-1 text-xs text-red-600">
+              Only {available} {material.unit} in stock — reduce the quantity
+            </p>
+          )}
         </div>
         <div>
           <label className="label">Allocation date</label>
@@ -161,7 +194,17 @@ function AllocateForm({ material, onSubmit, loading }) {
         <input className="input" value={form.note} onChange={set('note')} placeholder="Optional" />
       </div>
       <div className="flex justify-end pt-1">
-        <button type="submit" disabled={loading} className="btn-primary">
+        <button
+          type="submit"
+          disabled={loading || exceedsStock || !form.work_description.trim() || enteredQty <= 0}
+          className="btn-primary inline-flex items-center gap-2"
+        >
+          {loading && (
+            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
+              <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+          )}
           {loading ? 'Saving…' : 'Allocate to Work'}
         </button>
       </div>
@@ -237,6 +280,7 @@ export default function Inventory() {
   const [allocTarget,  setAllocTarget]  = useState(null)   // material
   const [allocating,   setAllocating]   = useState(false)
   const [allocError,   setAllocError]   = useState(null)
+  const [allocSuccess, setAllocSuccess] = useState(null)   // success message string
 
   const [ledgerMaterial, setLedgerMaterial] = useState(null)
 
@@ -324,44 +368,39 @@ export default function Inventory() {
 
   const handleAllocate = async ({ work_description, quantity_allocated, allocated_date, note }) => {
     if (!allocTarget) return
-    setAllocating(true); setAllocError(null)
+    setAllocating(true); setAllocError(null); setAllocSuccess(null)
     try {
-      const now = new Date().toISOString()
       const qty = Number(quantity_allocated)
 
-      // Insert allocation record
-      await supabase.from('material_allocations').insert({
-        material_id:       allocTarget.id,
-        site_id:           allocTarget.site_id,
-        tenant_id:         allocTarget.tenant_id,
-        work_description,
-        quantity_allocated: qty,
-        allocated_date,
-        note:              note || null,
-        allocated_by:      profile?.id,
+      // Single atomic RPC — validates stock, inserts allocation, decrements
+      // stock, and logs consumption transaction in one Postgres transaction.
+      // Replaces the previous 4-round-trip flow which had a double-decrement
+      // race + no stock validation. See migration 20260522000000.
+      const { data, error } = await supabase.rpc('record_material_allocation', {
+        p_material_id:      allocTarget.id,
+        p_site_id:          allocTarget.site_id,
+        p_tenant_id:        allocTarget.tenant_id,
+        p_work_description: work_description,
+        p_quantity:         qty,
+        p_allocated_date:   allocated_date,
+        p_note:             note || null,
+        p_allocated_by:     profile?.id,
       })
+      if (error) throw error
 
-      // Deduct from quantity_available
-      const current = Number(allocTarget.quantity_available) || 0
-      await supabase.from('materials')
-        .update({ quantity_available: current - qty, updated_at: now })
-        .eq('id', allocTarget.id)
-
-      // Log as consumption in transaction ledger
-      await recordTransaction({
-        material_id: allocTarget.id,
-        site_id:     allocTarget.site_id,
-        tenant_id:   allocTarget.tenant_id,
-        txn_type:    'consumption',
-        quantity:    qty,
-        note:        `Allocated: ${work_description}`,
-        created_by:  profile?.id,
-      })
-
-      setAllocTarget(null)
+      // Show success briefly before closing — gives the user concrete feedback.
+      const unit = allocTarget.unit ? ` ${allocTarget.unit}` : ''
+      setAllocSuccess(`Allocated ${qty}${unit} to "${work_description}"`)
       await loadMaterials()
-    } catch (err) { setAllocError(err.message) }
-    finally { setAllocating(false) }
+      setTimeout(() => {
+        setAllocTarget(null)
+        setAllocSuccess(null)
+      }, 1400)
+    } catch (err) {
+      setAllocError(err.message || 'Failed to allocate')
+    } finally {
+      setAllocating(false)
+    }
   }
 
   const openLedger = async (material) => {
@@ -537,13 +576,18 @@ export default function Inventory() {
       {/* Allocate to work modal */}
       <Modal
         open={!!allocTarget}
-        onClose={() => { setAllocTarget(null); setAllocError(null) }}
+        onClose={() => { setAllocTarget(null); setAllocError(null); setAllocSuccess(null) }}
         title="Allocate Material to Work"
       >
         {allocTarget && (
           <>
             {allocError && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{allocError}</div>}
-            <AllocateForm material={allocTarget} onSubmit={handleAllocate} loading={allocating} />
+            <AllocateForm
+              material={allocTarget}
+              onSubmit={handleAllocate}
+              loading={allocating}
+              success={allocSuccess}
+            />
           </>
         )}
       </Modal>
