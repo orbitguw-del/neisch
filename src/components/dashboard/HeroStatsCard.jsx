@@ -25,7 +25,13 @@ export default function HeroStatsCard({ label, stats = [], strip }) {
             {label}
           </p>
         )}
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div
+          className={`mt-3 grid gap-2 ${
+            stats.length === 4 ? 'grid-cols-2 sm:grid-cols-4'
+            : stats.length === 2 ? 'grid-cols-2'
+            : 'grid-cols-3'
+          }`}
+        >
           {stats.map((s, i) => {
             const Icon = s.icon
             return (

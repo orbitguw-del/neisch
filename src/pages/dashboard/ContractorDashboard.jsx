@@ -1,18 +1,29 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { HardHat, Users, Package, TrendingUp, Plus, IndianRupee, AlertTriangle } from 'lucide-react'
+import {
+  HardHat, MapPin, ListTodo, IndianRupee, AlertTriangle,
+  Building2, Users, Package, Wallet, BarChart3, Calendar, ChevronRight,
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
-import StatCard from '@/components/ui/StatCard'
-import PageHeader from '@/components/ui/PageHeader'
-import { formatDate, formatINR } from '@/lib/utils'
+import HeroStatsCard from '@/components/dashboard/HeroStatsCard'
+import QuickActionTile from '@/components/dashboard/QuickActionTile'
+import SiteStockWidget from '@/components/dashboard/SiteStockWidget'
+import { formatINR } from '@/lib/utils'
 
-const STATUS_CLASS = {
-  active:    'badge-green',
-  completed: 'badge-blue',
-  planning:  'badge-yellow',
-  on_hold:   'badge-gray',
+// Status colour map (stripe colour on each site card)
+const STATUS_STRIPE = {
+  active:    '#059669', // green
+  completed: '#2563EB', // blue
+  planning:  '#D97706', // amber
+  on_hold:   '#9CA3AF', // gray
+}
+const STATUS_LABEL = {
+  active:    'Active',
+  completed: 'Completed',
+  planning:  'Planning',
+  on_hold:   'On hold',
 }
 
 export default function ContractorDashboard() {
@@ -20,12 +31,18 @@ export default function ContractorDashboard() {
   const profile  = useAuthStore((s) => s.profile)
   const { sites, fetchSites } = useSiteStore()
 
-  const [teamCount,    setTeamCount]    = useState(0)
+  const [workersCount,  setWorkersCount]  = useState(null)
+  const [tasksDueCount, setTasksDueCount] = useState(null)
+  const [spendToday,    setSpendToday]    = useState(null)
   const [lowStockCount, setLowStockCount] = useState(0)
-  const [loading,      setLoading]      = useState(true)
 
   const tenantId  = profile?.tenant_id
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
+  const companyName = profile?.tenant?.name ?? 'Your company'
+  const today = new Date().toISOString().split('T')[0]
+  const todayLabel = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long', day: '2-digit', month: 'short',
+  })
 
   useEffect(() => {
     if (tenantId) fetchSites(tenantId)
@@ -33,160 +50,222 @@ export default function ContractorDashboard() {
 
   useEffect(() => {
     if (!tenantId) return
-    async function loadKPIs() {
-      setLoading(true)
-      try {
-        // Team members (excluding contractor)
-        const { count: tc } = await supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true })
-          .eq('tenant_id', tenantId)
-          .neq('role', 'contractor')
-        setTeamCount(tc ?? 0)
+    let cancelled = false
 
-        // Low stock materials
-        const { data: mats } = await supabase
-          .from('materials')
-          .select('quantity_available, quantity_minimum, category')
-          .eq('tenant_id', tenantId)
-          .eq('category', 'consumable')
-          .not('quantity_minimum', 'is', null)
-          .not('quantity_available', 'is', null)
-        const low = (mats ?? []).filter(
-          (m) => Number(m.quantity_available) <= Number(m.quantity_minimum)
-        ).length
-        setLowStockCount(low)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadKPIs()
-  }, [tenantId])
+    // Run in parallel — independent queries
+    const head = (table, mods = (q) => q) =>
+      mods(supabase.from(table).select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId))
+
+    Promise.all([
+      head('workers'),
+      head('tasks', (q) => q.eq('due_date', today).neq('status', 'done')),
+      supabase
+        .from('site_expenses')
+        .select('amount')
+        .eq('tenant_id', tenantId)
+        .gte('expense_date', today),
+      supabase
+        .from('materials')
+        .select('quantity_available, quantity_minimum, category')
+        .eq('tenant_id', tenantId)
+        .eq('category', 'consumable')
+        .not('quantity_minimum', 'is', null)
+        .not('quantity_available', 'is', null),
+    ]).then(([workers, tasks, expenses, mats]) => {
+      if (cancelled) return
+      setWorkersCount(workers.count ?? 0)
+      setTasksDueCount(tasks.count ?? 0)
+      const sumToday = (expenses.data ?? [])
+        .reduce((a, e) => a + (Number(e.amount) || 0), 0)
+      setSpendToday(sumToday)
+      const low = (mats.data ?? []).filter(
+        (m) => Number(m.quantity_available) <= Number(m.quantity_minimum),
+      ).length
+      setLowStockCount(low)
+    }).catch(() => {
+      /* silent — KPI cards render '—' */
+    })
+
+    return () => { cancelled = true }
+  }, [tenantId, today])
 
   const activeSites = sites.filter((s) => s.status === 'active').length
-  const planSites   = sites.filter((s) => s.status === 'planning').length
-  const totalBudget = sites.reduce((sum, s) => sum + (Number(s.budget) || 0), 0)
+
+  // Format spend compactly for the hero card
+  const spendDisplay = spendToday == null
+    ? '—'
+    : spendToday >= 100000
+      ? `₹${(spendToday / 100000).toFixed(1)}L`
+      : spendToday >= 1000
+        ? `₹${Math.round(spendToday / 1000)}k`
+        : `₹${spendToday}`
 
   return (
-    <div>
-      <PageHeader
-        title={`Welcome back, ${firstName}`}
-        description={`${profile?.tenant?.name ?? 'Your company'} — construction operations overview.`}
-        action={
-          <button onClick={() => navigate('/sites')} className="btn-primary">
-            <Plus className="h-4 w-4" /> New site
-          </button>
+    <div className="space-y-4">
+      {/* ── Greeting ─────────────────────────────────────────────── */}
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+          Welcome, {firstName}
+        </h1>
+        <p className="mt-0.5 text-sm text-gray-500 flex items-center gap-1.5 flex-wrap">
+          <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+          <span>{todayLabel}</span>
+          <span className="text-gray-300">·</span>
+          <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
+          <span className="truncate">{companyName}</span>
+        </p>
+      </div>
+
+      {/* ── Hero stats — 4-up ────────────────────────────────────── */}
+      <HeroStatsCard
+        label="ACROSS ALL SITES TODAY"
+        stats={[
+          {
+            icon: HardHat,
+            value: workersCount ?? '—',
+            sub:   workersCount === 1 ? 'worker' : 'workers',
+          },
+          {
+            icon: MapPin,
+            value: activeSites,
+            sub:   `of ${sites.length} sites`,
+          },
+          {
+            icon: ListTodo,
+            value: tasksDueCount ?? '—',
+            sub:   tasksDueCount === 1 ? 'task due' : 'tasks due',
+          },
+          {
+            icon: IndianRupee,
+            value: spendDisplay,
+            sub:   'spent today',
+          },
+        ]}
+        strip={
+          lowStockCount > 0
+            ? `⚠ ${lowStockCount} material${lowStockCount > 1 ? 's' : ''} below reorder level`
+            : sites.length === 0
+              ? 'No sites yet — start by adding your first site'
+              : '✓ All stock above reorder level'
         }
       />
 
-      {/* Low stock alert banner */}
+      {/* ── Quick actions — 3×2 grid ─────────────────────────────── */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <QuickActionTile
+          icon={Building2} label="Sites" color="brand"
+          onClick={() => navigate('/sites')}
+        />
+        <QuickActionTile
+          icon={Users} label="Team" color="sage"
+          onClick={() => navigate('/team')}
+        />
+        <QuickActionTile
+          icon={ListTodo} label="Tasks" color="amber"
+          onClick={() => navigate('/tasks')}
+        />
+        <QuickActionTile
+          icon={Package} label="Inventory" color="blue"
+          onClick={() => navigate('/inventory')}
+        />
+        <QuickActionTile
+          icon={Wallet} label="Expenses" color="violet"
+          onClick={() => navigate('/expenses')}
+        />
+        <QuickActionTile
+          icon={BarChart3} label="Reports" color="green"
+          onClick={() => navigate('/reports')}
+        />
+      </div>
+
+      {/* ── Low stock alert (only when material is below reorder) ── */}
       {lowStockCount > 0 && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-          <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
-          <span className="text-sm text-red-700">
-            <strong>{lowStockCount}</strong> material{lowStockCount > 1 ? 's' : ''} below reorder level across your sites.{' '}
-            <button onClick={() => navigate('/inventory')} className="underline font-medium">View inventory →</button>
-          </span>
-        </div>
+        <button
+          onClick={() => navigate('/inventory')}
+          className="flex w-full items-center gap-3 rounded-xl border border-red-300 bg-red-50 p-4 text-left hover:bg-red-100 transition-colors"
+        >
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-red-800">
+              {lowStockCount} material{lowStockCount > 1 ? 's' : ''} below reorder level
+            </p>
+            <p className="text-xs text-red-600">Tap to view inventory across all sites</p>
+          </div>
+          <ChevronRight className="h-4 w-4 flex-shrink-0 text-red-400" />
+        </button>
       )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Total Sites"    value={sites.length}  icon={HardHat}       color="brand" />
-        <StatCard label="Active Sites"   value={activeSites}   icon={TrendingUp}    color="green" />
-        <StatCard label="Team Members"   value={teamCount}     icon={Users}         color="sage" />
-        <StatCard
-          label="Total Budget"
-          value={totalBudget > 0 ? formatINR(totalBudget) : '—'}
-          icon={IndianRupee}
-          color="red"
-        />
-      </div>
-
-      {/* Second row KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <StatCard label="In Planning"    value={planSites}     icon={Package}       color="sage" />
-        <StatCard
-          label="Low Stock Items"
-          value={lowStockCount}
-          icon={AlertTriangle}
-          color={lowStockCount > 0 ? 'red' : 'green'}
-        />
-        <StatCard
-          label="Completed Sites"
-          value={sites.filter((s) => s.status === 'completed').length}
-          icon={HardHat}
-          color="blue"
-        />
-      </div>
-
-      {/* Recent sites */}
+      {/* ── Your Sites — restyled with status stripes ───────────── */}
       <div className="card overflow-hidden">
-        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-          <h2 className="text-sm font-semibold text-gray-900">Your Sites</h2>
-          <button onClick={() => navigate('/sites')} className="text-xs font-medium text-brand-600 hover:text-brand-700">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-brand-600" />
+            <h2 className="text-sm font-semibold text-gray-900">Your sites</h2>
+            {sites.length > 0 && (
+              <span className="text-xs text-gray-400">· {sites.length}</span>
+            )}
+          </div>
+          <button
+            onClick={() => navigate('/sites')}
+            className="text-xs font-medium text-brand-600 hover:text-brand-700"
+          >
             View all →
           </button>
         </div>
 
         {sites.length === 0 ? (
-          <div className="py-12 text-center text-sm text-gray-500">
-            No sites yet.{' '}
-            <button onClick={() => navigate('/sites')} className="text-brand-600 hover:underline">
-              Add your first site
+          <div className="px-5 py-10 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-sand-300">
+              <Building2 className="h-6 w-6 text-brand-600" />
+            </div>
+            <p className="text-sm font-medium text-gray-700">No sites yet</p>
+            <p className="mt-1 text-xs text-gray-500">Add your first site to get started</p>
+            <button
+              onClick={() => navigate('/sites')}
+              className="mt-3 inline-flex items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+            >
+              + Add first site
             </button>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {sites.slice(0, 6).map((site) => (
-              <button
-                key={site.id}
-                onClick={() => navigate(`/sites/${site.id}`)}
-                className="flex w-full items-center justify-between px-5 py-3 text-left hover:bg-gray-50"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-900 truncate">{site.name}</p>
-                  <p className="text-xs text-gray-500 truncate">{site.location}</p>
-                </div>
-                <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                  <span className={STATUS_CLASS[site.status] ?? 'badge-gray'}>
-                    {site.status?.replace('_', ' ')}
-                  </span>
-                  {site.budget && (
-                    <span className="text-xs font-medium text-gray-600">{formatINR(site.budget)}</span>
-                  )}
-                  <span className="text-xs text-gray-400">{formatDate(site.start_date)}</span>
-                </div>
-              </button>
-            ))}
+            {sites.slice(0, 6).map((site) => {
+              const stripeColor = STATUS_STRIPE[site.status] ?? STATUS_STRIPE.on_hold
+              return (
+                <button
+                  key={site.id}
+                  onClick={() => navigate(`/sites/${site.id}`)}
+                  className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-gray-50"
+                >
+                  {/* Status stripe */}
+                  <div
+                    className="h-10 w-1 flex-shrink-0 rounded-full"
+                    style={{ backgroundColor: stripeColor }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 truncate">{site.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{site.location || '—'}</p>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <p className="text-xs font-semibold" style={{ color: stripeColor }}>
+                      {STATUS_LABEL[site.status] ?? site.status}
+                    </p>
+                    {site.budget && (
+                      <p className="text-xs text-gray-500 tabular-nums">{formatINR(site.budget)}</p>
+                    )}
+                  </div>
+                  <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-300" />
+                </button>
+              )
+            })}
           </div>
         )}
       </div>
 
-      {/* Quick actions */}
-      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button
-          onClick={() => navigate('/reports')}
-          className="card p-4 text-left hover:shadow-md transition-shadow"
-        >
-          <p className="text-sm font-semibold text-gray-900">Reports</p>
-          <p className="text-xs text-gray-500 mt-0.5">Budget & status summary</p>
-        </button>
-        <button
-          onClick={() => navigate('/team')}
-          className="card p-4 text-left hover:shadow-md transition-shadow"
-        >
-          <p className="text-sm font-semibold text-gray-900">Team</p>
-          <p className="text-xs text-gray-500 mt-0.5">Manage site assignments</p>
-        </button>
-        <button
-          onClick={() => navigate('/inventory')}
-          className="card p-4 text-left hover:shadow-md transition-shadow"
-        >
-          <p className="text-sm font-semibold text-gray-900">Inventory</p>
-          <p className="text-xs text-gray-500 mt-0.5">Stock levels & alerts</p>
-        </button>
-      </div>
+      {/* ── Stock at a glance — reuse the existing widget ────────── */}
+      <SiteStockWidget />
     </div>
   )
 }
