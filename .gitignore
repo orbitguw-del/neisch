@@ -13,3 +13,13 @@ key.properties
 
 # Local-only
 _trash/
+
+# Claude Code agent worktrees (each is its own git repo — must not be embedded)
+.claude/worktrees/
+
+# Editor / OS lock files
+~$*
+.idea/
+
+# Generated PowerPoint output (regen via scripts when needed)
+~$*.pptx
