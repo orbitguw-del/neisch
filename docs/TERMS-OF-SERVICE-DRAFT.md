@@ -1,6 +1,6 @@
 # Storey — Terms of Service
 ### DRAFT for lawyer review · NOT yet published
-*Drafted 2026-05-22 · Status: DRAFT — do not publish until reviewed by an Indian-law SaaS specialist*
+*Drafted 2026-05-22 · Revised 2026-05-22 (incorporated 20-point review feedback) · Status: DRAFT — do not publish until reviewed by an Indian-law SaaS specialist*
 
 > ⚠️ **This is a TEMPLATE.** Like the Privacy Policy draft, this captures
 > Storey's specifics honestly but needs review by a qualified Indian-law
@@ -27,6 +27,10 @@ organisation, you confirm that you have the authority to bind that
 organisation, and the term "you" in these Terms shall refer to that
 organisation jointly with you.
 
+**Minimum age.** You must be at least 18 years old to create or
+administer a Storey account. By accepting these Terms you confirm you
+meet this age requirement.
+
 If you do not agree to these terms, you must not use Storey.
 
 ## 2. About Storey
@@ -38,6 +42,14 @@ Storey is being organised as a private limited company. Until that
 incorporation is complete, the business is operated by the founder
 in a sole-proprietor capacity. These Terms will be updated to reflect
 the corporate entity once it is registered.
+
+### 2.1 Corporate transition
+Upon incorporation, restructuring, conversion, or reorganisation of
+Storey Infra into a private limited company or any successor entity,
+these Terms and all associated user agreements, accounts, data, and
+obligations may automatically transfer to that successor entity
+without further action required from you. We will notify users of
+the corporate name change once registration is complete.
 
 ## 3. Beta status
 
@@ -58,7 +70,7 @@ practical.
 ### 4.1 Account creation
 You can create an account using email + password, Google sign-in, or
 (in preview) phone OTP. You must provide accurate information when
-creating your account.
+creating your account. You must be at least 18 years old (see Section 1).
 
 ### 4.2 Account security
 You are responsible for maintaining the confidentiality of your
@@ -83,16 +95,44 @@ By using Storey, you grant us a limited, non-exclusive, revocable
 licence to store, process, transmit, display, and back up your data
 solely as necessary to provide the Storey service to you.
 
-### 5.3 Data sovereignty (coming in v1.2)
+### 5.3 Your responsibility for uploaded data
+You are solely responsible for ensuring that all content, records,
+documents, photos, worker information, invoices, and any personal
+information uploaded to Storey:
+
+- is lawful, accurate, and not misleading;
+- is uploaded with appropriate permissions and consent from the
+  individuals to whom it relates (e.g. workers, subcontractors);
+- does not infringe any third party's intellectual property, privacy,
+  or other rights;
+- complies with applicable Indian labour, tax, and data-protection
+  law.
+
+You must not upload sensitive personal information (including but not
+limited to medical records, biometric data, or financial account
+numbers) unless it is necessary for legitimate operational purposes
+and permitted under applicable law.
+
+### 5.4 Data sovereignty (coming in v1.2)
 We plan to introduce automatic daily backups of your tenant's data
 to your own Google Drive in mid-June 2026. Once active, this gives
 you an independent copy of your data outside of our infrastructure.
 
-### 5.4 Data export
-You can request an export of your data at any time by contacting us.
-We will provide it in a portable format within 7 working days.
+### 5.5 Backup responsibility (shared)
+While Storey maintains operational backups as a routine
+disaster-recovery measure, you are encouraged to maintain independent
+copies of critical business records. We do not guarantee that backups
+will be free of corruption, complete, or recoverable in every
+scenario, and you should not rely on Storey as your only system of
+record.
 
-### 5.5 Data deletion
+### 5.6 Data export
+You can request an export of your data at any time by contacting us.
+Exports will be provided in commercially reasonable portable formats
+(typically CSV, JSON, or ZIP archives) supported by Storey at the
+time of the request, within 7 working days.
+
+### 5.7 Data deletion
 You can request deletion of your account and associated data at any
 time. We will permanently delete or anonymise your data within 90
 days of the request, subject to legal retention requirements
@@ -107,15 +147,26 @@ You agree NOT to use Storey to:
 - Store or transmit illegal content
 - Attempt to circumvent our security measures (e.g. bypass tenant
   isolation, gain unauthorised access)
-- Reverse-engineer, decompile, or attempt to extract the source code
-  of the Storey applications
+- Reverse-engineer, decompile, disassemble, or attempt to extract
+  the source code of the Storey applications
+- Scrape, crawl, or use automated tools, bots, or scripts to extract
+  data from Storey beyond features we expressly provide
+- Develop, train, benchmark, or operate a product or service that
+  competes with Storey, or any derivative service intended to
+  replicate or replace Storey
+- Use Storey or its content to train artificial-intelligence or
+  machine-learning models without our prior written permission
+- Interfere with or disrupt the integrity, performance, or security
+  of Storey — including through automated abuse, excessive load
+  generation, denial-of-service patterns, or malicious activity
 - Use Storey to harass, threaten, or harm any individual
 - Send unsolicited bulk communications through Storey
 - Resell, sublicense, or commercially redistribute Storey itself
   (your own use of the service to manage your construction business
   is, of course, permitted)
 - Use Storey for activities that violate environmental, labour, or
-  safety regulations
+  safety regulations, or to facilitate forced labour, child labour,
+  or unsafe site practices
 
 Violation of these terms may result in immediate suspension or
 termination of your account.
@@ -124,7 +175,10 @@ termination of your account.
 
 ### 7.1 Beta period
 During the beta period (until public launch, expected mid-June 2026),
-Storey is free to use for selected tester contractors.
+Storey is free to use for selected tester contractors. We may
+deactivate or delete beta accounts that have been inactive for an
+extended period after providing reasonable notice (typically 30 days)
+to the account email on file.
 
 ### 7.2 Post-launch pricing
 Pricing tiers will be introduced at public launch. Pilot users and
@@ -155,19 +209,39 @@ To the maximum extent permitted by law, we disclaim all warranties,
 express or implied, including warranties of merchantability, fitness
 for a particular purpose, accuracy of data, and non-infringement.
 
-### 8.2 Operational decisions
+### 8.2 No professional advice
 **Storey is a tool to help you manage your construction operations.**
-It does not replace your professional judgment, legal advisors, or
-chartered accountants. Decisions you make based on data displayed in
-Storey are your responsibility.
+Storey does not provide engineering, structural, architectural,
+accounting, taxation, legal, regulatory, compliance, occupational
+safety, or environmental advice. It does not replace your professional
+advisors — including chartered accountants, lawyers, qualified
+engineers, or safety officers. Decisions you make based on data
+displayed in Storey are your responsibility.
 
-### 8.3 Third-party dependencies
+### 8.3 No guarantee of availability
+Storey does not guarantee uninterrupted, timely, secure, or
+error-free availability of the service. Scheduled maintenance,
+upgrades, third-party service interruptions, or unforeseen outages
+may temporarily affect access. We will use commercially reasonable
+efforts to minimise downtime and to communicate planned maintenance
+in advance.
+
+### 8.4 Automated insights
+Any automated reports, suggestions, forecasts, alerts, or
+recommendations generated by Storey — whether produced by
+deterministic logic or by artificial-intelligence / machine-learning
+features that we may introduce in future — are informational tools
+only. They are not a substitute for professional judgment, on-site
+verification, or qualified advice, and should not be relied on as the
+sole basis for material business decisions.
+
+### 8.5 Third-party dependencies
 Storey relies on third-party services (Supabase, Vercel, Resend,
 Google Play Services). We are not responsible for outages or failures
 in these underlying services, though we will work to minimise their
 impact on your use of Storey.
 
-### 8.4 Internet connectivity
+### 8.6 Internet connectivity
 Storey is designed to work offline for many features (attendance,
 daily logs, photos, expenses) but a working internet connection is
 required for some features (live reports, transfers between sites,
@@ -189,8 +263,14 @@ To the maximum extent permitted by Indian law:
   loss of goodwill, or loss of data not caused by our gross
   negligence.
 - **Force majeure:** We are not liable for failures or delays caused
-  by events beyond our reasonable control (natural disasters, war,
-  regulatory action, infrastructure provider outages, etc.).
+  by events beyond our reasonable control. This includes, without
+  limitation: natural disasters; floods, earthquakes, or cyclones;
+  fire; war or civil unrest; pandemic or epidemic; strikes or labour
+  action; government, regulatory, or judicial orders (including
+  internet shutdowns or blocking orders); failures or outages of
+  third-party cloud, hosting, or telecommunications providers;
+  electricity or power-grid disruption; cyber-attacks; or any other
+  event of a similar nature beyond our reasonable control.
 
 Nothing in these terms limits any liability that cannot be limited
 under Indian law (e.g. for fraud, wilful misconduct, or gross
@@ -199,14 +279,29 @@ negligence).
 ## 10. Intellectual property
 
 ### 10.1 Storey's IP
-Storey's software, designs, brand, logos, and documentation are
-owned by Storey Infra. These Terms grant you a limited licence to
-use the service — they do not transfer any IP rights to you.
+Storey's software, designs, brand, logos, documentation, copy,
+illustrations, user interface, screen designs, workflows, database
+schemas, and any other materials related to the service are owned
+by Storey Infra (and, upon incorporation, by Storey Infra Pvt Ltd).
+These Terms grant you a limited, non-exclusive, non-transferable
+licence to use the service for your own internal business use — they
+do not transfer any IP rights to you.
 
-### 10.2 Feedback
-If you provide feedback, suggestions, or feature requests to us, we
-may use that feedback to improve Storey without compensation or
-attribution to you, unless otherwise agreed in writing.
+### 10.2 Anti-competition / anti-cloning
+Without limiting Section 6, you specifically agree not to use Storey,
+its interface, documentation, or any data accessible through it for
+the purpose of building, training, benchmarking, or marketing a
+competing product or service. This restriction survives termination
+of your account.
+
+### 10.3 Feedback
+If you provide feedback, suggestions, feature requests, bug reports,
+or other input to us (including during the beta period), we may use
+that feedback to improve Storey without obligation, compensation, or
+attribution to you, unless otherwise agreed in writing. You grant us
+a perpetual, worldwide, royalty-free licence to use such feedback
+for any purpose related to the development, operation, and
+improvement of Storey.
 
 ## 11. Termination
 
@@ -221,10 +316,18 @@ We may suspend or terminate your account if:
 - We're required to by law or regulatory action
 - You haven't paid an invoice within 30 days of its due date
 - Your conduct poses a security risk to Storey or other users
+- We have reasonable grounds to suspect that your account is being
+  used for fraud, forgery, falsified records, money laundering,
+  evasion of statutory dues, or other illegal activity
+- Your use of Storey enables or documents serious violations of
+  labour law, child-labour prohibitions, occupational-safety rules,
+  or environmental regulations
+- We detect activity consistent with automated abuse, scraping,
+  excessive load generation, or attempts to compromise the service
 
 For non-emergency terminations, we'll give you 30 days' written
-notice and a chance to remedy the issue. For security-related
-terminations, suspension may be immediate.
+notice and a chance to remedy the issue. For security-, fraud-, or
+compliance-related terminations, suspension may be immediate.
 
 ### 11.3 Effect of termination
 Upon termination:
@@ -232,9 +335,46 @@ Upon termination:
 - Your data is retained for 90 days for re-activation, then deleted
 - Any outstanding fees become immediately due
 - Sections of these Terms that should reasonably survive (e.g.
-  disclaimers, liability limits, governing law) continue to apply
+  disclaimers, liability limits, IP restrictions, governing law)
+  continue to apply
 
-## 12. Changes to these Terms
+## 12. Security incidents
+
+In the event of a material security incident affecting your personal
+data or business records stored in Storey, we will:
+
+- investigate the incident promptly;
+- take reasonable steps to contain and remediate it;
+- notify affected users within a commercially reasonable timeframe
+  consistent with applicable Indian law (including the Digital
+  Personal Data Protection Act 2023 and the IT Act 2000); and
+- notify relevant regulatory authorities where required by law.
+
+Our internal incident-response process is described in our internal
+runbook (`docs/INCIDENT-RESPONSE.md`). If you believe you have
+discovered a security vulnerability in Storey, please report it
+confidentially to **security@storeyinfra.com** or via WhatsApp at
++91 98640 66898.
+
+## 13. Electronic communications
+
+By creating a Storey account and using the service, you consent to
+receive electronic communications from us, including:
+
+- account-related notices (password resets, sign-in alerts);
+- service-related messages (maintenance, outages, feature updates);
+- transactional messages (invoices, payment receipts, billing
+  reminders);
+- security and incident notifications;
+- product announcements relevant to features you use.
+
+These communications may be sent by email, in-app notification,
+WhatsApp (to the number on file), or SMS. You may opt out of
+non-essential product announcements but cannot opt out of
+service-related and security communications while your account is
+active.
+
+## 14. Changes to these Terms
 
 We may update these Terms from time to time. For material changes:
 - We'll update the "Last updated" date
@@ -247,21 +387,31 @@ We may update these Terms from time to time. For material changes:
 For non-material changes (e.g. clarifying language, fixing typos,
 contact information updates), we may update without advance notice.
 
-## 13. Governing law and dispute resolution
+## 15. Governing law and dispute resolution
 
 These Terms are governed by the laws of India. Any dispute arising
 out of or relating to these Terms or your use of Storey shall be
 subject to:
 
 1. **Good-faith negotiation** first — please contact us at
-   help@storeyinfra.com to discuss any concern
+   help@storeyinfra.com to discuss any concern.
 2. **Mediation** if negotiation fails — through any mutually agreed
-   mediator in Guwahati
-3. **Exclusive jurisdiction** of the courts in Guwahati, Assam, for
-   any matter that cannot be resolved through the above
+   mediator in Guwahati.
+3. **Arbitration** if mediation fails — by a sole arbitrator
+   appointed by mutual agreement, conducted in Guwahati, in English,
+   under the Indian Arbitration and Conciliation Act, 1996. The
+   arbitrator's award shall be final and binding. Either party may
+   elect arbitration at its discretion before commencing litigation.
+4. **Exclusive jurisdiction** of the courts in Guwahati, Assam, for
+   any matter that cannot be resolved through the above, or for
+   urgent interim relief.
 
-## 14. Miscellaneous
+## 16. Miscellaneous
 
+- **Precedence with Privacy Policy:** In the event of any conflict
+  between these Terms and our Privacy Policy regarding the handling
+  of personal data, the Privacy Policy shall govern with respect to
+  that personal-data handling.
 - **Severability:** If any provision of these Terms is held invalid,
   the remaining provisions continue in effect.
 - **Entire agreement:** These Terms, together with our Privacy
@@ -271,22 +421,29 @@ subject to:
   our right to enforce it later.
 - **Assignment:** You may not assign these Terms without our written
   consent. We may assign these Terms in connection with a corporate
-  reorganisation or sale of the business.
+  reorganisation, conversion to Pvt Ltd, or sale of the business
+  (see Section 2.1).
 - **Notices:** We may communicate with you via the email address you
   provided, via WhatsApp at the number on file, or via in-app
   notification. You should communicate with us via help@storeyinfra.com
   or WhatsApp +91 98640 66898.
 
-## 15. Contact
+## 17. Contact
 
 For any questions about these Terms:
 - **Email:** help@storeyinfra.com
 - **WhatsApp:** +91 98640 66898
 - **Postal:** [Address — to be added when registered office is finalised]
 
+> ℹ️ *During the beta period, support contact is routed through the
+> founder directly. Once the Pvt Ltd is incorporated and Storey scales,
+> these will be replaced with a dedicated support number, a registered
+> office address, and a support sub-domain (e.g. support.storeyinfra.com).*
+
 ---
 
 *These Terms were drafted in good faith by Storey's founder with
-domain-knowledge support, not legal expertise. Please review with a
-qualified Indian-law SaaS lawyer before relying on them for
-commercial purposes.*
+domain-knowledge support, not legal expertise. They have been revised
+once to incorporate a 20-point structured review. They still require
+review by a qualified Indian-law SaaS lawyer before being relied on
+for commercial purposes.*
