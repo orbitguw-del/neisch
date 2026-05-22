@@ -296,7 +296,11 @@ export default function EquipmentAssets() {
 
   const tenantId = profile?.tenant_id
   const role     = profile?.role
-  const canManage = ['superadmin', 'contractor', 'site_manager', 'store_keeper'].includes(role)
+  // Supervisor added 2026-05-22 — they're the on-site role who actually hands
+  // equipment to workers / sub-contractors. RLS in 20260522010000 enforces
+  // site-assignment scoping so a supervisor can only issue / return assets
+  // at sites they're assigned to. Retire stays restricted (commercial action).
+  const canManage = ['superadmin', 'contractor', 'site_manager', 'store_keeper', 'supervisor'].includes(role)
   const canRetire = ['superadmin', 'contractor', 'site_manager'].includes(role)
 
   useEffect(() => {
