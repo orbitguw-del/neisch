@@ -23,10 +23,12 @@ serve(async (req) => {
   let createdUserId: string | null = null
 
   try {
-    const { email, password, full_name, tenant_name } = await req.json()
+    const { email, password, full_name, tenant_name, consent } = await req.json()
     if (!email || !password || !tenant_name) {
       return json({ error: "Missing email, password, or tenant_name" }, 400)
     }
+    // `consent` shape (optional):
+    //   { accepted_at: ISO string, terms_version: string, privacy_version: string }
 
     // ── Step 0: detect orphan / existing user before trying to create.
     // An "orphan" is an auth.users row created earlier (often by a half-finished
@@ -109,6 +111,24 @@ serve(async (req) => {
         error: `Failed to create company: ${tenantError.message}`,
         code: "TENANT_INSERT_FAILED",
       }, 400)
+    }
+
+    // ── Step 3: record ToS / Privacy Policy consent on the profile row
+    // (the profile itself is created by the handle_new_user trigger).
+    // Best-effort — a failure here should not roll back the user.
+    if (consent && typeof consent === "object") {
+      try {
+        await admin
+          .from("profiles")
+          .update({
+            consent_at:              consent.accepted_at ?? new Date().toISOString(),
+            consent_terms_version:   consent.terms_version ?? null,
+            consent_privacy_version: consent.privacy_version ?? null,
+          })
+          .eq("id", createdUserId)
+      } catch (e) {
+        console.error("Consent stamp failed for", createdUserId, e)
+      }
     }
 
     return json({ success: true, user_id: createdUserId })

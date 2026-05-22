@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Storey — How-To Guide</title>
+<style>
+  :root{--terra:#B85042;--sand:#E7E8D1;--sage:#A7BEAE;--dark:#2C1810;--ink:#3a2c24;--mute:#8b7b72;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  @page{size:A4;margin:0;}
+  body{font-family:Arial,Helvetica,sans-serif;color:var(--ink);font-size:12px;line-height:1.5;}
+  h1,h2,h3{font-family:Georgia,'Times New Roman',serif;color:var(--dark);}
+  .page{width:210mm;height:297mm;padding:15mm 17mm;page-break-after:always;
+    position:relative;overflow:hidden;}
+  .page:last-child{page-break-after:auto;}
+
+  .cover{background:var(--terra);color:#fff;display:flex;flex-direction:column;
+    justify-content:center;align-items:center;text-align:center;}
+  .cover .logo{width:110px;height:110px;background:#fff;border-radius:26px;
+    display:flex;align-items:center;justify-content:center;margin-bottom:26px;}
+  .cover .logo svg{width:68px;height:68px;}
+  .cover h1{color:#fff;font-size:56px;}
+  .cover .tag{font-style:italic;color:var(--sand);font-size:20px;margin-top:6px;}
+  .cover .sub{margin-top:26px;font-size:19px;border-top:2px solid var(--sage);padding-top:18px;}
+  .cover .meta{margin-top:44px;font-size:12px;color:var(--sand);}
+
+  .sec-label{font-size:11px;letter-spacing:3px;color:var(--terra);font-weight:bold;}
+  h2.sec{font-size:30px;margin:3px 0 4px;border-bottom:3px solid var(--terra);padding-bottom:8px;}
+  .lead{color:var(--mute);font-size:13px;margin-bottom:12px;}
+
+  /* Task card */
+  .task{border:1px solid #e3ddd5;border-radius:7px;margin:9px 0;overflow:hidden;
+    page-break-inside:avoid;}
+  .task .th{background:var(--sand);padding:7px 12px;font-family:Georgia,serif;
+    font-size:13px;font-weight:bold;color:var(--dark);display:flex;align-items:center;gap:8px;}
+  .task .tn{background:var(--terra);color:#fff;width:20px;height:20px;border-radius:50%;
+    font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .task .tb{padding:8px 12px 10px;}
+  .steps{counter-reset:s;}
+  .steps .st{position:relative;padding:3px 0 3px 26px;}
+  .steps .st::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:2px;
+    width:17px;height:17px;background:var(--sage);color:#fff;border-radius:50%;
+    font-size:10px;font-weight:bold;display:flex;align-items:center;justify-content:center;}
+  .steps .st b{color:var(--dark);}
+  .tip{background:#faf7f2;border-left:3px solid var(--sage);padding:5px 9px;margin-top:6px;
+    font-size:11px;color:var(--mute);}
+  .tip b{color:var(--terra);}
+
+  .menu{display:inline-block;background:var(--dark);color:#fff;border-radius:4px;
+    padding:1px 7px;font-size:11px;}
+  .colhead{font-family:Georgia,serif;color:var(--terra);font-size:15px;margin:14px 0 4px;}
+  .foot{position:absolute;bottom:9mm;left:17mm;right:17mm;border-top:1px solid #e3ddd5;
+    padding-top:7px;font-size:9px;color:var(--mute);display:flex;justify-content:space-between;}
+  .twocol{column-count:1;}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="page cover">
+  <div class="logo">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="#B85042"/>
+      <rect x="6.5" y="12" width="2.6" height="6" rx="1" fill="#fff"/>
+      <rect x="10.7" y="9" width="2.6" height="9" rx="1" fill="#fff"/>
+      <rect x="14.9" y="6" width="2.6" height="12" rx="1" fill="#fff"/></svg>
+  </div>
+  <h1>STOREY</h1>
+  <div class="tag">Construction, organised.</div>
+  <div class="sub">How-To Guide &nbsp;·&nbsp; Step by Step</div>
+  <div class="meta">
+    Every activity, for every role.<br>
+    Contractor &nbsp;·&nbsp; Site Manager &nbsp;·&nbsp; Site Supervisor &nbsp;·&nbsp; Store Keeper<br><br>
+    Works the same on the app and the website &nbsp;·&nbsp; help@storeyinfra.com
+  </div>
+</div>
+
+<!-- CONTRACTOR 1 -->
+<div class="page">
+  <div class="sec-label">CONTRACTOR · PART 1</div>
+  <h2 class="sec">Contractor — How To</h2>
+  <p class="lead">Setting up the company, sites and team.</p>
+
+  <div class="task">
+    <div class="th"><span class="tn">1</span> Register your company</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Open the app or <b>storeyinfra.com</b>.</div>
+      <div class="st">On the sign-in screen tap <b>Register your company</b>.</div>
+      <div class="st">Enter your name, company name, email and a password.</div>
+      <div class="st">Tap <b>Create account</b> — you're in as the Contractor.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">2</span> Add a construction site</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Sites</span> → tap <b>Add Site</b>.</div>
+      <div class="st">Enter site name, location, start date and budget.</div>
+      <div class="st">Set status (Planning / Active) → <b>Save</b>.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">3</span> Add a worker</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Workers</span> → tap <b>Add Worker</b>.</div>
+      <div class="st">Enter name, trade, daily wage and phone.</div>
+      <div class="st">Choose Direct hire or Vendor (enter vendor name if vendor).</div>
+      <div class="st">Assign the worker to a site.</div>
+      <div class="st">ID proof: pick type, enter <b>only the last 4 digits</b> → <b>Add Worker</b>.</div>
+      <div class="tip"><b>Privacy:</b> never enter the full Aadhaar/PAN — last 4 digits only.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">4</span> Invite a team member</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Team</span> → tap <b>Invite</b>.</div>
+      <div class="st">Enter their email, pick the role (Site Manager / Supervisor / Store Keeper).</div>
+      <div class="st">Assign the site(s) they will handle.</div>
+      <div class="st">Send — they get an <b>invite code</b> to join with.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">5</span> Set a budget line</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Reports</span> → <b>Budget vs Actual</b> tab.</div>
+      <div class="st">Pick the site and month → tap <b>Add budget line</b>.</div>
+      <div class="st">Choose a material, enter planned quantity and cost → <b>Save</b>.</div>
+      <div class="tip"><b>Why:</b> budget lines power the variance report — planned vs actually spent.</div>
+    </div></div>
+  </div>
+
+  <div class="foot"><span>Storey How-To Guide</span><span>Contractor · 1</span></div>
+</div>
+
+<!-- CONTRACTOR 2 -->
+<div class="page">
+  <div class="sec-label">CONTRACTOR · PART 2</div>
+  <h2 class="sec">Contractor — How To</h2>
+  <p class="lead">Day-to-day records, expenses and reports.</p>
+
+  <div class="task">
+    <div class="th"><span class="tn">6</span> Mark daily attendance</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Attendance</span>. Pick the site and date.</div>
+      <div class="st">Tap each worker to cycle: Present → Absent → Half-day → Paid-leave.</div>
+      <div class="st">Use <b>Mark all present</b> to speed things up, then fix exceptions.</div>
+      <div class="st">Tap <b>Save</b>.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">7</span> Record a material receipt</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Receipts</span> → <b>Record receipt</b>.</div>
+      <div class="st">Pick site and material; enter quantity, supplier and unit cost.</div>
+      <div class="st"><b>Save</b> — inventory updates automatically.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">8</span> Transfer materials between sites</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Transfers</span> → <b>New transfer</b>.</div>
+      <div class="st">Choose From-site, To-site, material and quantity → <b>Save</b>.</div>
+      <div class="st">Stock drops at the source and rises at the destination.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">9</span> Add a site expense</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Expenses</span> → <b>Add Expense</b>.</div>
+      <div class="st">Pick site, date, category (Fuel, Transport, Rental…), amount.</div>
+      <div class="st">Add who paid and a note → <b>Add Expense</b>.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">10</span> Approve or reject an expense</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Expenses</span>. Set Status filter to <b>Pending</b>.</div>
+      <div class="st">Review amount, category and note.</div>
+      <div class="st">Tap <b>Approve</b> or <b>Reject</b>.</div>
+      <div class="tip"><b>Only approved</b> expenses count in reports and total site spend.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">11</span> Generate &amp; print a report</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Reports</span>. Pick a tab — Attendance &amp; Pay, Site Report, Materials, Budget.</div>
+      <div class="st">Set the date range and site filters.</div>
+      <div class="st">Tap <b>Print</b> → choose a printer, or <b>Save as PDF</b> to share.</div>
+    </div></div>
+  </div>
+
+  <div class="foot"><span>Storey How-To Guide</span><span>Contractor · 2</span></div>
+</div>
+
+<!-- SITE MANAGER -->
+<div class="page">
+  <div class="sec-label">SITE MANAGER</div>
+  <h2 class="sec">Site Manager — How To</h2>
+  <p class="lead">Running your assigned sites — workers, materials, expense approvals.</p>
+
+  <div class="task">
+    <div class="th"><span class="tn">1</span> Add a worker to your site</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Workers</span> → <b>Add Worker</b>.</div>
+      <div class="st">Fill name, trade, daily wage; assign to your site.</div>
+      <div class="st">ID proof — last 4 digits only → <b>Add Worker</b>.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">2</span> Mark attendance</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Attendance</span>. Pick site and date.</div>
+      <div class="st">Tap each worker to set status → <b>Save</b>.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">3</span> Write a daily log</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Daily Logs</span> → <b>New log</b>.</div>
+      <div class="st">Enter date, workers present, weather, work done and issues → <b>Save</b>.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">4</span> Record receipts &amp; transfers</div>
+    <div class="tb"><div class="steps">
+      <div class="st"><span class="menu">Receipts</span> → record incoming materials with cost.</div>
+      <div class="st"><span class="menu">Transfers</span> → move stock to/from another site.</div>
+      <div class="st"><span class="menu">Equipment</span> → register machines and maintenance.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">5</span> Add an expense</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Expenses</span> → <b>Add Expense</b>.</div>
+      <div class="st">Enter site, date, category, amount, note → <b>Add Expense</b>.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">6</span> Approve a Supervisor's expense</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Expenses</span> → filter Status = <b>Pending</b>.</div>
+      <div class="st">Check the entry, then tap <b>Approve</b> or <b>Reject</b>.</div>
+      <div class="tip"><b>Do this daily</b> so reports stay accurate.</div>
+    </div></div>
+  </div>
+
+  <div class="foot"><span>Storey How-To Guide</span><span>Site Manager</span></div>
+</div>
+
+<!-- SUPERVISOR -->
+<div class="page">
+  <div class="sec-label">SITE SUPERVISOR</div>
+  <h2 class="sec">Site Supervisor — How To</h2>
+  <p class="lead">Your on-ground daily tasks.</p>
+
+  <div class="task">
+    <div class="th"><span class="tn">1</span> Mark daily attendance <span style="font-size:10px;color:var(--terra);">(every morning)</span></div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Attendance</span>. Today's date is selected.</div>
+      <div class="st">Tap each worker to cycle through P / A / ½ / PL.</div>
+      <div class="st">Tap <b>Mark all present</b> first if most are in, then fix the rest.</div>
+      <div class="st">Tap <b>Save</b> before leaving the screen.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">2</span> Write the daily log <span style="font-size:10px;color:var(--terra);">(every evening)</span></div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Daily Logs</span> → <b>New log</b>.</div>
+      <div class="st">Enter how many workers were present.</div>
+      <div class="st">Write what work was done, the weather, and any issues or delays.</div>
+      <div class="st">Tap <b>Save</b>.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">3</span> Raise a site expense <span style="font-size:10px;color:var(--terra);">(when cash is spent)</span></div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Expenses</span> → <b>Add Expense</b>.</div>
+      <div class="st">Pick the site and date.</div>
+      <div class="st">Choose a category — Fuel, Transport, Food, Repairs, etc.</div>
+      <div class="st">Enter the amount, who paid, and a short note.</div>
+      <div class="st">Tap <b>Add Expense</b> — it goes to your Site Manager as <b>Pending</b>.</div>
+      <div class="tip"><b>Do it immediately:</b> log the expense when the money is spent, not later — small spends get forgotten.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">4</span> Add a worker</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Workers</span> → <b>Add Worker</b>.</div>
+      <div class="st">Enter name, trade, daily wage; assign to the site → <b>Add Worker</b>.</div>
+    </div></div>
+  </div>
+
+  <div class="foot"><span>Storey How-To Guide</span><span>Site Supervisor</span></div>
+</div>
+
+<!-- STORE KEEPER -->
+<div class="page">
+  <div class="sec-label">STORE KEEPER</div>
+  <h2 class="sec">Store Keeper — How To</h2>
+  <p class="lead">Keeping materials and equipment accurate.</p>
+
+  <div class="task">
+    <div class="th"><span class="tn">1</span> Add a material to inventory</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Inventory</span> → <b>Add Material</b>.</div>
+      <div class="st">Enter name, unit (bag, ton, cft…), opening stock and reorder level.</div>
+      <div class="st">Set the unit cost → <b>Save</b>.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">2</span> Record a material receipt (GRN)</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Receipts</span> → <b>Record receipt</b>.</div>
+      <div class="st">Pick the site and material.</div>
+      <div class="st">Enter quantity received, supplier name and unit cost.</div>
+      <div class="st">Tap <b>Save</b> — stock rises automatically.</div>
+      <div class="tip"><b>Same-day entry:</b> record receipts the day goods arrive so stock always matches reality.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">3</span> Transfer materials to another site</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Transfers</span> → <b>New transfer</b>.</div>
+      <div class="st">Choose From-site, To-site, the material and quantity.</div>
+      <div class="st">Tap <b>Save</b> — both sites' stock update together.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">4</span> Add equipment / an asset</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Equipment</span> → <b>Add Equipment</b>.</div>
+      <div class="st">Enter name, type, and the site it's at.</div>
+      <div class="st">Record assignment and any maintenance notes → <b>Save</b>.</div>
+    </div></div>
+  </div>
+
+  <div class="task">
+    <div class="th"><span class="tn">5</span> Check stock levels</div>
+    <div class="tb"><div class="steps">
+      <div class="st">Menu → <span class="menu">Inventory</span> — see live quantity for every material.</div>
+      <div class="st">Items at or below the reorder level need restocking — raise it with your Site Manager.</div>
+      <div class="st">Tap a material to see its full receipt/transfer history (ledger).</div>
+    </div></div>
+  </div>
+
+  <div class="foot"><span>Storey How-To Guide</span><span>Store Keeper</span></div>
+</div>
+
+<!-- QUICK REFERENCE -->
+<div class="page">
+  <div class="sec-label">QUICK REFERENCE</div>
+  <h2 class="sec">Daily Rhythm</h2>
+  <p class="lead">If everyone does their bit each day, the reports take care of themselves.</p>
+
+  <div class="colhead">Site Supervisor — every day</div>
+  <div class="task"><div class="tb"><div class="steps">
+    <div class="st"><b>Morning:</b> mark attendance for all workers.</div>
+    <div class="st"><b>Through the day:</b> raise expenses as cash is spent.</div>
+    <div class="st"><b>Evening:</b> write the daily log.</div>
+  </div></div></div>
+
+  <div class="colhead">Store Keeper — as it happens</div>
+  <div class="task"><div class="tb"><div class="steps">
+    <div class="st">Record every material receipt the day it arrives.</div>
+    <div class="st">Log transfers immediately so both sites stay correct.</div>
+    <div class="st">Watch reorder levels; flag low stock early.</div>
+  </div></div></div>
+
+  <div class="colhead">Site Manager — every day</div>
+  <div class="task"><div class="tb"><div class="steps">
+    <div class="st">Clear all <b>Pending</b> expenses — Approve or Reject.</div>
+    <div class="st">Check attendance was marked for each site.</div>
+  </div></div></div>
+
+  <div class="colhead">Contractor — weekly</div>
+  <div class="task"><div class="tb"><div class="steps">
+    <div class="st">Open <b>Reports → Site Report</b> for each site — review total spend.</div>
+    <div class="st">Check <b>Budget vs Actual</b> — catch overspend early.</div>
+    <div class="st">Print or PDF the reports you need to keep.</div>
+  </div></div></div>
+
+  <div class="tip" style="margin-top:16px;font-size:12px;">
+    <b>Stuck?</b> On the sign-in screen tap "Need help signing in?", or email
+    <b>help@storeyinfra.com</b> — we reply within one business day.
+  </div>
+
+  <div style="margin-top:30px;text-align:center;color:var(--mute);font-size:10px;
+    border-top:2px solid var(--sage);padding-top:16px;">
+    STOREY — Construction, organised. &nbsp;·&nbsp; storeyinfra.com<br>
+    Works the same on the Android app and the website.
+  </div>
+  <div class="foot"><span>Storey How-To Guide</span><span>Quick Reference</span></div>
+</div>
+
+</body>
+</html>

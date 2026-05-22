@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Storey — User Guide</title>
+<style>
+  :root{
+    --terra:#B85042; --sand:#E7E8D1; --sage:#A7BEAE;
+    --dark:#2C1810; --ink:#3a2c24; --mute:#8b7b72;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  @page{size:A4;margin:0;}
+  body{font-family:Arial,Helvetica,sans-serif;color:var(--ink);font-size:13px;line-height:1.55;}
+  h1,h2,h3{font-family:Georgia,'Times New Roman',serif;color:var(--dark);}
+  .page{width:210mm;height:297mm;padding:16mm 18mm;page-break-after:always;
+    position:relative;overflow:hidden;}
+  .page:last-child{page-break-after:auto;}
+
+  /* Cover */
+  .cover{background:var(--terra);color:#fff;display:flex;flex-direction:column;
+    justify-content:center;align-items:center;text-align:center;}
+  .cover .logo{width:120px;height:120px;background:#fff;border-radius:28px;
+    display:flex;align-items:center;justify-content:center;margin-bottom:28px;}
+  .cover .logo svg{width:74px;height:74px;}
+  .cover h1{color:#fff;font-size:62px;letter-spacing:1px;}
+  .cover .tag{font-style:italic;color:var(--sand);font-size:22px;margin-top:6px;}
+  .cover .sub{margin-top:30px;font-size:18px;color:#fff;border-top:2px solid var(--sage);
+    padding-top:20px;}
+  .cover .meta{margin-top:50px;font-size:13px;color:var(--sand);}
+
+  /* Section headers */
+  .sec-label{font-size:11px;letter-spacing:3px;color:var(--terra);font-weight:bold;}
+  h2.sec{font-size:34px;margin:4px 0 6px;border-bottom:3px solid var(--terra);
+    padding-bottom:10px;}
+  h3{font-size:18px;margin:22px 0 8px;color:var(--terra);}
+  p{margin:6px 0;}
+  ul{margin:6px 0 6px 22px;}
+  li{margin:3px 0;}
+  .lead{color:var(--mute);font-size:14px;margin-bottom:14px;}
+
+  /* Tables */
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px;}
+  th{background:var(--dark);color:#fff;text-align:left;padding:8px 10px;font-weight:600;}
+  td{border:1px solid #e3ddd5;padding:7px 10px;vertical-align:top;}
+  tr:nth-child(even) td{background:#faf7f2;}
+
+  /* Feature card */
+  .feat{border:1px solid #e3ddd5;border-left:4px solid var(--sage);
+    border-radius:6px;padding:12px 14px;margin:10px 0;background:#fff;}
+  .feat h4{font-family:Georgia,serif;color:var(--dark);font-size:15px;margin-bottom:3px;}
+  .feat .who{font-size:11px;color:var(--terra);font-weight:bold;}
+
+  /* Steps */
+  .steps{counter-reset:s;margin:8px 0;}
+  .steps .st{position:relative;padding:4px 0 4px 34px;margin:4px 0;}
+  .steps .st::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:3px;
+    width:22px;height:22px;background:var(--terra);color:#fff;border-radius:50%;
+    font-size:12px;font-weight:bold;display:flex;align-items:center;justify-content:center;}
+
+  .callout{background:var(--sand);border-radius:6px;padding:10px 14px;margin:12px 0;
+    font-size:12px;}
+  .callout b{color:var(--terra);}
+
+  /* Phone mockup */
+  .phones{display:flex;gap:26px;flex-wrap:wrap;margin:16px 0;}
+  .phone{width:228px;border:8px solid var(--dark);border-radius:28px;overflow:hidden;
+    background:#fff;flex-shrink:0;}
+  .phone .pbar{background:var(--terra);color:#fff;padding:9px 12px;font-size:11px;
+    display:flex;justify-content:space-between;font-family:Georgia,serif;}
+  .phone .pbody{padding:10px;min-height:330px;background:#faf9f6;}
+  .phone .pcap{text-align:center;font-size:11px;color:var(--mute);margin-top:6px;}
+  .mk-row{background:#fff;border:1px solid #e7e1d8;border-radius:6px;padding:7px 9px;
+    margin:6px 0;font-size:10px;display:flex;justify-content:space-between;align-items:center;}
+  .mk-row .l{color:var(--ink);font-weight:600;}
+  .mk-row .r{color:var(--mute);}
+  .mk-h{font-family:Georgia,serif;font-size:13px;color:var(--dark);margin:2px 0 8px;}
+  .mk-stat{display:flex;gap:6px;margin:6px 0;}
+  .mk-stat div{flex:1;background:#fff;border:1px solid #e7e1d8;border-radius:6px;
+    padding:6px;text-align:center;}
+  .mk-stat .v{font-family:Georgia,serif;font-size:14px;color:var(--terra);font-weight:bold;}
+  .mk-stat .k{font-size:8px;color:var(--mute);text-transform:uppercase;}
+  .mk-btn{background:var(--terra);color:#fff;text-align:center;border-radius:6px;
+    padding:8px;font-size:10px;font-weight:bold;margin:8px 0;}
+  .mk-pill{display:inline-block;width:20px;height:20px;border-radius:4px;
+    color:#fff;font-size:9px;text-align:center;line-height:20px;font-weight:bold;}
+  .pill-p{background:#3ba55c;} .pill-a{background:#d9534f;}
+  .pill-h{background:#e0a826;} .pill-l{background:#5b9bd5;}
+  .badge{display:inline-block;padding:1px 7px;border-radius:9px;font-size:9px;font-weight:bold;}
+  .b-y{background:#fdf0d0;color:#9a7510;} .b-g{background:#d9efdf;color:#1f7a3d;}
+
+  .foot{position:absolute;bottom:10mm;left:18mm;right:18mm;border-top:1px solid #e3ddd5;
+    padding-top:8px;font-size:10px;color:var(--mute);display:flex;justify-content:space-between;}
+</style>
+</head>
+<body>
+
+<!-- ════════ COVER ════════ -->
+<div class="page cover">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="3" width="18" height="18" rx="4" fill="#B85042"/>
+      <rect x="6.5" y="12" width="2.6" height="6" rx="1" fill="#fff"/>
+      <rect x="10.7" y="9" width="2.6" height="9" rx="1" fill="#fff"/>
+      <rect x="14.9" y="6" width="2.6" height="12" rx="1" fill="#fff"/>
+    </svg>
+  </div>
+  <h1>STOREY</h1>
+  <div class="tag">Construction, organised.</div>
+  <div class="sub">User Guide &nbsp;·&nbsp; All Roles &nbsp;·&nbsp; App &amp; Website</div>
+  <div class="meta">
+    Contractor &nbsp;·&nbsp; Site Manager &nbsp;·&nbsp; Site Supervisor &nbsp;·&nbsp; Store Keeper<br><br>
+    storeyinfra.com &nbsp;·&nbsp; help@storeyinfra.com
+  </div>
+</div>
+
+<!-- ════════ GETTING STARTED ════════ -->
+<div class="page">
+  <div class="sec-label">CHAPTER 1</div>
+  <h2 class="sec">Getting Started</h2>
+  <p class="lead">Storey runs the same on the phone app and the website — same screens, same login. Use whichever is handy.</p>
+
+  <h3>Two ways to use Storey</h3>
+  <table>
+    <tr><th style="width:50%">On your phone (App)</th><th>On a computer (Website)</th></tr>
+    <tr>
+      <td>Install <b>Storey</b> from the Google Play Store. Best for the field — attendance, daily logs, expenses, photos.</td>
+      <td>Open <b>storeyinfra.com</b> in any browser. Best for the office — reports, budgets, team management.</td>
+    </tr>
+  </table>
+  <p style="font-size:12px;color:var(--mute);">Your data is the same in both. Mark attendance on the phone at site, see the report on the website at the office — instantly.</p>
+
+  <h3>Signing in</h3>
+  <div class="steps">
+    <div class="st">Open the app or website. You land on the sign-in screen.</div>
+    <div class="st">Choose a method: <b>Google</b>, <b>Email &amp; Password</b>, or <b>Phone OTP</b>.</div>
+    <div class="st">First time? A contractor registers the company. Team members join with an <b>invite code</b>.</div>
+  </div>
+
+  <div class="phones">
+    <div>
+      <div class="phone">
+        <div class="pbar"><span>STOREY</span><span>9:41</span></div>
+        <div class="pbody">
+          <div class="mk-h" style="text-align:center;">Welcome back</div>
+          <div class="mk-btn" style="background:#fff;color:var(--ink);border:1px solid #ddd;">Continue with Google</div>
+          <div class="mk-row"><span class="l">Email &amp; Password</span><span class="r">›</span></div>
+          <div class="mk-row"><span class="l">Phone OTP</span><span class="r">›</span></div>
+          <div class="mk-row"><span class="l">Accept Team Invite</span><span class="r">›</span></div>
+          <div class="mk-row" style="border-style:dashed;"><span class="l">Register your company</span><span class="r">›</span></div>
+        </div>
+      </div>
+      <div class="pcap">Sign-in screen</div>
+    </div>
+    <div style="flex:1;min-width:240px;">
+      <h3 style="margin-top:0;">Who does what</h3>
+      <table>
+        <tr><th>Role</th><th>In short</th></tr>
+        <tr><td><b>Contractor</b></td><td>The owner. Full access — every site, money, team.</td></tr>
+        <tr><td><b>Site Manager</b></td><td>Runs assigned sites — workers, materials, expenses, approvals.</td></tr>
+        <tr><td><b>Site Supervisor</b></td><td>On-ground — attendance, daily logs, raises expenses.</td></tr>
+        <tr><td><b>Store Keeper</b></td><td>Materials &amp; equipment — stock, receipts, transfers.</td></tr>
+      </table>
+      <div class="callout"><b>Tip:</b> You only see the menu items your role needs. A cleaner screen, less confusion.</div>
+    </div>
+  </div>
+  <div class="foot"><span>Storey User Guide</span><span>1 · Getting Started</span></div>
+</div>
+
+<!-- ════════ ROLES AT A GLANCE ════════ -->
+<div class="page">
+  <div class="sec-label">CHAPTER 2</div>
+  <h2 class="sec">Roles at a Glance</h2>
+  <p class="lead">What each role can open from the menu. ✓ = available.</p>
+  <table>
+    <tr><th>Feature</th><th>Contractor</th><th>Site Manager</th><th>Supervisor</th><th>Store Keeper</th></tr>
+    <tr><td>Dashboard</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Sites</td><td>✓ all</td><td>✓ assigned</td><td>—</td><td>—</td></tr>
+    <tr><td>Workers</td><td>✓</td><td>✓</td><td>✓</td><td>—</td></tr>
+    <tr><td>Attendance</td><td>✓</td><td>✓</td><td>✓</td><td>—</td></tr>
+    <tr><td>Daily Logs</td><td>✓</td><td>✓</td><td>✓</td><td>—</td></tr>
+    <tr><td>Inventory</td><td>✓</td><td>✓</td><td>—</td><td>✓</td></tr>
+    <tr><td>Material Receipts</td><td>✓</td><td>✓</td><td>—</td><td>✓</td></tr>
+    <tr><td>Material Transfers</td><td>✓</td><td>✓</td><td>—</td><td>✓</td></tr>
+    <tr><td>Equipment &amp; Assets</td><td>✓</td><td>✓</td><td>—</td><td>✓</td></tr>
+    <tr><td>Site Expenses</td><td>✓ approve</td><td>✓ approve</td><td>✓ raise</td><td>—</td></tr>
+    <tr><td>Reports</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>Team / Invites</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>Settings</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  </table>
+  <div class="callout"><b>Expenses approval:</b> A Supervisor <i>raises</i> an expense (status: Pending). A Site Manager or Contractor <i>approves</i> it. Only approved expenses count in reports.</div>
+  <div class="foot"><span>Storey User Guide</span><span>2 · Roles at a Glance</span></div>
+</div>
+
+<!-- ════════ CONTRACTOR ════════ -->
+<div class="page">
+  <div class="sec-label">CHAPTER 3 · ROLE</div>
+  <h2 class="sec">Contractor</h2>
+  <p class="lead">The company owner. Full control of every site, the team, money and reports.</p>
+
+  <div class="phones">
+    <div>
+      <div class="phone">
+        <div class="pbar"><span>Dashboard</span><span>9:41</span></div>
+        <div class="pbody">
+          <div class="mk-h">Good morning, Rajiv</div>
+          <div class="mk-stat">
+            <div><div class="v">3</div><div class="k">Sites</div></div>
+            <div><div class="v">48</div><div class="k">Workers</div></div>
+          </div>
+          <div class="mk-stat">
+            <div><div class="v">₹12L</div><div class="k">Budget</div></div>
+            <div><div class="v">₹7.4L</div><div class="k">Spent</div></div>
+          </div>
+          <div class="mk-row"><span class="l">NH-37 Jorhat</span><span class="r">Active</span></div>
+          <div class="mk-row"><span class="l">Manipur Hostel</span><span class="r">Active</span></div>
+          <div class="mk-row"><span class="l">Imphal Bypass</span><span class="r">Planning</span></div>
+        </div>
+      </div>
+      <div class="pcap">Contractor dashboard</div>
+    </div>
+    <div style="flex:1;min-width:250px;">
+      <h3 style="margin-top:0;">Your features</h3>
+      <div class="feat"><h4>Sites</h4>Create and manage every construction site — name, location, budget, status.</div>
+      <div class="feat"><h4>Workers</h4>Add labour — name, trade, daily wage, direct/vendor, ID proof (last 4 digits only).</div>
+      <div class="feat"><h4>Team</h4>Invite Site Managers, Supervisors and Store Keepers with an invite code.</div>
+      <div class="feat"><h4>Reports</h4>The full picture — Attendance &amp; Pay, Site Report, Materials, Budget vs Actual. All printable.</div>
+    </div>
+  </div>
+
+  <h3>Everything the Contractor can do</h3>
+  <table>
+    <tr><th style="width:24%">Feature</th><th>What it's for</th></tr>
+    <tr><td>Sites</td><td>Set up sites, budgets, mark active/completed.</td></tr>
+    <tr><td>Workers</td><td>Onboard labour with wages, trade and vendor details.</td></tr>
+    <tr><td>Attendance</td><td>Mark Present / Absent / Half-day / Paid-leave daily.</td></tr>
+    <tr><td>Daily Logs</td><td>Record site progress, weather, issues.</td></tr>
+    <tr><td>Inventory · Receipts · Transfers</td><td>Track material stock, incoming goods, inter-site movement.</td></tr>
+    <tr><td>Equipment</td><td>Register machines and assets, assignments, maintenance.</td></tr>
+    <tr><td>Expenses</td><td>Record and <b>approve</b> cash spends — fuel, transport, rentals.</td></tr>
+    <tr><td>Reports</td><td>Payroll, site spend, budget variance — printable / PDF.</td></tr>
+    <tr><td>Team</td><td>Invite and manage all staff roles.</td></tr>
+  </table>
+  <div class="foot"><span>Storey User Guide</span><span>3 · Contractor</span></div>
+</div>
+
+<!-- ════════ SITE MANAGER ════════ -->
+<div class="page">
+  <div class="sec-label">CHAPTER 4 · ROLE</div>
+  <h2 class="sec">Site Manager</h2>
+  <p class="lead">Runs the sites assigned to them — day-to-day workers, materials, equipment, and approving expenses.</p>
+
+  <div class="phones">
+    <div>
+      <div class="phone">
+        <div class="pbar"><span>Expenses</span><span>9:41</span></div>
+        <div class="pbody">
+          <div class="mk-h">Site Expenses</div>
+          <div class="mk-stat">
+            <div><div class="v">₹18k</div><div class="k">Approved</div></div>
+            <div><div class="v">₹3k</div><div class="k">Pending</div></div>
+          </div>
+          <div class="mk-row"><span class="l">Diesel · ₹2,000</span><span class="badge b-y">pending</span></div>
+          <div class="mk-row"><span class="l">Tea / crew · ₹450</span><span class="badge b-y">pending</span></div>
+          <div class="mk-row"><span class="l">Mixer rent · ₹1,500</span><span class="badge b-g">approved</span></div>
+        </div>
+      </div>
+      <div class="pcap">Approving expenses</div>
+    </div>
+    <div style="flex:1;min-width:250px;">
+      <h3 style="margin-top:0;">Your features</h3>
+      <div class="feat"><h4>My Sites</h4>Only the sites assigned to you — focused, no clutter.</div>
+      <div class="feat"><h4>Workers &amp; Attendance</h4>Onboard labour and mark daily attendance.</div>
+      <div class="feat"><h4>Materials</h4>Inventory, receipts, transfers, equipment for your sites.</div>
+      <div class="feat"><h4>Approve Expenses <span class="who">KEY</span></h4>Review what supervisors raised — Approve or Reject.</div>
+    </div>
+  </div>
+
+  <h3>How to approve a Supervisor's expense</h3>
+  <div class="steps">
+    <div class="st">Open <b>Expenses</b> from the menu.</div>
+    <div class="st">Set the Status filter to <b>Pending</b> — these need your decision.</div>
+    <div class="st">Check the amount, category and note.</div>
+    <div class="st">Tap <b>Approve</b> (counts in reports) or <b>Reject</b>.</div>
+  </div>
+  <div class="callout"><b>Note:</b> A Site Manager sees only assigned sites — not the whole company. For the company-wide view, that's the Contractor's Reports.</div>
+  <div class="foot"><span>Storey User Guide</span><span>4 · Site Manager</span></div>
+</div>
+
+<!-- ════════ SUPERVISOR ════════ -->
+<div class="page">
+  <div class="sec-label">CHAPTER 5 · ROLE</div>
+  <h2 class="sec">Site Supervisor</h2>
+  <p class="lead">On the ground every day. Marks attendance, writes the daily log, and raises expenses for approval.</p>
+
+  <div class="phones">
+    <div>
+      <div class="phone">
+        <div class="pbar"><span>Attendance</span><span>9:41</span></div>
+        <div class="pbody">
+          <div class="mk-h">NH-37 · Today</div>
+          <div class="mk-row"><span class="l">Biren Das</span><span class="mk-pill pill-p">P</span></div>
+          <div class="mk-row"><span class="l">Anil Bora</span><span class="mk-pill pill-p">P</span></div>
+          <div class="mk-row"><span class="l">Joy Tirkey</span><span class="mk-pill pill-h">½</span></div>
+          <div class="mk-row"><span class="l">Rita Munda</span><span class="mk-pill pill-a">A</span></div>
+          <div class="mk-row"><span class="l">Sunil Das</span><span class="mk-pill pill-l">PL</span></div>
+          <div class="mk-btn">Save attendance</div>
+        </div>
+      </div>
+      <div class="pcap">Marking attendance</div>
+    </div>
+    <div style="flex:1;min-width:250px;">
+      <h3 style="margin-top:0;">Your features</h3>
+      <div class="feat"><h4>Attendance <span class="who">DAILY</span></h4>Tap each worker to cycle Present → Absent → Half-day → Paid-leave.</div>
+      <div class="feat"><h4>Daily Logs</h4>Record what happened — work done, weather, issues, worker count.</div>
+      <div class="feat"><h4>Workers</h4>View and add workers on your site.</div>
+      <div class="feat"><h4>Raise Expenses</h4>Log a cash spend — it goes to your Site Manager as <b>Pending</b>.</div>
+    </div>
+  </div>
+
+  <h3>The daily routine</h3>
+  <div class="steps">
+    <div class="st"><b>Morning:</b> open Attendance, mark every worker, Save.</div>
+    <div class="st"><b>During the day:</b> raise any expense (diesel, tea, transport) as it happens.</div>
+    <div class="st"><b>Evening:</b> open Daily Logs, write what was done and any issues.</div>
+  </div>
+  <div class="callout"><b>Status legend:</b>
+    <span class="mk-pill pill-p">P</span> Present &nbsp;
+    <span class="mk-pill pill-a">A</span> Absent &nbsp;
+    <span class="mk-pill pill-h">½</span> Half-day &nbsp;
+    <span class="mk-pill pill-l">PL</span> Paid leave</div>
+  <div class="foot"><span>Storey User Guide</span><span>5 · Site Supervisor</span></div>
+</div>
+
+<!-- ════════ STORE KEEPER ════════ -->
+<div class="page">
+  <div class="sec-label">CHAPTER 6 · ROLE</div>
+  <h2 class="sec">Store Keeper</h2>
+  <p class="lead">Owns the materials. Records what comes in, what moves between sites, and keeps stock accurate.</p>
+
+  <div class="phones">
+    <div>
+      <div class="phone">
+        <div class="pbar"><span>Inventory</span><span>9:41</span></div>
+        <div class="pbody">
+          <div class="mk-h">NH-37 · Stock</div>
+          <div class="mk-row"><span class="l">Cement (bag)</span><span class="r">420</span></div>
+          <div class="mk-row"><span class="l">Steel (ton)</span><span class="r">12.5</span></div>
+          <div class="mk-row"><span class="l">Sand (cft)</span><span class="r">1,800</span></div>
+          <div class="mk-row"><span class="l">Bricks (no.)</span><span class="r">9,200</span></div>
+          <div class="mk-btn">+ Record receipt</div>
+        </div>
+      </div>
+      <div class="pcap">Inventory stock</div>
+    </div>
+    <div style="flex:1;min-width:250px;">
+      <h3 style="margin-top:0;">Your features</h3>
+      <div class="feat"><h4>Inventory</h4>Live stock of every material, per site, with reorder levels.</div>
+      <div class="feat"><h4>Material Receipts</h4>Record incoming goods (GRN) — quantity, supplier, cost.</div>
+      <div class="feat"><h4>Material Transfers</h4>Move stock between sites — both sides stay in sync.</div>
+      <div class="feat"><h4>Equipment &amp; Assets</h4>Track machines, assignments and maintenance.</div>
+    </div>
+  </div>
+
+  <h3>Recording a material receipt</h3>
+  <div class="steps">
+    <div class="st">Open <b>Receipts</b> → tap <b>Record receipt</b>.</div>
+    <div class="st">Pick the site and material, enter quantity, supplier and unit cost.</div>
+    <div class="st">Save — inventory updates automatically.</div>
+  </div>
+  <div class="callout"><b>Why cost matters:</b> the unit cost you enter flows into the Contractor's Budget vs Actual report. Accurate entry = accurate budgets.</div>
+  <div class="foot"><span>Storey User Guide</span><span>6 · Store Keeper</span></div>
+</div>
+
+<!-- ════════ REPORTS ════════ -->
+<div class="page">
+  <div class="sec-label">CHAPTER 7</div>
+  <h2 class="sec">Reports &amp; Printing</h2>
+  <p class="lead">For the Contractor. Every report has a Print button — print on paper or save as PDF, on phone or computer.</p>
+
+  <table>
+    <tr><th style="width:26%">Report</th><th>Shows</th></tr>
+    <tr><td>Overview</td><td>All sites with budgets and status at a glance.</td></tr>
+    <tr><td>Attendance &amp; Pay</td><td>Worker × date grid with auto-calculated wages for any date range.</td></tr>
+    <tr><td>Site Report</td><td>One site, full picture — daily logs, attendance, materials, expenses, total spend.</td></tr>
+    <tr><td>Materials</td><td>Material received vs transferred, monthly, with cost.</td></tr>
+    <tr><td>Budget vs Actual</td><td>Planned vs spent per material, with variance.</td></tr>
+  </table>
+
+  <div class="phones">
+    <div>
+      <div class="phone">
+        <div class="pbar"><span>Reports</span><span>9:41</span></div>
+        <div class="pbody">
+          <div class="mk-h">Attendance &amp; Pay</div>
+          <div class="mk-stat">
+            <div><div class="v">48</div><div class="k">Workers</div></div>
+            <div><div class="v">₹2.6L</div><div class="k">Payroll</div></div>
+          </div>
+          <div class="mk-row"><span class="l">Biren Das</span><span class="r">26 d · ₹15,600</span></div>
+          <div class="mk-row"><span class="l">Anil Bora</span><span class="r">24 d · ₹14,400</span></div>
+          <div class="mk-row"><span class="l">Joy Tirkey</span><span class="r">25.5 d · ₹12,750</span></div>
+          <div class="mk-btn">Print / Save PDF</div>
+        </div>
+      </div>
+      <div class="pcap">Attendance &amp; Pay report</div>
+    </div>
+    <div style="flex:1;min-width:250px;">
+      <h3 style="margin-top:0;">How wages are calculated</h3>
+      <table>
+        <tr><th>Status</th><th>Counts as</th></tr>
+        <tr><td>Present</td><td>1 full day</td></tr>
+        <tr><td>Half-day</td><td>½ day</td></tr>
+        <tr><td>Paid leave</td><td>1 full day</td></tr>
+        <tr><td>Absent</td><td>0</td></tr>
+      </table>
+      <p style="font-size:12px;">Pay = total days × the worker's daily wage. Vendor labour is grouped under the vendor.</p>
+      <div class="callout"><b>To print:</b> open any report → tap <b>Print</b> → choose a printer, or "Save as PDF" to share on WhatsApp / email.</div>
+    </div>
+  </div>
+  <div class="foot"><span>Storey User Guide</span><span>7 · Reports</span></div>
+</div>
+
+<!-- ════════ TIPS / SUPPORT ════════ -->
+<div class="page">
+  <div class="sec-label">CHAPTER 8</div>
+  <h2 class="sec">Good Habits &amp; Support</h2>
+
+  <h3>For a smooth site</h3>
+  <ul>
+    <li><b>Mark attendance every morning</b> — it's the base for payroll and daily logs.</li>
+    <li><b>Raise expenses the moment cash is spent</b> — don't wait till evening, things get missed.</li>
+    <li><b>Site Managers: clear pending expenses daily</b> — keeps reports accurate.</li>
+    <li><b>Store Keepers: record receipts the same day goods arrive</b> — stock stays trustworthy.</li>
+    <li><b>Contractors: review the Site Report weekly</b> — catch overspend early.</li>
+  </ul>
+
+  <h3>Privacy &amp; safety</h3>
+  <ul>
+    <li>Only the last 4 digits of a worker's ID are stored — never the full number.</li>
+    <li>Each company's data is fully separate — no one outside your company can see it.</li>
+    <li>Sign out on shared devices: Settings → Sign out.</li>
+  </ul>
+
+  <h3>Need help?</h3>
+  <p>On the sign-in screen, tap <b>"Need help signing in?"</b> to message support. Or write any time to:</p>
+  <div class="callout" style="text-align:center;font-size:14px;">
+    <b>help@storeyinfra.com</b><br>
+    <span style="font-size:11px;color:var(--mute);">We reply within one business day.</span>
+  </div>
+
+  <div style="margin-top:40px;text-align:center;color:var(--mute);font-size:11px;
+    border-top:2px solid var(--sage);padding-top:20px;">
+    STOREY — Construction, organised. &nbsp;·&nbsp; storeyinfra.com<br>
+    This guide covers the app and website. Screens shown are illustrative.
+  </div>
+  <div class="foot"><span>Storey User Guide</span><span>8 · Support</span></div>
+</div>
+
+</body>
+</html>

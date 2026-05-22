@@ -3,6 +3,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import useAuthStore from '@/stores/authStore'
 import StoreyIcon from '@/components/brand/StoreyIcon'
 
+// Bump these when ToS / Privacy Policy is updated materially.
+// They are stored on the profile row for audit purposes.
+const TERMS_VERSION   = '2026-05-22'
+const PRIVACY_VERSION = '2026-05-22'
+
 export default function Register() {
   const [form, setForm] = useState({
     tenantName: '',
@@ -10,6 +15,7 @@ export default function Register() {
     email: '',
     password: '',
   })
+  const [consent, setConsent] = useState(false)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const { signUp } = useAuthStore()
@@ -20,9 +26,20 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
+    if (!consent) {
+      setError('Please accept the Terms of Service and Privacy Policy to continue.')
+      return
+    }
     setLoading(true)
     try {
-      await signUp(form)
+      await signUp({
+        ...form,
+        consent: {
+          accepted_at:      new Date().toISOString(),
+          terms_version:    TERMS_VERSION,
+          privacy_version:  PRIVACY_VERSION,
+        },
+      })
       navigate('/dashboard')
     } catch (err) {
       setError(err.message)
@@ -99,7 +116,29 @@ export default function Register() {
                 placeholder="Min. 8 characters"
               />
             </div>
-            <button type="submit" disabled={loading} className="btn-primary w-full mt-1">
+
+            {/* DPDP / ToS consent — required for new sign-ups from 2026-05-22 */}
+            <label className="flex items-start gap-2.5 pt-1 text-xs text-gray-700 leading-relaxed cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-brand-600 focus:ring-brand-600"
+              />
+              <span>
+                I am at least 18 and I agree to Storey's{' '}
+                <Link to="/terms" target="_blank" className="font-medium text-brand-600 hover:text-brand-700 underline">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link to="/privacy" target="_blank" className="font-medium text-brand-600 hover:text-brand-700 underline">
+                  Privacy Policy
+                </Link>
+                . I understand Storey is in beta.
+              </span>
+            </label>
+
+            <button type="submit" disabled={loading || !consent} className="btn-primary w-full mt-1 disabled:opacity-60">
               {loading ? 'Creating account…' : 'Create account'}
             </button>
           </form>

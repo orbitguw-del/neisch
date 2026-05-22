@@ -1,7 +1,7 @@
 # Operational TODOs
 
 Running list of follow-up items, ordered by priority (highest first).
-Last reprioritised: 2026-05-18.
+Last reprioritised: 2026-05-20.
 
 ---
 
@@ -16,12 +16,27 @@ Last reprioritised: 2026-05-18.
 
 ## 🔴 P0 — Critical / blocking
 
-- [ ] **Fix broken IPv4 internet on the office network** — router gets IPv6 but
-  no IPv4. PC has no IPv4 default gateway; `tracert 8.8.8.8` returns
-  "destination net unreachable" at the router (`192.168.0.1`). IPv4-only
-  services (Supabase dashboard, `auth.supabase.io`) are unreachable. This blocks
-  the DB work below. Action: restart router → check WAN/IPv4 status in router
-  admin → call ISP for IPv4 / dual-stack (likely moved to IPv6-only or CGNAT).
+- [ ] **Recruit 10 more closed-testers for Play Production access** — currently
+  2/12. Until 12 unique testers opt-in AND stay opted-in for 14 consecutive
+  days, the app cannot be promoted from closed to production track. This is the
+  real blocker between v1.1.1 and a public launch.
+- [ ] **Office IPv4 stability** *(intermittent — was P0 blocker, now flaky)* —
+  IPv4 fully verified working 2026-05-20 12:41 IST: Google DNS 68–96 ms,
+  Supabase REST 401 in 0.38 s, storeyinfra.com 307 in 1.3 s — clean three-layer
+  pass (ICMP + DNS + HTTPS). However, the router has repeatedly dropped IPv4
+  in favour of IPv6-only over the past week, so this is "currently green" not
+  "fixed". Phone USB-tether (10.45.209.x) is wired as a parallel fallback path.
+  Long-term fix: ISP call to confirm dual-stack (not CGNAT / IPv6-only).
+  Declare resolved only after 48 hours of stable IPv4 with no drop.
+
+- [ ] **Disable the duplicate slow NIC (Ethernet 2)** — vMatrix Host Info
+  shows Intel 82575EB #2 also bound to the office LAN (192.168.0.106) but
+  negotiating at 100 Mbps instead of 1 Gbps. Two NICs on the same subnet with
+  the same gateway causes route-table conflicts. `Disable-NetAdapter -Name
+  "Ethernet 2" -Confirm:$false` (run as Administrator). Also set interface
+  metrics so LAN wins over the phone-tether when both are connected:
+  `Set-NetIPInterface -InterfaceAlias "Ethernet" -InterfaceMetric 10` and
+  `Set-NetIPInterface -InterfaceAlias "Ethernet 3" -InterfaceMetric 50`.
 
 ---
 
@@ -36,9 +51,70 @@ Last reprioritised: 2026-05-18.
 - [ ] **Resolve frontend branch divergence from `main`** —
   `claude/heuristic-kepler-947fd0` is behind. Rebase + resolve, or cherry-pick.
 
+- [x] ~~**Confirm `help@storeyinfra.com` mailbox is live**~~ ✅
+  **VERIFIED 2026-05-20.** Round-trip test fired via the deployed
+  `send-support-email` edge function (Resend → help@) — mail arrived at
+  Karun's forwarding inbox. Beta poster is safe to broadcast.
+  `info@storeyinfra.com` remains blocked behind Google verification; using
+  `help@` going forward on all customer-facing assets.
+
+---
+
+## 📱 Bugs queued for next APK release *(batch — ship in one go)*
+
+> **Pattern:** small UI fixes get shipped to **web** (storeyinfra.com) immediately
+> via Vercel auto-deploy, but the **APK has to be rebuilt + Play Console
+> reviewed** to reach installed testers. Don't ship a new APK for each bug —
+> batch them. Build the next APK when (a) v1.2 is ready, OR (b) the list below
+> hits ~5 bugs, OR (c) one of them is severe enough to justify a one-off ship.
+>
+> When you build the next APK: bump versionCode + versionName, list the fixes
+> in release notes, mark them resolved here.
+
+### Bundled into v1.1.6 (versionCode 20) — built 2026-05-21 ✅
+
+- [x] ~~Worker form too long~~ (`fa82776e`) — progressive disclosure: 5
+  essential fields + photo, rest behind "+ Add more details" toggle.
+- [x] ~~Site detail title squashing + action buttons clipping~~ (`b391b6dc`)
+  — PageHeader stacks vertically on mobile + `min-w-0` on title; SiteDetail
+  action row gets `flex-wrap`. Fixes every page using PageHeader.
+- [x] ~~Supervisor Dashboard visual-first redesign~~ (`10eaa807`) — new
+  HeroStatsCard + QuickActionTile components; rewritten layout per
+  `mockup-visual-first-dashboard.jpg`. Path A Day 1 of dashboard rewrite.
+- [x] ~~Orphan-user registration failure~~ (`59971eeb`) — edge-function-only
+  fix, already live for installed apps. Bundled here for completeness.
+
+**v1.1.6 ready to upload:**
+- `app-release.aab` (3.28 MB, versionCode 20) → Play Console closed track
+- `app-release.apk` (2.5 MB, versionCode 20) → side-load to Arun directly
+
+*(add new bugs below as testers report them — keep entries one line each
+when possible, with: what's broken · where · severity · commit hash if
+fixed on web · APK status)*
+
 ---
 
 ## 🐞 P1.5 — Known bugs
+
+- [ ] **Beta activation funnel leak** *(observed 2026-05-20 from User Activity
+  CSV)* — of 10 real prospects in the DB, **3 never signed in** (budhi
+  roongta, parthroongta756, ...) and **2 are inactive 14+ days** (naturalnidhs,
+  sarmahupamanyu — duplicate of Upamanyu's primary account). That's a 50%
+  drop-off between sign-up and first login. Action: re-engage the 3
+  "never-signed-in" prospects directly via WhatsApp before any cold outreach
+  — they've already handed over their email, the friction is at install /
+  first-login.
+
+- [ ] **Auth-only users (no profile) — investigate** *(2026-05-20)* — a user
+  ("Rishab" / variants) is reported as registered but does not appear in the
+  profiles-based User Activity CSV. Possible causes: (a) `handle_new_user`
+  trigger failed silently, leaving them in `auth.users` with no `profiles`
+  row; (b) different spelling (Rishabh / Rishav / Rishu); (c) they never
+  actually completed signup. Diagnostic query saved at
+  `docs/snippets/find-user-rishab.sql` — paste in SQL Editor. If any rows
+  return with `state = 'auth-only (no profile)'`, that's a real bug — fix
+  `handle_new_user` or add a one-off insert.
+
 
 - [ ] **Invite resend / revoke actions** — the Reports → Invites tab now lists
   all pending invites (email, role, site, code, sent, expiry, status). Still
@@ -72,7 +148,10 @@ Last reprioritised: 2026-05-18.
 ## 🟡 P2 — Medium (legal / business)
 
 - [ ] **Register a legal entity** (Pvt Ltd / LLP) via a CA — operating as an
-  individual means unlimited personal liability. Move services under it once formed.
+  individual means unlimited personal liability. Move services under it once
+  formed. **Becomes P1 the moment fundraising / advisor-equity is on the
+  table** — you cannot issue equity, sign SAFEs / CCDs, or grant advisor shares
+  from an unregistered business.
 
 - [ ] **Consolidate accounts to one company email** — split across
   `orbitguw@gmail.com` and `karunroongta@gmail.com`. Create
@@ -83,10 +162,55 @@ Last reprioritised: 2026-05-18.
 
 - [ ] **Trademark "Storey" / "Storey Infra"** — file in the relevant class(es) in India.
 
-- [ ] **Verify `help@storeyinfra.com` mailbox exists** — Resend can send to it,
-  but if GoDaddy has no mailbox/alias, mail bounces. Check the GoDaddy email panel.
+> _`help@storeyinfra.com` mailbox check moved to P1 (2026-05-20) — it's now
+> printed on the beta poster, so it's a launch blocker, not a P2 cleanup._
 
 > NOTE: legal items are not legal advice — engage a CA + lawyer for India-specific items.
+
+---
+
+## 🤝 P1 — Pilot prospects *(new — 2026-05-20)*
+
+Track every contractor who's been pitched, in order of how close they are to
+saying yes. Update statuses here, not in WhatsApp memory.
+
+Statuses: **Pitched** → **On beta (trial)** → **Active pilot** → **Paying** → **Passed**
+
+| Name | Org / role | Source | Status | Gmail | Asked-for features | Last touch | Next step |
+|---|---|---|---|---|---|---|---|
+| **Arun** | Contractor (own firm) | Family — father's friend's son | **Pitched** (WhatsApp sent 2026-05-20: data-security + Tally backup + beta invite + soft pilot Q) | _awaiting_ | (1) Material budget vs actual · (2) Sub-contractor onboarding · (3) "Like Tally" data ownership | 2026-05-20 | Wait 24–48h. If no reply, follow up *once* with a single line — no more. |
+
+> Rules:
+> 1. **Don't chase.** After WhatsApp, wait 48 hours. One polite nudge if silent. After that — move on, come back in 4 weeks.
+> 2. **Capture every "no" as well** — passes today often become yeses in 12 months.
+> 3. **A pitched prospect is not a tester.** They only count toward the 12-tester gate after they install + sign in.
+> 4. **Don't start the v1.2 build for any prospect's request unless they confirm pilot intent.** Real contractor + real "yes" + real install is the trigger.
+
+---
+
+## 🤝 P2 — Advisors & fundraising *(new — 2026-05-20)*
+
+Tracked in detail in `docs/ADVISORS.md`. Headline items:
+
+- [ ] **Send a 15-min intro message to Avinash Chirania** (4Line Designs) — slot
+  #1 priority (construction industry + NE network). Already on advisor pipeline
+  as "Target".
+- [ ] **Send a 15-min intro message to Upmanyu Sharma** — slot #7 (technical /
+  ERP architecture sounding-board), not slot #2.
+- [ ] **Fill slots #2 (SMB-SaaS GTM) and #3 (NE network) with 2 candidates
+  each** — these are the two highest-leverage open slots. For slot #3, a former
+  head of an NE incubation centre is the strongest single profile (one
+  connector replaces five rolodexes).
+- [ ] **Apply to Assam Startup / Nest-i + NEDFi seed schemes** — non-dilutive
+  grants (₹2–50 lakh), based in Guwahati. Free money to apply for; slow but
+  reduces the angel round you actually need.
+- [ ] **Apply to Startup India Seed Fund (SISFS)** via IIM Shillong or IIT-G
+  incubator — ₹20L grant + ₹50L convertible.
+- [ ] **Defer angel raise** until: (a) Pvt Ltd registered, (b) 10+ paying
+  contractors live, (c) entity-level bank account opened. Standard cheque size
+  to plan for: ₹10–25 lakh on a **SAFE / CCD** with ₹5 cr valuation cap + 20%
+  discount → ~2% equity per ₹10 lakh. **Never sign a priced equity round at
+  this size — fees alone eat 10% of the cheque.**
 
 ---
 
@@ -95,6 +219,284 @@ Last reprioritised: 2026-05-18.
 - [ ] **SPF/DKIM warm-up for `noreply@storeyinfra.com`** — confirm green in
   Resend after first production sends; new domains get throttled by Gmail/Outlook
   for a few days.
+
+- [ ] **Revisit native camera plugin** *(2026-05-21 — punted to v1.x cleanup)*
+  — v1.1.5 bypasses `@capacitor/camera` entirely on Android, routing through
+  the HTML file-input path that already worked on storeyinfra.com. Native
+  plugin crashed Android 16 (targetSdk 36) WebView between steps [3] and
+  [4] of the diagnostic build (`v1.1.4-debug`). Two likely root causes
+  (unverified):
+  1. `@capacitor/camera@8.2.0` not yet patched for Android 16 / targetSdk 36
+  2. Some manifest / FileProvider config we missed in v1.1.2
+  Resolution path: when @capacitor/camera publishes a version >8.2.0, test
+  on a real Android 16 device. If still broken, capture logcat + file an
+  issue at github.com/ionic-team/capacitor-plugins. Until then, the file-
+  input path serves real users fine. Trade-off: gallery option may appear
+  alongside camera in the picker — acceptable for v1, fix later if any
+  customer flags it. Also: re-evaluate the `READ_MEDIA_IMAGES` /
+  `<queries>` / FileProvider entries in AndroidManifest — they were added
+  for the now-bypassed native plugin. After 30 days of stable file-input
+  capture, trim the manifest down to just `INTERNET` + `CAMERA` if file-
+  input doesn't need the rest.
+
+- [ ] **Evaluate removing `READ_MEDIA_IMAGES` permission post-v1.2**
+  *(2026-05-21 — tech-debt review)* — v1.1.2 declared READ_MEDIA_IMAGES
+  defensively to fix the camera crash on Android 13+ (commit `6e09bda8`).
+  Justified in Play Console "Photo and video permissions" form on
+  2026-05-21. Capacitor's pure `CameraSource.Camera` flow technically
+  doesn't need this permission — captured photos live in app-private
+  storage, not the media store. After 30 days of stable photo telemetry
+  in v1.2 (Day 90), test removing it on Android 13+ devices and shipping
+  a manifest-trimmed v1.x release. Less permission = cleaner Play Store
+  listing + one less "this app accesses your photos" warning to users.
+  Trigger to revisit: 2026-06-20 (Day 30 of v1.2 in production).
+
+- [ ] **Illustration system — proper version** *(v1.x — design quality, not engineering)*
+  *(2026-05-20)* — visual-first + three-tier rule locked in CLAUDE.md.
+  A v1 line-art library was rendered (`src/components/illustrations/index.jsx`,
+  preview at `illustration-library-preview.html`) but owner judged the render
+  quality not satisfactory — strokes mechanical, proportions programmer-art,
+  not distinctive enough for the brand. **Style is open: it does NOT have
+  to be strict line art.** Real options to evaluate before re-attempting:
+  1. **Hire a designer** (Fiverr / Dribbble, ~₹5–20k for a 16-set pack,
+     1–2 weeks). Best result, smallest opportunity cost vs Karun's time.
+     Recommended path once cashflow allows.
+  2. **Storyset** (storyset.com) — free customisable SVG illustrations,
+     professional quality, terracotta-tintable. Quick win, distinctive
+     look. Check construction / business categories.
+  3. **Iconify + construction sets** (Mdi, Fontisto, Game-Icons) — large
+     coverage, good for Tier 1 + decent for Tier 2.
+  4. **Two-tone filled silhouettes** (no stroke, terracotta primary +
+     sand secondary fill) — more distinctive than pure line art, still
+     lightweight. Iterate myself.
+  5. **Isometric line + fill** — Notion / Slack style. More character,
+     slightly heavier files. Iterate myself.
+  v1 files stay on disk as a placeholder reference. Do NOT integrate them
+  into Supervisor dashboard / Inventory / Tasks. Wait until v2 lands.
+  Pre-requisite for re-attempt: pick a style (1–5 above), then re-render
+  in that style, get owner approval, then ship.
+
+- [ ] **Hindi / Assamese language toggle** *(v1.x — Settings option, opt-in)*
+  — set 2026-05-20: in-app UI stays English by default (most NE-India
+  contractors find a Hindi-default app condescending — Tally, GST portal,
+  banking apps are all English and that's the respected posture). When a
+  contractor wants to roll Storey out to a low-English supervisor, they
+  flip a Settings toggle: **Language → English (default) / हिन्दी /
+  অসমীয়া**. Per-tenant or per-user — decide before building. Stack:
+  `react-i18next` + JSON translation packs. Effort: ~2 days wiring +
+  ongoing translation. Build only after one customer explicitly asks
+  ("my supervisor can't read English").
+
+- [ ] **Project memory refresh — every 2 days** *(2026-05-20)* — the
+  Claude memory file at
+  `C:\Users\model\.claude\projects\C--consne\memory\project_consne.md`
+  was rebuilt from scratch on 2026-05-20 after going 6 days stale. Cadence
+  set: every 2 days. Three triggers (any one is enough):
+  • a Claude session cron fires every ~2 days at 09:43 (in-memory, dies
+    when the Claude session restarts — best-effort)
+  • Karun says "update project memory" / "refresh project context"
+    (`CLAUDE.md` instructs Claude to do this without further prompting)
+  • Karun manually opens the file and notices `nextUpdateDue` is in the
+    past — say the trigger phrase to a fresh Claude session
+  Most reliable trigger: **the manual phrase**. Don't depend on the cron.
+
+- [ ] **Sweep orphan worktree directories** *(2026-05-20)* — git cleanup
+  reduced 9 worktrees → 2 (canonical `main` + active `heuristic-kepler-947fd0`).
+  Four directories remained on disk because Windows held file handles at
+  cleanup time:
+  • `.claude/worktrees/condescending-brown-581e12`
+  • `.claude/worktrees/dreamy-matsumoto-308587`
+  • `.claude/worktrees/eloquent-robinson-9e687a`
+  • `.claude/worktrees/priceless-jang-95030a`
+  Git no longer tracks them — they're just disk-space waste. **Action:**
+  reboot Windows, open PowerShell in `C:\consne`, run
+  `.\scripts\cleanup-orphan-worktrees.ps1` (safe — confirms before deleting,
+  refuses to touch active worktrees). Likely frees ~1–2 GB.
+
+- [ ] **Marketing assets ready to send** *(captured 2026-05-20)* — portrait 9:16
+  WhatsApp ad shipped (`storey-whatsapp-ad.pptx` + `storey-whatsapp-ad.jpg`),
+  travel poster and 8-slide deck already on disk. Source generator script:
+  `make-whatsapp-ad.cjs`. Iterate copy / add product screenshot when ready to
+  push to broadcast lists.
+
+---
+
+## 🎯 v1.2 — Contractor-requested bundle *(2026-05-20)*
+
+Contractor **Arun** (family connection — father's friend's son) named three
+blockers in a face-to-face meeting on 2026-05-20. Follow-up WhatsApp sent
+same day with the data-security write-up, Tally-style backup pitch, beta
+invite, and a soft pilot-commitment question. **Awaiting his Gmail + reply.**
+
+Build as ONE focused increment (single migration + unified UI plan) once
+**both** the 12-tester gate is cleared AND Arun confirms pilot intent.
+
+> **Honest delivery estimate (2026-05-20):** ~11 days of focused work
+> across 8 items below. Real calendar time: **4 weeks** (allowing for
+> bugs, prospect support, IPv4 dropouts, Play Console admin). Tell Arun
+> 4 weeks. Aim for 3.5. Under-promise.
+
+Issues:
+
+- [ ] **(1) Material budgeting at site setup, with deviation tracking** —
+  when a site is created, the contractor plans expected material quantities
+  per material ("500 bags cement, 200 m³ sand"). As receipts / consumption /
+  transfers flow through `material_transactions`, the system shows planned
+  vs actual deviation in real time. Data shape: `materials.budget_qty`
+  (+ optional `budget_rate` for ₹ deviation) + a `site_material_budget_v`
+  view. New "Budget vs Actual" report screen. Closes the cash-leak surface
+  every contractor cares about.
+
+- [ ] **(1b) Task-aware + sub-contractor-aware material allocation**
+  *(2026-05-20 — clarified by Arun's three-context framing)* — the
+  `material_allocations` table already exists from migration
+  `003_material_flow.sql` with a free-text `work_description`. Three
+  allocation contexts to support, single form:
+  • **Case 1 — General site work** → both FKs null, free-text only
+  • **Case 2 — Task** → `task_id` FK to tasks
+  • **Case 3 — Sub-contractor** → `subcontractor_id` FK to new subcontractors
+    table (from issue 2)
+  Migration: add nullable `task_id` and `subcontractor_id` to
+  `material_allocations` + a CHECK constraint enforcing at most one is set.
+  Mirror the columns on `material_transactions` so the ledger preserves
+  attribution. UI: one dropdown "Allocate to..." with three radio options.
+  ~0.5 day on top of the budget feature — small delta, big value.
+  Unlocks "by task" and "by sub-contractor" consumption reports.
+
+- [ ] **(1c) Flag-and-correct workflow for material allocations**
+  *(2026-05-20 — Arun-pattern, matches existing confirmation rhythm)* — a
+  supervisor who realises he logged a wrong allocation cannot self-correct;
+  he **flags it for review**. Site_manager / contractor sees a "Needs your
+  review" panel, can approve (system writes offsetting `return` +
+  re-allocation, preserving ledger) or reject (flag removed, original stands).
+  Original entry never disappears — court-defensible. Schema:
+  add `flag_status [none|pending|corrected|rejected]`, `flag_reason`,
+  `flagged_at`, `flagged_by`, `reviewed_at`, `reviewed_by`, `review_note`,
+  `correction_of FK` to `material_allocations`. BEFORE UPDATE trigger
+  enforces only site_manager+ can transition to corrected/rejected
+  (same Postgres recipe as migration `20260519000000`). Two new
+  dashboard widgets (supervisor's "🚩 1 pending" badge + site_manager's
+  "Allocations to review" panel). Zero new pages. **~0.5 day** — small
+  but high-value, closes the #1 fraud surface in NE-India construction
+  (supervisor over-allocating to hide leakage).
+
+- [ ] **(2) Sub-contractor onboarding — Path A (entity-only)** — sub-contractors
+  are tracked as entities, NOT as login users. **Onboarding restricted to
+  contractor + site_manager** (commercial roles). Supervisor sees them at
+  their sites (RLS) and can allocate material to them, but cannot create
+  or edit. Schema locked 2026-05-20 after Arun confirmed Q1 = one entry
+  per site:
+  `subcontractors (id, tenant_id, name, contact_person, phone, email,
+   work_type, pan, gst, address, site_id NOT NULL, agreed_amount,
+   advance_paid, scope_description, start_date, expected_end_date,
+   status, onboarded_by, created_at, updated_at)`.
+  Work-type taxonomy (fixed): electrical · plumbing · masonry · RCC ·
+  finishing · MEP · interiors · flooring · waterproofing · earthworks ·
+  scaffolding · structural steel · other.
+
+- [ ] **(2b) Sub-contractor payment ledger** *(new — Arun confirmed v1.2)* —
+  track every payment to a sub-contractor against the agreed amount.
+  Schema:
+  `subcontractor_payments (id, subcontractor_id FK, tenant_id, amount,
+   payment_date, payment_type [advance | running_bill | final],
+   payment_mode [cash | cheque | upi | bank_transfer], reference_no,
+   note, recorded_by FK profile, created_at)`.
+  Reports: balance due = `agreed_amount - sum(payments)`, payment
+  passbook, total liability across all sub-contractors per site.
+  Onboarding restriction inherits — only contractor + site_manager
+  record payments.
+
+- [ ] **(2d) Variation Orders — scope additions on existing sub-contractor**
+  *(new — 2026-05-20, addresses the #1 real-world dispute scenario)* — when
+  additional work is added to an existing sub-contractor's scope (e.g. "5th
+  floor added", "DB upgraded"), record it as a **Variation** linked to the
+  original record, NOT by editing the original. Each variation has its own
+  scope, amount, date, signatures. Total agreed = original + sum of
+  variations. RLS: only contractor + site_manager can create variations.
+  Schema:
+  `subcontractor_variations (id, subcontractor_id FK, variation_no,
+   reason, scope_description, additional_amount [can be negative for
+   reduction], variation_date, approved_by FK profile, note, created_at)`.
+  Balance / payment reports recompute against `total_agreed`. ~1 day on
+  top of base sub-contractor work.
+
+- [ ] **(2c) Printable Work Order PDF** *(new — Arun's breakthrough idea
+  2026-05-20)* — generate a signed Work Order PDF per sub-contractor with
+  contractor letterhead, sub-contractor details, scope, agreed amount
+  (figures + words), advance paid, balance, start/end dates, signature
+  blocks for both parties, and a QR code linking back to the digital
+  record. Indian construction WO standard format — CAs respect it,
+  makes Storey the *paper trail* sub-contractors didn't have. Build with
+  `pdfmake` or `jspdf` client-side (same SVG/sharp skillset as the
+  marketing posters). One-click generate + share via WhatsApp / email.
+  **This is the differentiator** — Tally doesn't do it, no ConTech SaaS at
+  this price point does it, NE-India sub-contractor disputes are constant
+  and this stops them at the door. **WO PDF stacks the original + every
+  variation** (see 2d above) so the latest document is always the complete
+  consolidated agreement.
+
+- [ ] **(3) "Your data, your Drive" — Tally-style data ownership**
+  *(re-scoped 2026-05-20)* — same contractor clarified by analogy to Tally,
+  where his data sits in a folder on his hard drive. He doesn't actually
+  need Postgres-on-his-AWS — he needs the **feeling and practical reality
+  of a copy he can touch**. Two-phase build:
+  • **Phase 1 (1 day):** "Download my data" button in Settings → edge
+    function exports all tenant tables as a single JSON / SQL bundle →
+    saved via Capacitor Filesystem (mobile) or browser download (web).
+  • **Phase 2 (2 days):** Daily auto-export to *his* Google Drive. OAuth
+    connect once in Settings, scheduled edge function pushes nightly
+    snapshot to a "Storey Backups" folder in his Drive, with a daily
+    email confirmation.
+  Marketing pitch this enables: *"Better than Tally — your data backed
+  up to your Drive every day, plus mobile + multi-user + offline."*
+  Closes the trust gap with NE-India contractors who anchor on Tally.
+  ~3 days total — fits cleanly in the v1.2 bundle.
+
+> Build order: do NOT start until 12-tester / 14-day Production gate is
+> cleared. Then ship as v1.2 in one tight increment — single migration,
+> unified UI plan, one commit per layer (db / store / pages).
+
+---
+
+## 🏢 Enterprise / on-prem — kept for future requests only *(2026-05-20)*
+
+> _The 2026-05-20 contractor turned out to mean "like Tally" — not literal
+> on-prem. That request is now covered by the v1.2 item "Your data, your
+> Drive" above. This section is kept for **future** asks that genuinely
+> want their own server (large corporates, govt, regulated industries)._
+
+When someone in future asks for "my own database on my own server", it is
+not automatically a feature — it's a commercial decision needing more
+information.
+
+**Step 1 — diagnose the real concern.** Ask the contractor:
+1. What specifically are you worried about — competitor seeing data, hack,
+   regulatory, or something else?
+2. How many sites + users in the first 12 months?
+3. Does a **dedicated database** on Storey's managed cloud (only your data,
+   no shared tenants) solve the concern, or do you specifically need the
+   server in your office / your own AWS?
+
+**Step 2 — match concern to option (don't skip to engineering):**
+
+| Concern | Cheapest fix | Engineering cost |
+|---|---|---|
+| Competitor seeing data | RLS audit summary + DPA + monthly DB export | **Zero** (already enforced) |
+| Trust / due-diligence | One-page Data Protection Agreement + audit log access | 1 day |
+| Dedicated DB acceptable | Separate Supabase project per tenant ("Pro" tier) | 2 days |
+| BYOD (his Postgres, our app) | Connection-string per tenant + ops runbook | 2–3 weeks |
+| Full self-hosted | Storey installer + Supabase OSS + support | 2–3 months |
+| Air-gapped / govt-grade | Enterprise edition + offline updates | 4–6 months |
+
+**Step 3 — pricing rule, non-negotiable:** anything beyond a Dedicated DB
+("Pro" tier) is **enterprise pricing**: ₹3–5L+ setup, ₹50k+/mo, multi-year
+contract, signed Pvt Ltd entity (P2 TODO). Don't engineer self-hosting at
+v1 price — it's the fastest way to burn 3 months and a year of runway.
+
+**Step 4 — entity prerequisite.** You cannot sign an enterprise contract
+without a registered Pvt Ltd. The legal-entity TODO (P2) is a hard
+dependency on any on-prem conversation. It's now also a commercial
+blocker, not just a liability concern.
 
 ---
 
@@ -172,6 +574,30 @@ Last reprioritised: 2026-05-18.
     due → an "Update overdue" flag on the task card, detail and "My Tasks"
     widget. Makes the vague "stalled" idea precise.
   Reminders/notifications for due updates build on this via the Notifications item.
+
+- [ ] **Supervisor "Today" work schedule** _(v1.2 — enhancement of Tasks)_ —
+  requested 2026-05-20 by devraaj (Supervisor at BuildNE). A focused
+  "today" view: tasks where assignee = me AND start_date ≤ today ≤ due_date,
+  grouped by **Overdue → Due today → In progress**, with last update time and
+  the next-update-due flag from the Task update cadence item above. Lives as
+  a tab on the Tasks page (`/tasks?view=today`) or as the default view for
+  supervisors. ~2 hours of work — small win once the beta tester gate is
+  cleared. Do NOT build until 12-tester / 14-day Production gate is cleared.
+
+- [ ] **Material allocation to a task** _(v1.2 — new feature, ConTech-specific)_
+  — requested 2026-05-20. Today a supervisor can SEE materials at their site
+  (post fix `80bcf89f`) but can't tie material usage to a work item. Plan:
+  • add `material_transactions.task_id` (nullable FK to `tasks`);
+  • "Allocate to task" button on a task detail → pick material + qty →
+    inserts a `consumption` row with `task_id`;
+  • task detail card surfaces "materials used: 20 bags cement, 5 m³ sand";
+  • over-allocation handling routes through the existing "Return material"
+    TODO above.
+  ~1–2 days of work. Closes a meaningful gap (right now consumption is
+  tenant-bucket, not work-item-attributed) but is NOT a beta blocker.
+  Decide scope when at least 5 supervisors have asked for it across distinct
+  tenants — until then, contractors track allocation manually. Do NOT build
+  until 12-tester gate cleared.
 
 - [ ] **Team activity log** _(v2 — new feature)_ — requested 2026-05-19.
   A contractor should see what their team is doing (attendance marked, logs

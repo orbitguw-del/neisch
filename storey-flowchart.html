@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Storey — App Flow</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    padding: 48px 24px 24px;
+  }
+  .header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #f59e0b, #ef4444, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+  }
+  .header p { color: #64748b; margin-top: 8px; font-size: 0.95rem; }
+
+  /* ── Tab bar ── */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 0 24px 32px;
+  }
+  .tab {
+    padding: 8px 20px;
+    border-radius: 999px;
+    border: 1.5px solid #334155;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab:hover { border-color: #f59e0b; color: #f59e0b; }
+  .tab.active { background: #f59e0b; border-color: #f59e0b; color: #0f1117; }
+
+  /* ── Flow canvas ── */
+  .canvas {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+    display: none;
+  }
+  .canvas.visible { display: block; }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 16px;
+    margin-top: 40px;
+  }
+
+  /* ── Row of nodes ── */
+  .row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    flex-wrap: nowrap;
+    position: relative;
+  }
+  .row.center { justify-content: center; }
+  .row.wrap { flex-wrap: wrap; gap: 16px; }
+
+  /* ── Arrow connector ── */
+  .arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    color: #334155;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    margin-top: 28px;
+  }
+  .arrow.down {
+    display: flex;
+    justify-content: center;
+    color: #334155;
+    font-size: 1.2rem;
+    margin: 4px 0;
+  }
+  .arrow.branch {
+    color: #f59e0b;
+  }
+
+  /* ── Node ── */
+  .node {
+    border-radius: 14px;
+    padding: 16px 20px;
+    min-width: 160px;
+    max-width: 220px;
+    flex-shrink: 0;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1.5px solid transparent;
+    animation: fadeIn 0.4s ease both;
+  }
+  .node:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  }
+  .node.wide { min-width: 220px; max-width: 300px; }
+  .node.full { min-width: 100%; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* colour themes */
+  .node.amber  { background: #1c1408; border-color: #d97706; }
+  .node.blue   { background: #0d1a2d; border-color: #3b82f6; }
+  .node.green  { background: #0d1a12; border-color: #22c55e; }
+  .node.purple { background: #160d2d; border-color: #8b5cf6; }
+  .node.red    { background: #1f0d0d; border-color: #ef4444; }
+  .node.teal   { background: #0d1a1a; border-color: #14b8a6; }
+  .node.slate  { background: #111827; border-color: #475569; }
+  .node.pink   { background: #1f0d18; border-color: #ec4899; }
+
+  .node-icon { font-size: 1.4rem; margin-bottom: 8px; }
+  .node-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .node-sub {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  /* ── Tooltip / detail panel ── */
+  .panel {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: #1e293b;
+    border: 1.5px solid #334155;
+    border-radius: 18px;
+    padding: 24px 28px;
+    max-width: 480px;
+    width: calc(100% - 48px);
+    z-index: 100;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  }
+  .panel.open { transform: translateX(-50%) translateY(0); }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .panel-icon { font-size: 1.8rem; }
+  .panel-title { font-size: 1rem; font-weight: 700; }
+  .panel-sub { font-size: 0.8rem; color: #64748b; margin-top: 2px; }
+  .panel-body { font-size: 0.85rem; color: #94a3b8; line-height: 1.7; }
+  .panel-body ul { padding-left: 16px; }
+  .panel-body li { margin-bottom: 4px; }
+  .panel-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: #334155;
+    border: none;
+    color: #94a3b8;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .panel-close:hover { background: #475569; color: white; }
+
+  /* ── Role pills ── */
+  .roles {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .role-pill {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #64748b;
+  }
+  .role-pill.active { border-color: #f59e0b; color: #f59e0b; background: #1c1408; }
+
+  /* ── Divider ── */
+  .divider {
+    border: none;
+    border-top: 1px solid #1e293b;
+    margin: 8px 0 16px;
+  }
+
+  /* ── Vertical stack ── */
+  .vstack { display: flex; flex-direction: column; align-items: center; }
+
+  /* ── Grid layout for features ── */
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 24px 32px;
+    font-size: 0.78rem;
+    color: #475569;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* pulse animation for start node */
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); }
+    50%       { box-shadow: 0 0 0 10px rgba(245,158,11,0); }
+  }
+  .node.start { animation: fadeIn 0.4s ease both, pulse 2s ease 1s infinite; }
+
+  .badge {
+    position: absolute;
+    top: -8px; right: -8px;
+    background: #ef4444;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+
+  .connector-line {
+    width: 2px;
+    background: linear-gradient(to bottom, #334155, transparent);
+    height: 32px;
+    margin: 0 auto;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Storey — App Flow Map</h1>
+  <p>Click any node to see details. Switch flows with the tabs below.</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showFlow('auth')">🔐 Auth & Login</button>
+  <button class="tab" onclick="showFlow('contractor')">🏢 Contractor Setup</button>
+  <button class="tab" onclick="showFlow('site')">📍 Site Management</button>
+  <button class="tab" onclick="showFlow('materials')">📦 Materials & Inventory</button>
+  <button class="tab" onclick="showFlow('workers')">👷 Workers & Attendance</button>
+  <button class="tab" onclick="showFlow('team')">👥 Team & Invites</button>
+  <button class="tab" onclick="showFlow('reports')">📊 Reports & Logs</button>
+</div>
+
+<div class="legend">
+  <span class="legend-item"><span class="legend-dot" style="background:#d97706"></span>Entry / Auth</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>Navigation</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#22c55e"></span>Success / Data</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span>Actions</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Error / Guard</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#14b8a6"></span>Inventory</span>
+</div>
+
+<!-- ════════════════ AUTH FLOW ════════════════ -->
+<div id="flow-auth" class="canvas visible">
+
+  <div class="section-label">Entry Point</div>
+  <div class="row center">
+    <div class="node amber start" onclick="showPanel('landing')">
+      <div class="node-icon">🌐</div>
+      <div class="node-title">Landing Page</div>
+      <div class="node-sub">storeyinfra.com</div>
+    </div>
+  </div>
+
+  <div class="connector-line"></div>
+
+  <div class="section-label">Login Methods</div>
+  <div class="row center" style="gap:12px">
+    <div class="node amber" onclick="showPanel('email-login')">
+      <div class="node-icon">📧</div>
+      <div class="node-title">Email + Password</div>
+      <div class="node-sub">Returning users</div>
+    </div>
+    <div class="node amber" onclick="showPanel('google-oauth')">
+      <div class="node-icon">🔵</div>
+      <div class="node-title">Google OAuth</div>
+      <div class="node-sub">PKCE flow</div>
+    </div>
+    <div class="node amber" onclick="showPanel('sms-otp')">
+      <div class="node-icon">📱</div>
+      <div class="node-title">SMS OTP</div>
+      <div class="node-sub">Phone number login</div>
+    </div>
+    <div class="node amber" onclick="showPanel('invite')">
+      <div class="node-icon">📩</div>
+      <div class="node-title">Invite Code</div>
+      <div class="node-sub">Team members</div>
+    </div>
+  </div>
+
+  <div class="connector-line"></div>
+
+  <div class="section-label">Auth Processing</div>
+  <div class="row center" style="gap:12px">
+    <div class="node blue" onclick="showPanel('supabase-auth')">
+      <div class="node-icon">⚡</div>
+      <div class="node-title">Supabase Auth</div>
+      <div class="node-sub">Session + JWT issued</div>
+    </div>
+    <div class="node blue" onclick="showPanel('callback')">
+      <div class="node-icon">🔄</div>
+      <div class="node-title">/auth/callback</div>
+      <div class="node-sub">PKCE code exchange</div>
+    </div>
+    <div class="node blue" onclick="showPanel('profile-fetch')">
+      <div class="node-icon">👤</div>
+      <div class="node-title">Profile Fetch</div>
+      <div class="node-sub">authStore.fetchProfile()</div>
+    </div>
+  </div>
+
+  <div class="connector-line"></div>
+
+  <div class="section-label">Route Guard</div>
+  <div class="row center" style="gap:12px">
+    <div class="node red" onclick="showPanel('protected-route')">
+      <div class="node-icon">🛡️</div>
+      <div class="node-title">ProtectedRoute</div>
+      <div class="node-sub">Session check</div>
+    </div>
+    <div class="node red" onclick="showPanel('role-guard')">
+      <div class="node-icon">🔒</div>
+      <div class="node-title">RoleGuard</div>
+      <div class="node-sub">Per-route role check</div>
+    </div>
+    <div class="node purple" onclick="showPanel('create-company')">
+      <div class="node-icon">🏗️</div>
+      <div class="node-title">Create Company</div>
+      <div class="node-sub">New contractors only</div>
+    </div>
+  </div>
+
+  <div class="connector-line"></div>
+
+  <div class="section-label">Destination</div>
+  <div class="row center">
+    <div class="node green" onclick="showPanel('dashboard')">
+      <div class="node-icon">📊</div>
+      <div class="node-title">Dashboard</div>
+      <div class="node-sub">Role-scoped overview</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════ CONTRACTOR SETUP ════════════════ -->
+<div id="flow-contractor" class="canvas">
+
+  <div class="section-label">First-Time Google OAuth Contractor</div>
+  <div class="row center">
+    <div class="node amber start" onclick="showPanel('google-oauth')">
+      <div class="node-icon">🔵</div>
+      <div class="node-title">Google Sign-In</div>
+      <div class="node-sub">No password required</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+  <div class="row center" style="gap:12px">
+    <div class="node blue" onclick="showPanel('trigger')">
+      <div class="node-icon">⚙️</div>
+      <div class="node-title">handle_new_user</div>
+      <div class="node-sub">DB trigger creates profile<br/>role=contractor, tenant=NULL</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+  <div class="row center" style="gap:12px">
+    <div class="node red" onclick="showPanel('protected-route')">
+      <div class="node-icon">🛡️</div>
+      <div class="node-title">ProtectedRoute detects</div>
+      <div class="node-sub">tenant_id = NULL</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+  <div class="row center">
+    <div class="node purple" onclick="showPanel('create-company')">
+      <div class="node-icon">🏗️</div>
+      <div class="node-title">Create Company Page</div>
+      <div class="node-sub">Enter company / firm name</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+  <div class="row center" style="gap:12px">
+    <div class="node blue" onclick="showPanel('tenant-trigger')">
+      <div class="node-icon">⚙️</div>
+      <div class="node-title">link_owner_to_tenant</div>
+      <div class="node-sub">Sets tenant_id on profile<br/>RLS policies now work</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+  <div class="row center">
+    <div class="node green" onclick="showPanel('dashboard')">
+      <div class="node-icon">✅</div>
+      <div class="node-title">Dashboard — Ready</div>
+      <div class="node-sub">Full app access unlocked</div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:48px">Email Registration (New Contractor)</div>
+  <div class="row center" style="gap:12px">
+    <div class="node amber" onclick="showPanel('register')">
+      <div class="node-icon">📝</div>
+      <div class="node-title">Register Page</div>
+      <div class="node-sub">Name · Email · Password · Company</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node blue" onclick="showPanel('supabase-auth')">
+      <div class="node-icon">⚡</div>
+      <div class="node-title">supabase.auth.signUp()</div>
+      <div class="node-sub">+ tenants.insert()</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node green" onclick="showPanel('dashboard')">
+      <div class="node-icon">📊</div>
+      <div class="node-title">Dashboard</div>
+      <div class="node-sub">tenant_id set immediately</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SITE MANAGEMENT ════════════════ -->
+<div id="flow-site" class="canvas">
+
+  <div class="section-label">Sites List</div>
+  <div class="row center">
+    <div class="node blue start" onclick="showPanel('sites-list')">
+      <div class="node-icon">📍</div>
+      <div class="node-title">Sites Page</div>
+      <div class="node-sub">All tenant sites (RLS scoped)</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+
+  <div class="section-label">Site Actions</div>
+  <div class="row center" style="gap:12px">
+    <div class="node purple" onclick="showPanel('create-site')">
+      <div class="node-icon">➕</div>
+      <div class="node-title">Create Site</div>
+      <div class="node-sub">Contractor only<br/>Name · Location · Type</div>
+    </div>
+    <div class="node blue" onclick="showPanel('site-detail')">
+      <div class="node-icon">🔍</div>
+      <div class="node-title">Site Detail</div>
+      <div class="node-sub">/sites/:siteId<br/>All roles</div>
+    </div>
+    <div class="node purple" onclick="showPanel('site-assign')">
+      <div class="node-icon">👥</div>
+      <div class="node-title">Assign Team</div>
+      <div class="node-sub">site_assignments table</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+
+  <div class="section-label">From Site Detail — Sub-modules</div>
+  <div class="grid-3">
+    <div class="node teal" onclick="showPanel('site-workers')">
+      <div class="node-icon">👷</div>
+      <div class="node-title">Workers</div>
+      <div class="node-sub">/sites/:siteId/workers<br/>Supervisor+</div>
+    </div>
+    <div class="node teal" onclick="showPanel('site-materials')">
+      <div class="node-icon">📦</div>
+      <div class="node-title">Materials</div>
+      <div class="node-sub">/sites/:siteId/materials<br/>Store Keeper+</div>
+    </div>
+    <div class="node teal" onclick="showPanel('daily-logs')">
+      <div class="node-icon">📋</div>
+      <div class="node-title">Daily Logs</div>
+      <div class="node-sub">/logs/:siteId<br/>Supervisor+</div>
+    </div>
+    <div class="node teal" onclick="showPanel('attendance')">
+      <div class="node-icon">✅</div>
+      <div class="node-title">Attendance</div>
+      <div class="node-sub">/attendance<br/>Supervisor+</div>
+    </div>
+    <div class="node teal" onclick="showPanel('inventory')">
+      <div class="node-icon">🗄️</div>
+      <div class="node-title">Inventory</div>
+      <div class="node-sub">/inventory<br/>Store Keeper+</div>
+    </div>
+    <div class="node teal" onclick="showPanel('equipment')">
+      <div class="node-icon">🚧</div>
+      <div class="node-title">Equipment</div>
+      <div class="node-sub">/equipment<br/>Store Keeper+</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ MATERIALS FLOW ════════════════ -->
+<div id="flow-materials" class="canvas">
+
+  <div class="section-label">Material Entry Points</div>
+  <div class="row center" style="gap:12px">
+    <div class="node teal start" onclick="showPanel('receipts')">
+      <div class="node-icon">📥</div>
+      <div class="node-title">Material Receipts</div>
+      <div class="node-sub">Inward register<br/>Material arrives at site</div>
+    </div>
+    <div class="arrow">+</div>
+    <div class="node teal" onclick="showPanel('inventory')">
+      <div class="node-icon">🗄️</div>
+      <div class="node-title">Inventory</div>
+      <div class="node-sub">Current stock levels<br/>per material per site</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+
+  <div class="section-label">Material Actions</div>
+  <div class="row center" style="gap:12px">
+    <div class="node purple" onclick="showPanel('add-material')">
+      <div class="node-icon">➕</div>
+      <div class="node-title">Add to Inventory</div>
+      <div class="node-sub">Record new stock<br/>Store Keeper+</div>
+    </div>
+    <div class="node purple" onclick="showPanel('transfer')">
+      <div class="node-icon">🔀</div>
+      <div class="node-title">Material Transfer</div>
+      <div class="node-sub">Inter-site movement<br/>Manager+</div>
+    </div>
+    <div class="node purple" onclick="showPanel('ledger')">
+      <div class="node-icon">📒</div>
+      <div class="node-title">Material Ledger</div>
+      <div class="node-sub">Full transaction history<br/>/inventory/:id/ledger</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+
+  <div class="section-label">Transfer Flow</div>
+  <div class="row center" style="gap:12px">
+    <div class="node amber" onclick="showPanel('transfer-source')">
+      <div class="node-icon">📤</div>
+      <div class="node-title">Source Site</div>
+      <div class="node-sub">Deduct from inventory</div>
+    </div>
+    <div class="arrow branch">→→</div>
+    <div class="node blue" onclick="showPanel('transfer-record')">
+      <div class="node-icon">📝</div>
+      <div class="node-title">Transfer Record</div>
+      <div class="node-sub">material_transfers table<br/>date · qty · material</div>
+    </div>
+    <div class="arrow branch">→→</div>
+    <div class="node green" onclick="showPanel('transfer-dest')">
+      <div class="node-icon">📥</div>
+      <div class="node-title">Destination Site</div>
+      <div class="node-sub">Add to inventory</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+
+  <div class="section-label">Ledger — Full Transaction History</div>
+  <div class="row center" style="gap:12px">
+    <div class="node slate" onclick="showPanel('ledger-in')">
+      <div class="node-icon">⬇️</div>
+      <div class="node-title">Receipt (IN)</div>
+      <div class="node-sub">Material arrived</div>
+    </div>
+    <div class="node slate" onclick="showPanel('ledger-out')">
+      <div class="node-icon">⬆️</div>
+      <div class="node-title">Transfer (OUT)</div>
+      <div class="node-sub">Material sent away</div>
+    </div>
+    <div class="node slate" onclick="showPanel('ledger-used')">
+      <div class="node-icon">🔨</div>
+      <div class="node-title">Usage (USED)</div>
+      <div class="node-sub">Consumed on site</div>
+    </div>
+    <div class="node slate" onclick="showPanel('ledger-balance')">
+      <div class="node-icon">⚖️</div>
+      <div class="node-title">Running Balance</div>
+      <div class="node-sub">Real-time stock level</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ WORKERS FLOW ════════════════ -->
+<div id="flow-workers" class="canvas">
+
+  <div class="section-label">Workers Entry</div>
+  <div class="row center" style="gap:12px">
+    <div class="node blue start" onclick="showPanel('workers-global')">
+      <div class="node-icon">👷</div>
+      <div class="node-title">Workers (Global)</div>
+      <div class="node-sub">/workers — all assigned sites<br/>Supervisor+</div>
+    </div>
+    <div class="node blue" onclick="showPanel('workers-site')">
+      <div class="node-icon">📍</div>
+      <div class="node-title">Workers (Per Site)</div>
+      <div class="node-sub">/sites/:siteId/workers<br/>Supervisor+</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+
+  <div class="section-label">Worker Actions</div>
+  <div class="row center" style="gap:12px">
+    <div class="node purple" onclick="showPanel('add-worker')">
+      <div class="node-icon">➕</div>
+      <div class="node-title">Add Worker</div>
+      <div class="node-sub">Name · Trade · Daily Rate</div>
+    </div>
+    <div class="node purple" onclick="showPanel('worker-detail')">
+      <div class="node-icon">🪪</div>
+      <div class="node-title">Worker Profile</div>
+      <div class="node-sub">History · Attendance · Pay</div>
+    </div>
+    <div class="node purple" onclick="showPanel('edit-worker')">
+      <div class="node-icon">✏️</div>
+      <div class="node-title">Edit / Archive</div>
+      <div class="node-sub">Update or deactivate</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+
+  <div class="section-label">Daily Attendance Flow</div>
+  <div class="row center" style="gap:12px">
+    <div class="node amber" onclick="showPanel('attendance-page')">
+      <div class="node-icon">📋</div>
+      <div class="node-title">Attendance Page</div>
+      <div class="node-sub">/attendance<br/>Supervisor+</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node blue" onclick="showPanel('mark-attendance')">
+      <div class="node-icon">☑️</div>
+      <div class="node-title">Mark Daily</div>
+      <div class="node-sub">Present · Absent · Half Day<br/>Per worker per date</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node green" onclick="showPanel('attendance-saved')">
+      <div class="node-icon">✅</div>
+      <div class="node-title">Saved to DB</div>
+      <div class="node-sub">attendance_records table<br/>Used for wage calc</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+
+  <div class="section-label">Daily Logs</div>
+  <div class="row center" style="gap:12px">
+    <div class="node teal" onclick="showPanel('daily-logs')">
+      <div class="node-icon">📓</div>
+      <div class="node-title">Daily Log Entry</div>
+      <div class="node-sub">/logs · /logs/:siteId<br/>Supervisor+</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node teal" onclick="showPanel('log-content')">
+      <div class="node-icon">📝</div>
+      <div class="node-title">Log Content</div>
+      <div class="node-sub">Work done · Issues<br/>Weather · Materials used</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node green" onclick="showPanel('log-saved')">
+      <div class="node-icon">📊</div>
+      <div class="node-title">Feeds Reports</div>
+      <div class="node-sub">Daily logs aggregated<br/>into site reports</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ TEAM FLOW ════════════════ -->
+<div id="flow-team" class="canvas">
+
+  <div class="section-label">Team Management (Contractor only)</div>
+  <div class="row center">
+    <div class="node blue start" onclick="showPanel('team-page')">
+      <div class="node-icon">👥</div>
+      <div class="node-title">Team Page</div>
+      <div class="node-sub">/team — Contractor+</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+
+  <div class="section-label">Invite Flow</div>
+  <div class="row center" style="gap:12px">
+    <div class="node purple" onclick="showPanel('send-invite')">
+      <div class="node-icon">📤</div>
+      <div class="node-title">Send Invite</div>
+      <div class="node-sub">Email · Role · Site (optional)<br/>pending_invites table</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node blue" onclick="showPanel('invite-email')">
+      <div class="node-icon">📧</div>
+      <div class="node-title">Invite Email Sent</div>
+      <div class="node-sub">Contains invite code<br/>Expires in 7 days</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node amber" onclick="showPanel('accept-invite')">
+      <div class="node-icon">📩</div>
+      <div class="node-title">Recipient Registers</div>
+      <div class="node-sub">Register page → Invite tab<br/>Code + Email + Password</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+
+  <div class="section-label">Edge Function Processing</div>
+  <div class="row center" style="gap:12px">
+    <div class="node slate" onclick="showPanel('invite-function')">
+      <div class="node-icon">⚡</div>
+      <div class="node-title">sign-up-with-invite</div>
+      <div class="node-sub">Edge function validates:<br/>Code · Email match · Expiry</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node blue" onclick="showPanel('invite-creates')">
+      <div class="node-icon">⚙️</div>
+      <div class="node-title">Creates auth user</div>
+      <div class="node-sub">Sets role + tenant_id<br/>site_assignments if site set</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node green" onclick="showPanel('invite-done')">
+      <div class="node-icon">✅</div>
+      <div class="node-title">Invite Accepted</div>
+      <div class="node-sub">accepted_at stamped<br/>Member can now log in</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+
+  <div class="section-label">Role Hierarchy</div>
+  <div class="row center" style="gap:8px; flex-wrap:wrap">
+    <div class="node amber" onclick="showPanel('role-contractor')">
+      <div class="node-icon">👔</div>
+      <div class="node-title">Contractor</div>
+      <div class="node-sub">Full access · Owner</div>
+    </div>
+    <div class="arrow">›</div>
+    <div class="node blue" onclick="showPanel('role-manager')">
+      <div class="node-icon">🗂️</div>
+      <div class="node-title">Site Manager</div>
+      <div class="node-sub">Sites · Reports · Transfers</div>
+    </div>
+    <div class="arrow">›</div>
+    <div class="node teal" onclick="showPanel('role-supervisor')">
+      <div class="node-icon">🦺</div>
+      <div class="node-title">Supervisor</div>
+      <div class="node-sub">Workers · Attendance · Logs</div>
+    </div>
+    <div class="arrow">›</div>
+    <div class="node purple" onclick="showPanel('role-storekeeper')">
+      <div class="node-icon">📦</div>
+      <div class="node-title">Store Keeper</div>
+      <div class="node-sub">Materials · Inventory</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ REPORTS FLOW ════════════════ -->
+<div id="flow-reports" class="canvas">
+
+  <div class="section-label">Report Sources</div>
+  <div class="grid-3">
+    <div class="node blue" onclick="showPanel('source-attendance')">
+      <div class="node-icon">✅</div>
+      <div class="node-title">Attendance Records</div>
+      <div class="node-sub">Daily presence data</div>
+    </div>
+    <div class="node blue" onclick="showPanel('source-materials')">
+      <div class="node-icon">📦</div>
+      <div class="node-title">Material Ledger</div>
+      <div class="node-sub">IN / OUT / USED</div>
+    </div>
+    <div class="node blue" onclick="showPanel('source-logs')">
+      <div class="node-icon">📋</div>
+      <div class="node-title">Daily Logs</div>
+      <div class="node-sub">Site progress notes</div>
+    </div>
+    <div class="node blue" onclick="showPanel('source-transfers')">
+      <div class="node-icon">🔀</div>
+      <div class="node-title">Transfers</div>
+      <div class="node-sub">Inter-site movements</div>
+    </div>
+    <div class="node blue" onclick="showPanel('source-receipts')">
+      <div class="node-icon">📥</div>
+      <div class="node-title">Receipts</div>
+      <div class="node-sub">Material inward</div>
+    </div>
+    <div class="node blue" onclick="showPanel('source-equipment')">
+      <div class="node-icon">🚧</div>
+      <div class="node-title">Equipment</div>
+      <div class="node-sub">Asset status & logs</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+
+  <div class="section-label">Reports Page</div>
+  <div class="row center">
+    <div class="node green start" onclick="showPanel('reports-page')">
+      <div class="node-icon">📊</div>
+      <div class="node-title">Reports</div>
+      <div class="node-sub">/reports — Contractor+<br/>Aggregated across all sites</div>
+    </div>
+  </div>
+  <div class="connector-line"></div>
+
+  <div class="section-label">Report Types</div>
+  <div class="row center" style="gap:12px; flex-wrap:wrap">
+    <div class="node purple" onclick="showPanel('report-wage')">
+      <div class="node-icon">💰</div>
+      <div class="node-title">Wage Report</div>
+      <div class="node-sub">Attendance × daily rate</div>
+    </div>
+    <div class="node purple" onclick="showPanel('report-material')">
+      <div class="node-icon">📦</div>
+      <div class="node-title">Material Report</div>
+      <div class="node-sub">Usage vs received</div>
+    </div>
+    <div class="node purple" onclick="showPanel('report-site')">
+      <div class="node-icon">📍</div>
+      <div class="node-title">Site Progress</div>
+      <div class="node-sub">Logs + milestones</div>
+    </div>
+    <div class="node purple" onclick="showPanel('report-export')">
+      <div class="node-icon">📤</div>
+      <div class="node-title">Export</div>
+      <div class="node-sub">PDF / Excel</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ DETAIL PANEL ════════════════ -->
+<div class="panel" id="detail-panel">
+  <button class="panel-close" onclick="closePanel()">✕</button>
+  <div class="panel-header">
+    <div class="panel-icon" id="p-icon"></div>
+    <div>
+      <div class="panel-title" id="p-title"></div>
+      <div class="panel-sub" id="p-sub"></div>
+    </div>
+  </div>
+  <hr class="divider" />
+  <div class="panel-body" id="p-body"></div>
+  <div class="roles" id="p-roles"></div>
+</div>
+
+<script>
+const data = {
+  'landing': {
+    icon:'🌐', title:'Landing Page', sub:'storeyinfra.com',
+    body:'<ul><li>Public marketing page</li><li>Links to Login and Register</li><li>If already logged in → redirects to /#/dashboard</li></ul>',
+    roles:[]
+  },
+  'email-login': {
+    icon:'📧', title:'Email + Password Login', sub:'supabase.auth.signInWithPassword()',
+    body:'<ul><li>Standard Supabase email/password auth</li><li>Session stored in localStorage</li><li>fetchProfile() called on success to load role + tenant</li><li>Redirects to /#/dashboard</li></ul>',
+    roles:['All roles']
+  },
+  'google-oauth': {
+    icon:'🔵', title:'Google OAuth (PKCE)', sub:'supabase.auth.signInWithOAuth()',
+    body:'<ul><li>PKCE flow — code verifier stored in localStorage for current origin</li><li>Redirects to Google → back to /auth/callback?code=…</li><li>main.jsx intercepts before React mounts, exchanges code for session</li><li>Shows amber spinner during 1-2s exchange</li><li>New contractors land with tenant_id=NULL → /create-company</li></ul>',
+    roles:['contractor']
+  },
+  'sms-otp': {
+    icon:'📱', title:'SMS OTP Login', sub:'send-sms-otp + verify-sms-otp edge functions',
+    body:'<ul><li>User enters phone number → OTP sent via SMS</li><li>OTP stored in phone_verifications table (expires 10min)</li><li>On verify: profile.phone_verified = true</li><li>Magic link generated → frontend establishes session</li></ul>',
+    roles:['All roles']
+  },
+  'invite': {
+    icon:'📩', title:'Invite Code Sign-Up', sub:'sign-up-with-invite edge function',
+    body:'<ul><li>Contractor sends invite → pending_invites row created with code</li><li>Recipient gets email with code</li><li>Register page → Invite tab: enter code + email + password</li><li>Edge function validates: code valid + email matches + not expired</li><li>Creates auth user with correct role + tenant_id + site_assignment</li></ul>',
+    roles:['site_manager','supervisor','store_keeper']
+  },
+  'supabase-auth': {
+    icon:'⚡', title:'Supabase Auth', sub:'JWT issued, session stored',
+    body:'<ul><li>JWT contains user ID, email, role metadata</li><li>Session persisted in localStorage via Supabase JS SDK</li><li>authStore subscribes to onAuthStateChange for real-time updates</li><li>INITIAL_SESSION event skipped (would cause double profile fetch)</li></ul>',
+    roles:[]
+  },
+  'callback': {
+    icon:'🔄', title:'/auth/callback Handler', sub:'main.jsx — before React mounts',
+    body:'<ul><li>Vercel serves index.html for all paths (filesystem first, then fallback)</li><li>main.jsx checks pathname === "/auth/callback"</li><li>Injects loading spinner immediately (no blank white page)</li><li>Calls supabase.auth.exchangeCodeForSession(code)</li><li>On success → window.location.replace("/#/dashboard")</li><li>On failure → window.location.replace("/#/login")</li><li>storeyinfra.com (no-www) redirected to www first to keep PKCE origin consistent</li></ul>',
+    roles:[]
+  },
+  'profile-fetch': {
+    icon:'👤', title:'fetchProfile()', sub:'authStore.js',
+    body:'<ul><li>Queries profiles table for id, role, tenant_id, full_name</li><li>If tenant_id set → also fetches tenants.name + plan</li><li>Sets loading: false when complete</li><li>All downstream RLS queries now use correct tenant context</li></ul>',
+    roles:[]
+  },
+  'protected-route': {
+    icon:'🛡️', title:'ProtectedRoute', sub:'src/components/auth/ProtectedRoute.jsx',
+    body:'<ul><li>Shows spinner while loading or not yet initialized</li><li>If no session → redirect to /login</li><li>If contractor + tenant_id=null → redirect to /create-company</li><li>Otherwise → render children</li></ul>',
+    roles:[]
+  },
+  'role-guard': {
+    icon:'🔒', title:'RoleGuard', sub:'Per-route role enforcement',
+    body:'<ul><li>Each route declares allowed roles array</li><li>Checks profile.role against allowed list</li><li>Unauthorized → redirect to /dashboard</li><li>Role hierarchy: superadmin > contractor > site_manager > supervisor > store_keeper</li></ul>',
+    roles:[]
+  },
+  'create-company': {
+    icon:'🏗️', title:'Create Company', sub:'src/pages/auth/CreateCompany.jsx',
+    body:'<ul><li>Only shown to contractors with tenant_id = NULL</li><li>Single field: company / firm name</li><li>Calls createTenantForUser() → inserts into tenants table</li><li>link_owner_to_tenant DB trigger fires → sets profile.tenant_id</li><li>fetchProfile() called again → RLS now works → navigate to /dashboard</li></ul>',
+    roles:['contractor (new)']
+  },
+  'dashboard': {
+    icon:'📊', title:'Dashboard', sub:'Role-scoped overview',
+    body:'<ul><li>Shows summary cards relevant to the user\'s role</li><li>Contractor: all sites, team count, material summary</li><li>Supervisor: today\'s attendance, assigned site logs</li><li>Store Keeper: low stock alerts, pending receipts</li></ul>',
+    roles:['All roles']
+  },
+  'trigger': {
+    icon:'⚙️', title:'handle_new_user trigger', sub:'PostgreSQL trigger on auth.users',
+    body:'<ul><li>Fires on INSERT into auth.users</li><li>Creates row in public.profiles</li><li>Sets role = "contractor" (default)</li><li>tenant_id = NULL (no company yet for OAuth users)</li><li>full_name from user_metadata if available</li></ul>',
+    roles:[]
+  },
+  'tenant-trigger': {
+    icon:'⚙️', title:'link_owner_to_tenant trigger', sub:'PostgreSQL trigger on tenants',
+    body:'<ul><li>Fires after INSERT into tenants</li><li>Sets profile.tenant_id = new tenant ID for owner</li><li>Sets profile.role = "contractor"</li><li>After this fires, all RLS policies evaluate correctly</li></ul>',
+    roles:[]
+  },
+  'register': {
+    icon:'📝', title:'Register Page', sub:'Email-based contractor registration',
+    body:'<ul><li>Fields: Full name · Email · Password · Company name</li><li>Calls supabase.auth.signUp() + tenants.insert() in sequence</li><li>tenant_id set immediately via trigger</li><li>No email verification required (email_confirm: true skipped)</li></ul>',
+    roles:['contractor (new)']
+  },
+  'sites-list': {
+    icon:'📍', title:'Sites Page', sub:'/sites — All tenant sites',
+    body:'<ul><li>Contractor sees all sites for their tenant</li><li>Other roles see only sites they\'re assigned to via site_assignments</li><li>RLS enforced: my_tenant_id() + assignment check</li><li>Can filter, search, create new sites</li></ul>',
+    roles:['All roles']
+  },
+  'create-site': {
+    icon:'➕', title:'Create Site', sub:'Contractor only',
+    body:'<ul><li>Fields: Site name · Location · Type (residential/commercial/infra)</li><li>Inserts into sites table with tenant_id</li><li>Contractor auto-assigned as owner</li><li>Can then invite team members to the site</li></ul>',
+    roles:['contractor', 'superadmin']
+  },
+  'site-detail': {
+    icon:'🔍', title:'Site Detail', sub:'/sites/:siteId',
+    body:'<ul><li>Shows all sub-modules for this site</li><li>Workers · Materials · Logs · Attendance · Equipment</li><li>All roles can view (filtered by their permissions)</li><li>Breadcrumb navigation back to /sites</li></ul>',
+    roles:['All roles']
+  },
+  'site-assign': {
+    icon:'👥', title:'Assign Team to Site', sub:'site_assignments table',
+    body:'<ul><li>Add team members to specific sites</li><li>site_assignments: site_id + profile_id + tenant_id + role</li><li>RLS uses this table to scope data per user</li><li>Automatically set when accepting an invite with site_id</li></ul>',
+    roles:['contractor', 'site_manager']
+  },
+  'site-workers': {
+    icon:'👷', title:'Workers per Site', sub:'/sites/:siteId/workers',
+    body:'<ul><li>List of workers registered at this site</li><li>Add new workers, view attendance history</li><li>Workers ≠ app users — they are manual records (labourers etc)</li></ul>',
+    roles:['supervisor', 'site_manager', 'contractor']
+  },
+  'site-materials': {
+    icon:'📦', title:'Materials per Site', sub:'/sites/:siteId/materials',
+    body:'<ul><li>Current material inventory for this specific site</li><li>Add receipts (inward) · record usage · transfer out</li><li>Links to full ledger per material</li></ul>',
+    roles:['store_keeper', 'site_manager', 'contractor']
+  },
+  'receipts': {
+    icon:'📥', title:'Material Receipts', sub:'Inward register',
+    body:'<ul><li>Records material arriving at a site</li><li>Fields: Material · Quantity · Unit · Supplier · Date · Invoice</li><li>Adds to inventory balance (ledger entry: IN)</li><li>Auditable — all receipts kept permanently</li></ul>',
+    roles:['store_keeper', 'site_manager', 'contractor']
+  },
+  'inventory': {
+    icon:'🗄️', title:'Inventory', sub:'Current stock levels',
+    body:'<ul><li>Per-material, per-site current balance</li><li>Derived from ledger: SUM(IN) - SUM(OUT) - SUM(USED)</li><li>Low stock alerts configurable</li><li>Click material → full ledger history</li></ul>',
+    roles:['store_keeper', 'site_manager', 'contractor']
+  },
+  'add-material': {
+    icon:'➕', title:'Add to Inventory', sub:'Record new stock',
+    body:'<ul><li>Creates a receipt record (material_receipts)</li><li>Triggers ledger entry type=IN</li><li>Running balance updated in real-time</li></ul>',
+    roles:['store_keeper', 'site_manager', 'contractor']
+  },
+  'transfer': {
+    icon:'🔀', title:'Material Transfer', sub:'/transfers — inter-site movement',
+    body:'<ul><li>Move material from one site to another</li><li>Creates material_transfers record</li><li>Source site: OUT ledger entry (balance decreases)</li><li>Destination site: IN ledger entry (balance increases)</li><li>Full audit trail maintained</li></ul>',
+    roles:['site_manager', 'contractor']
+  },
+  'ledger': {
+    icon:'📒', title:'Material Ledger', sub:'/inventory/:materialId/ledger',
+    body:'<ul><li>Complete transaction history for one material</li><li>Types: IN (receipt) · OUT (transfer) · USED (consumed)</li><li>Running balance column</li><li>Filter by date range, type, site</li></ul>',
+    roles:['store_keeper', 'site_manager', 'contractor']
+  },
+  'transfer-source': {
+    icon:'📤', title:'Source Site — Deduct', sub:'Inventory decreases',
+    body:'<ul><li>Transfer OUT creates ledger entry at source</li><li>Balance = previous balance - transferred qty</li><li>Cannot transfer more than available balance</li></ul>',
+    roles:[]
+  },
+  'transfer-record': {
+    icon:'📝', title:'Transfer Record', sub:'material_transfers table',
+    body:'<ul><li>Stores: from_site · to_site · material · qty · date · transferred_by</li><li>Immutable audit record</li><li>Referenced in ledger entries at both sites</li></ul>',
+    roles:[]
+  },
+  'transfer-dest': {
+    icon:'📥', title:'Destination Site — Add', sub:'Inventory increases',
+    body:'<ul><li>Transfer IN creates ledger entry at destination</li><li>Balance = previous balance + transferred qty</li><li>Links back to the transfer record for traceability</li></ul>',
+    roles:[]
+  },
+  'ledger-in': { icon:'⬇️', title:'Receipt (IN)', sub:'Material arrived at site', body:'<ul><li>Source: material_receipts</li><li>Increases running balance</li><li>Supplier and invoice number recorded</li></ul>', roles:[] },
+  'ledger-out': { icon:'⬆️', title:'Transfer (OUT)', sub:'Material sent to another site', body:'<ul><li>Source: material_transfers (from this site)</li><li>Decreases running balance</li><li>Links to destination site</li></ul>', roles:[] },
+  'ledger-used': { icon:'🔨', title:'Usage (USED)', sub:'Consumed on site', body:'<ul><li>Material used in construction work</li><li>Recorded manually by store keeper</li><li>Decreases running balance</li></ul>', roles:[] },
+  'ledger-balance': { icon:'⚖️', title:'Running Balance', sub:'Real-time stock level', body:'<ul><li>Calculated as: Σ IN - Σ OUT - Σ USED</li><li>Shown per row in ledger</li><li>Matches current inventory figure</li></ul>', roles:[] },
+  'workers-global': {
+    icon:'👷', title:'Workers (Global)', sub:'/workers',
+    body:'<ul><li>Shows all workers across all sites the user is assigned to</li><li>Supervisor sees their sites only; contractor sees all</li><li>Search and filter by name, trade, site</li></ul>',
+    roles:['supervisor', 'site_manager', 'contractor']
+  },
+  'workers-site': {
+    icon:'📍', title:'Workers per Site', sub:'/sites/:siteId/workers',
+    body:'<ul><li>Scoped to one site</li><li>Same data, filtered by site_id</li></ul>',
+    roles:['supervisor', 'site_manager', 'contractor']
+  },
+  'add-worker': {
+    icon:'➕', title:'Add Worker', sub:'Register a new labourer',
+    body:'<ul><li>Fields: Name · Trade · Daily rate · Phone · Address</li><li>Workers are site-level records (not app users)</li><li>Linked to a site via site_id + tenant_id</li></ul>',
+    roles:['supervisor', 'site_manager', 'contractor']
+  },
+  'worker-detail': {
+    icon:'🪪', title:'Worker Profile', sub:'Full history',
+    body:'<ul><li>All attendance records</li><li>Calculated wages owed</li><li>Daily rate history if changed</li></ul>',
+    roles:['supervisor', 'site_manager', 'contractor']
+  },
+  'edit-worker': {
+    icon:'✏️', title:'Edit / Archive Worker', sub:'Update or deactivate',
+    body:'<ul><li>Update name, trade, daily rate</li><li>Archive (soft delete) — historical data preserved</li><li>Archived workers excluded from attendance sheets</li></ul>',
+    roles:['supervisor', 'site_manager', 'contractor']
+  },
+  'attendance-page': {
+    icon:'📋', title:'Attendance Page', sub:'/attendance',
+    body:'<ul><li>Date picker defaults to today</li><li>Shows all active workers for assigned sites</li><li>Grid: worker rows × status columns</li></ul>',
+    roles:['supervisor', 'site_manager', 'contractor']
+  },
+  'mark-attendance': {
+    icon:'☑️', title:'Mark Attendance', sub:'Per worker per day',
+    body:'<ul><li>Status: Present · Absent · Half Day · Leave</li><li>Saved to attendance_records table</li><li>Can be edited until end of day</li><li>Used to calculate wages in reports</li></ul>',
+    roles:['supervisor', 'site_manager', 'contractor']
+  },
+  'attendance-saved': {
+    icon:'✅', title:'Attendance Saved', sub:'attendance_records table',
+    body:'<ul><li>Immutable once confirmed</li><li>Used in wage report: days × daily_rate</li><li>Aggregated in dashboard stats</li></ul>',
+    roles:[]
+  },
+  'daily-logs': {
+    icon:'📓', title:'Daily Logs', sub:'/logs and /logs/:siteId',
+    body:'<ul><li>Site diary entry per day</li><li>Work done description</li><li>Issues / blockers noted</li><li>Weather conditions</li><li>Materials consumed</li></ul>',
+    roles:['supervisor', 'site_manager', 'contractor']
+  },
+  'log-content': {
+    icon:'📝', title:'Log Content', sub:'What gets recorded',
+    body:'<ul><li>Free-text work summary</li><li>Structured fields: weather, manpower count, issues</li><li>Material usage entries (links to ledger)</li><li>Photos (if enabled)</li></ul>',
+    roles:[]
+  },
+  'log-saved': {
+    icon:'📊', title:'Logs Feed Reports', sub:'Aggregated into site reports',
+    body:'<ul><li>Daily logs aggregated for site progress reports</li><li>Manpower count history from logs</li><li>Issue tracker built from log entries</li></ul>',
+    roles:[]
+  },
+  'team-page': {
+    icon:'👥', title:'Team Page', sub:'/team — Contractor+',
+    body:'<ul><li>Lists all team members across the tenant</li><li>Shows role, assigned sites, invite status</li><li>Send new invites from here</li><li>Revoke access or change roles</li></ul>',
+    roles:['contractor', 'superadmin']
+  },
+  'send-invite': {
+    icon:'📤', title:'Send Invite', sub:'pending_invites table',
+    body:'<ul><li>Fields: Email · Role · Site (optional)</li><li>Generates unique 8-char invite code</li><li>Sets expires_at = now + 7 days</li><li>Sends invite email with code and instructions</li></ul>',
+    roles:['contractor']
+  },
+  'invite-email': {
+    icon:'📧', title:'Invite Email', sub:'Sent to recipient',
+    body:'<ul><li>Contains: invite code · role they\'re being invited as · company name</li><li>Links to Register page with pre-filled code</li><li>Expires in 7 days</li></ul>',
+    roles:[]
+  },
+  'accept-invite': {
+    icon:'📩', title:'Accept Invite (Register)', sub:'Register page → Invite tab',
+    body:'<ul><li>Recipient enters: invite code · their email · password · full name</li><li>Email must match what contractor entered in the invite</li><li>Calls sign-up-with-invite edge function</li></ul>',
+    roles:[]
+  },
+  'invite-function': {
+    icon:'⚡', title:'sign-up-with-invite', sub:'Supabase Edge Function',
+    body:'<ul><li>Validates invite code exists and not expired</li><li>Checks email matches invite.email</li><li>Creates auth user (or finds existing)</li><li>Uses get_auth_user_id_by_email RPC (profiles has no email column)</li><li>Updates profile: role + tenant_id + full_name</li><li>Creates site_assignment if site_id specified</li><li>Marks invite as accepted_at</li></ul>',
+    roles:[]
+  },
+  'invite-creates': {
+    icon:'⚙️', title:'Auth user + Profile set', sub:'Invite processing',
+    body:'<ul><li>supabase.auth.admin.createUser() with email_confirm: true</li><li>profile.role = invite.role</li><li>profile.tenant_id = invite.tenant_id</li><li>site_assignments upserted if site_id present</li></ul>',
+    roles:[]
+  },
+  'invite-done': {
+    icon:'✅', title:'Invite Accepted', sub:'Member onboarded',
+    body:'<ul><li>pending_invites.accepted_at = now()</li><li>Member can log in immediately</li><li>Sees only data for their tenant + assigned sites</li></ul>',
+    roles:[]
+  },
+  'role-contractor': { icon:'👔', title:'Contractor', sub:'Owner role', body:'<ul><li>Full access to everything in their tenant</li><li>Create sites, send invites, view all reports</li><li>Manage team roles and site assignments</li></ul>', roles:['contractor'] },
+  'role-manager': { icon:'🗂️', title:'Site Manager', sub:'Operations role', body:'<ul><li>Access to sites, reports, transfers, team view</li><li>Cannot create new sites or send invites</li><li>Can manage workers, materials, logs on their sites</li></ul>', roles:['site_manager'] },
+  'role-supervisor': { icon:'🦺', title:'Supervisor', sub:'Field role', body:'<ul><li>Workers, attendance, daily logs</li><li>Cannot access materials or transfers</li><li>Site-scoped: only sees assigned sites</li></ul>', roles:['supervisor'] },
+  'role-storekeeper': { icon:'📦', title:'Store Keeper', sub:'Materials role', body:'<ul><li>Materials, inventory, receipts, equipment</li><li>Cannot access workers or attendance</li><li>Site-scoped: only sees assigned sites</li></ul>', roles:['store_keeper'] },
+  'reports-page': {
+    icon:'📊', title:'Reports Page', sub:'/reports — Contractor+',
+    body:'<ul><li>Contractor sees reports across all sites</li><li>Site manager sees their assigned sites</li><li>Date range filter</li><li>Export to PDF / Excel</li></ul>',
+    roles:['contractor', 'site_manager']
+  },
+  'report-wage': { icon:'💰', title:'Wage Report', sub:'Payroll calculation', body:'<ul><li>Pulls attendance_records for date range</li><li>Multiplies days present × worker daily_rate</li><li>Grouped by site and worker</li><li>Export for payment processing</li></ul>', roles:['contractor','site_manager'] },
+  'report-material': { icon:'📦', title:'Material Report', sub:'Stock analysis', body:'<ul><li>Total received vs total used per material</li><li>Variance analysis</li><li>Site-wise breakdown</li></ul>', roles:['contractor','site_manager'] },
+  'report-site': { icon:'📍', title:'Site Progress', sub:'Construction timeline', body:'<ul><li>Aggregated daily logs</li><li>Manpower deployed per day chart</li><li>Issues and blockers list</li><li>Milestone tracking</li></ul>', roles:['contractor','site_manager'] },
+  'report-export': { icon:'📤', title:'Export', sub:'Download reports', body:'<ul><li>PDF: formatted printable report</li><li>Excel: raw data for further analysis</li><li>Date range selectable</li><li>Per-site or all-sites</li></ul>', roles:['contractor','site_manager'] },
+  'source-attendance': { icon:'✅', title:'Attendance Data Source', sub:'attendance_records table', body:'<ul><li>worker_id · date · status · site_id · marked_by</li><li>Used for wage calculation</li><li>Feeds manpower charts in reports</li></ul>', roles:[] },
+  'source-materials': { icon:'📦', title:'Material Ledger Source', sub:'material_ledger table', body:'<ul><li>All IN/OUT/USED entries</li><li>Running balance calculated here</li><li>Used in material report and inventory</li></ul>', roles:[] },
+  'source-logs': { icon:'📋', title:'Daily Logs Source', sub:'daily_logs table', body:'<ul><li>One entry per site per day</li><li>Free text + structured fields</li><li>Used in site progress report</li></ul>', roles:[] },
+  'source-transfers': { icon:'🔀', title:'Transfers Source', sub:'material_transfers table', body:'<ul><li>from_site · to_site · material · qty · date</li><li>Creates ledger entries at both ends</li></ul>', roles:[] },
+  'source-receipts': { icon:'📥', title:'Receipts Source', sub:'material_receipts table', body:'<ul><li>Material inward records</li><li>Supplier · invoice · qty · date</li><li>Creates IN ledger entry</li></ul>', roles:[] },
+  'source-equipment': { icon:'🚧', title:'Equipment Source', sub:'equipment_assets table', body:'<ul><li>Asset name · type · status · assigned site</li><li>Maintenance logs if tracked</li><li>Used in equipment report</li></ul>', roles:[] },
+  'attendance': { icon:'✅', title:'Attendance Module', sub:'/attendance', body:'<ul><li>Date-wise attendance for all active workers</li><li>Present / Absent / Half Day / Leave</li><li>Editable until submitted</li></ul>', roles:['supervisor','site_manager','contractor'] },
+  'equipment': { icon:'🚧', title:'Equipment & Assets', sub:'/equipment', body:'<ul><li>Track machinery, tools, vehicles</li><li>Status: Available / In-use / Under maintenance</li><li>Assigned to sites</li><li>Cost and depreciation tracking</li></ul>', roles:['store_keeper','site_manager','contractor'] },
+};
+
+function showFlow(id) {
+  document.querySelectorAll('.canvas').forEach(c => c.classList.remove('visible'));
+  document.getElementById('flow-' + id).classList.add('visible');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  closePanel();
+  // re-trigger animations
+  document.querySelectorAll('#flow-' + id + ' .node').forEach((n, i) => {
+    n.style.animationDelay = (i * 0.04) + 's';
+    n.style.animation = 'none';
+    requestAnimationFrame(() => { n.style.animation = ''; });
+  });
+}
+
+function showPanel(key) {
+  const d = data[key];
+  if (!d) return;
+  document.getElementById('p-icon').textContent = d.icon;
+  document.getElementById('p-title').textContent = d.title;
+  document.getElementById('p-sub').textContent = d.sub;
+  document.getElementById('p-body').innerHTML = d.body;
+  const rolesEl = document.getElementById('p-roles');
+  rolesEl.innerHTML = '';
+  const allRoles = ['superadmin','contractor','site_manager','supervisor','store_keeper'];
+  if (d.roles.length > 0 && !d.roles.includes('All roles') && !d.roles.includes('contractor (new)') && !d.roles.includes('contractor (new)')) {
+    allRoles.forEach(r => {
+      const pill = document.createElement('span');
+      pill.className = 'role-pill' + (d.roles.includes(r) ? ' active' : '');
+      pill.textContent = r.replace('_',' ');
+      rolesEl.appendChild(pill);
+    });
+  } else if (d.roles.includes('All roles')) {
+    allRoles.forEach(r => {
+      const pill = document.createElement('span');
+      pill.className = 'role-pill active';
+      pill.textContent = r.replace('_',' ');
+      rolesEl.appendChild(pill);
+    });
+  }
+  document.getElementById('detail-panel').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('detail-panel').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+</script>
+</body>
+</html>

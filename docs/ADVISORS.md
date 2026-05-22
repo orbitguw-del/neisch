@@ -79,6 +79,10 @@ The skill you need is "sell software to small businesses who don't want software
 - A **senior banker** at HDFC / SBI / Axis corporate banking, Guwahati branch
 - An **IIT Guwahati / NIT** faculty member with industry links
 - A **state PWD / urban-development** retired senior officer
+- A **former head of an NE incubation centre** (IIM Shillong's incubator,
+  IIT-G Technology Incubation, Assam Startup / Nest-i, Startup Mizoram, etc.) —
+  one of the highest-leverage profiles for this slot: they sit on every
+  founder/investor/govt/industry rolodex in the region at once
 - Look for someone who can place a call and get a meeting — that's the asset
 
 ### 4 — B2B sales / GTM to SMB *(not "marketing")*
@@ -97,6 +101,15 @@ The skill you need is "sell software to small businesses who don't want software
 - An **active angel** with 5+ Indian SaaS investments in the past 3 years (not someone who invested once in 2018)
 - An **ex-founder** who has *recently* closed a pre-seed or seed in India — the playbook changes yearly
 - A **VC associate/principal** at an Indian early-stage fund — for the lens, not the money (yet)
+- A **boutique investment banker** focused on early-stage tech / SaaS — useful
+  for term-sheet negotiation, valuation sanity-checks, and (later) bridge/Series
+  A process management. Not the same role as an angel: a banker runs the
+  *process*, an angel writes the *cheque*. Only relevant at seed → Series A,
+  not pre-seed.
+  • **Avoid:** generalist M&A bankers (big-ticket only) and "fundraising
+    consultants" charging % upfront with no track record
+  • **Ideal:** someone who has closed 5+ Indian SaaS rounds in $1–5M range in
+    the last 2 years
 - **Only relevant when you're <90 days from raising** — too early and they ghost; too late and you're behind
 
 ### 7 — Technical / architecture sounding-board *(useful, not urgent)*

@@ -168,15 +168,17 @@ const useAuthStore = create((set, get) => ({
     return data
   },
 
-  signUp: async ({ email, password, fullName, tenantName }) => {
+  signUp: async ({ email, password, fullName, tenantName, consent }) => {
     // Server-side atomic registration: creates the auth user + tenant, rolls back the
     // user if the tenant insert fails. Avoids the orphaned-auth-user failure mode.
+    // `consent` (optional) captures ToS + Privacy Policy acceptance for DPDP audit.
     const { data, error } = await supabase.functions.invoke('register-tenant', {
       body: {
         email,
         password,
         full_name: fullName,
         tenant_name: tenantName,
+        consent: consent ?? null,
       },
     })
     if (error) {
