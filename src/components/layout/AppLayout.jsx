@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import OfflineBanner from '@/components/OfflineBanner'
+import ConsentPrompt from '@/components/ConsentPrompt'
 import useAuthStore from '@/stores/authStore'
 
 export default function AppLayout() {
@@ -45,6 +46,10 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Grandfather-consent modal for pre-2026-05-22 testers.
+          Self-suppresses when profile.consent_at is set. */}
+      <ConsentPrompt />
     </div>
   )
 }
