@@ -118,6 +118,49 @@ superadmin > contractor > site_manager > supervisor > store_keeper
 ### Edge functions — known issues fixed
 - `sign-up-with-invite`: use `get_auth_user_id_by_email` RPC (not `profiles.email` — column doesn't exist)
 - `verify-sms-otp`: use `SITE_URL` env var for `redirectTo`, not a hardcoded domain
+- `register-tenant`: do NOT chain `.catch()` on a Supabase query builder (see rule below)
+
+### Supabase query builder — `.catch()` is NOT a method (set 2026-05-22)
+
+The Supabase query builder (`supabase.from(...).select(...).eq(...).maybeSingle()`, etc.)
+is **thenable** but does NOT implement the full Promise API. Chaining `.catch()` directly
+on a builder raises `"...catch is not a function"` at runtime.
+
+This shipped to prod once already and blocked every new sign-up on `storeyinfra.com`
+until it was caught — don't repeat it.
+
+❌ **Wrong** (runtime error):
+```js
+const { data } = await supabase
+  .from("profiles")
+  .select("id")
+  .eq("email", email)
+  .maybeSingle()
+  .catch(() => ({ data: null }))   // ← throws
+```
+
+✅ **Right** — use one of these three patterns:
+
+1. `await` + `try/catch`:
+   ```js
+   let data = null
+   try {
+     ({ data } = await supabase.from("profiles").select("id").maybeSingle())
+   } catch (_) { /* fallback */ }
+   ```
+
+2. `Promise.all([builders]).catch(...)` — the `Promise.all` returns a real Promise:
+   ```js
+   Promise.all([q1, q2]).then(([a, b]) => ...).catch(() => ...)
+   ```
+
+3. Two-argument `.then(onOk, onErr)` — builders DO implement `.then()`:
+   ```js
+   supabase.from(...).select(...).then((r) => ..., () => fallback)
+   ```
+
+`.catch()` IS safe on `req.json()`, `fetch()`, `admin.auth.admin.*` calls — those return
+real Promises. The trap is specifically the Postgrest query builder.
 
 ---
 
