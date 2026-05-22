@@ -35,12 +35,20 @@ serve(async (req) => {
     // before re-registering.
     //
     // We look up the user by email via the admin API.
-    const { data: lookup } = await admin
-      .from("profiles")
-      .select("id, tenant_id")
-      .ilike("email", email)
-      .maybeSingle()
-      .catch(() => ({ data: null }))
+    // Note: the Supabase query builder is thenable but does NOT implement
+    // `.catch()` — chaining it raises "catch is not a function" at runtime.
+    // Wrap in try/catch instead.
+    let lookup: { id: string; tenant_id: string | null } | null = null
+    try {
+      const { data } = await admin
+        .from("profiles")
+        .select("id, tenant_id")
+        .ilike("email", email)
+        .maybeSingle()
+      lookup = data ?? null
+    } catch (_) {
+      lookup = null
+    }
 
     const { data: existingList } = await admin.auth.admin.listUsers({
       page: 1,
