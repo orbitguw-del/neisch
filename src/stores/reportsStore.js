@@ -473,6 +473,42 @@ const useReportsStore = create((set, get) => ({
     set({ consumptionData: { rows, summary, startDate, endDate }, consumptionLoading: false })
   },
 
+  // ─── Tasks report ────────────────────────────────────────────────────────
+  tasksData:    null,
+  tasksLoading: false,
+
+  fetchTasksReport: async (tenantId, siteId = null, status = null) => {
+    set({ tasksLoading: true, tasksData: null })
+
+    let q = supabase
+      .from('tasks')
+      .select(`
+        id, title, description, status, priority,
+        start_date, due_date, completed_at, created_at, parent_task_id,
+        sites(name),
+        assignee_profile:assigned_to_profile(full_name),
+        assignee_worker:assigned_to_worker(name),
+        assigner:assigned_by(full_name)
+      `)
+      .eq('tenant_id', tenantId)
+      .order('due_date', { ascending: true, nullsFirst: false })
+    if (siteId) q = q.eq('site_id', siteId)
+    if (status)  q = q.eq('status', status)
+
+    const { data } = await q
+    const rows = data ?? []
+    const today = new Date().toISOString().slice(0, 10)
+
+    const counts = { pending: 0, in_progress: 0, submitted: 0, done: 0, blocked: 0 }
+    let overdue = 0
+    rows.forEach((t) => {
+      counts[t.status] = (counts[t.status] || 0) + 1
+      if (t.due_date && t.due_date < today && t.status !== 'done') overdue++
+    })
+
+    set({ tasksData: { rows, counts, overdue, today }, tasksLoading: false })
+  },
+
   // ─── Stock snapshot (current inventory across sites) ────────────────────
   stockData:    null,
   stockLoading: false,

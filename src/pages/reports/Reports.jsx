@@ -17,6 +17,7 @@ import AttendanceReportTab from './AttendanceReportTab'
 import SiteReportTab from './SiteReportTab'
 import StockReportTab from './StockReportTab'
 import ConsumptionReportTab from './ConsumptionReportTab'
+import TasksReportTab from './TasksReportTab'
 import InvitesReportTab from './InvitesReportTab'
 import { downloadSheet, fmtINR } from '@/lib/exportXLS'
 import { formatINR, formatDate, cn } from '@/lib/utils'
@@ -549,6 +550,7 @@ const TABS = [
   { id: 'site',         label: 'Site Report' },
   { id: 'monthly',      label: 'Materials In' },
   { id: 'budget',       label: 'Budget vs Actual' },
+  { id: 'tasks',        label: 'Tasks' },
   { id: 'invites',      label: 'Invites' },
 ]
 
@@ -594,6 +596,7 @@ export default function Reports() {
       {tab === 'site'       && <SiteReportTab sites={sites} />}
       {tab === 'monthly'    && <MonthlyTab  tenantId={tenantId} sites={sites} />}
       {tab === 'budget'     && <BudgetTab   tenantId={tenantId} sites={sites} />}
+      {tab === 'tasks'      && <TasksReportTab sites={sites} />}
       {tab === 'invites'    && <InvitesReportTab tenantId={tenantId} />}
     </div>
   )
