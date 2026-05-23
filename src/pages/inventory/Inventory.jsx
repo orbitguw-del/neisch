@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, AlertTriangle, Package, ArrowUpCircle, History, SlidersHorizontal, Hammer, ExternalLink, ChevronLeft } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import MaterialPresetPicker from '@/components/materials/MaterialPresetPicker'
 import { WORK_TYPES, WORK_TYPE_COLORS } from '@/lib/materialPresets'
-import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
 import useMaterialStore from '@/stores/materialStore'
@@ -21,9 +21,25 @@ const TXN_LABELS = { receipt: 'Receipt', consumption: 'Consumption', adjustment:
 
 // ─── Add Material Form ─────────────────────────────────────────────────────────
 function MaterialForm({ sites, onSubmit, loading }) {
-  const [step, setStep] = useState('pick')
-  const [form, setForm] = useState({ site_id: sites[0]?.id ?? '', ...BLANK_MAT })
+  const [step, setStep]             = useState('pick')
+  const [form, setForm]             = useState({ site_id: sites[0]?.id ?? '', ...BLANK_MAT })
+  const [dupWarning, setDupWarning] = useState(null)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  useEffect(() => {
+    if (step !== 'detail' || !form.name.trim() || !form.site_id) { setDupWarning(null); return }
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from('materials')
+        .select('id, name, brand, quantity_available, unit')
+        .eq('site_id', form.site_id)
+        .ilike('name', form.name.trim())
+        .ilike('brand', form.brand.trim() || '')
+        .maybeSingle()
+      setDupWarning(data ?? null)
+    }, 400)
+    return () => clearTimeout(t)
+  }, [form.name, form.brand, form.site_id, step])
 
   const handleSelect = (preset) => {
     setForm((f) => ({ ...f, ...preset, brand: preset.brand ?? '', quantity_available: '', quantity_minimum: '', unit_cost: '', supplier: '' }))
@@ -68,6 +84,13 @@ function MaterialForm({ sites, onSubmit, loading }) {
         className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 -mt-1 mb-1">
         <ChevronLeft className="h-3.5 w-3.5" /> Back to list
       </button>
+      {dupWarning && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+          <strong>Already exists</strong> — {dupWarning.brand || 'Generic'} {dupWarning.name} has{' '}
+          <strong>{dupWarning.quantity_available ?? 0} {dupWarning.unit}</strong> in stock.
+          Add more stock via a <strong>Receipt</strong> instead.
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="label">Site *</label>
@@ -123,7 +146,7 @@ function MaterialForm({ sites, onSubmit, loading }) {
         </div>
       </div>
       <div className="flex justify-end pt-1">
-        <button type="submit" disabled={loading} className="btn-primary">
+        <button type="submit" disabled={loading || !!dupWarning} className="btn-primary">
           {loading ? 'Saving…' : 'Add material'}
         </button>
       </div>

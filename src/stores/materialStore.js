@@ -22,7 +22,13 @@ const useMaterialStore = create((set) => ({
       .insert(payload)
       .select()
       .single()
-    if (error) throw error
+    if (error) {
+      if (error.code === '23505') {
+        const brand = payload.brand ? `${payload.brand} — ` : ''
+        throw new Error(`"${brand}${payload.name}" already exists at this site. Add more stock via a Receipt instead.`)
+      }
+      throw error
+    }
 
     // Write opening stock transaction if initial quantity > 0
     const initialQty = Number(payload.quantity_available) || 0

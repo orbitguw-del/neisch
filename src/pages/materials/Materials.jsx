@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Plus, Package, ArrowLeft, AlertTriangle, Upload, ClipboardList, ChevronLeft } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import { supabase } from '@/lib/supabase'
 import useMaterialStore from '@/stores/materialStore'
 import useAuthStore from '@/stores/authStore'
 import PageHeader from '@/components/ui/PageHeader'
@@ -16,9 +17,26 @@ const UNIT_OPTIONS = ['bags', 'kg', 'tonnes', 'pieces', 'sq ft', 'cu ft', 'cu m'
 const BLANK = { name: '', brand: '', unit: 'bags', category: 'consumable', work_type: '', quantity_available: '', quantity_minimum: '', unit_cost: '', supplier: '' }
 
 function MaterialForm({ siteId, onSubmit, loading }) {
-  const [step, setStep] = useState('pick')   // 'pick' | 'detail'
-  const [form, setForm] = useState(BLANK)
+  const [step, setStep]         = useState('pick')
+  const [form, setForm]         = useState(BLANK)
+  const [dupWarning, setDupWarning] = useState(null)   // existing material row or null
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  // Live duplicate check whenever name or brand changes on the detail step
+  useEffect(() => {
+    if (step !== 'detail' || !form.name.trim() || !siteId) { setDupWarning(null); return }
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from('materials')
+        .select('id, name, brand, quantity_available, unit')
+        .eq('site_id', siteId)
+        .ilike('name', form.name.trim())
+        .ilike('brand', form.brand.trim() || '')   // empty brand matches Generic (NULL stored as '')
+        .maybeSingle()
+      setDupWarning(data ?? null)
+    }, 400)
+    return () => clearTimeout(t)
+  }, [form.name, form.brand, siteId, step])
 
   const handleSelect = (preset) => {
     setForm({ ...BLANK, ...preset, brand: preset.brand ?? '', quantity_available: '', quantity_minimum: '', unit_cost: '', supplier: '' })
@@ -41,6 +59,13 @@ function MaterialForm({ siteId, onSubmit, loading }) {
         <ChevronLeft className="h-3.5 w-3.5" /> Back to list
       </button>
 
+      {dupWarning && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+          <strong>Already exists</strong> — {dupWarning.brand || 'Generic'} {dupWarning.name} has{' '}
+          <strong>{dupWarning.quantity_available ?? 0} {dupWarning.unit}</strong> in stock.
+          Add more stock via a <strong>Receipt</strong> instead.
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="label">Material name *</label>
@@ -88,7 +113,7 @@ function MaterialForm({ siteId, onSubmit, loading }) {
         </div>
       </div>
       <div className="flex justify-end pt-1">
-        <button type="submit" disabled={loading} className="btn-primary">
+        <button type="submit" disabled={loading || !!dupWarning} className="btn-primary">
           {loading ? 'Saving…' : 'Add material'}
         </button>
       </div>
