@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   BarChart3, HardHat, Package, TrendingUp, TrendingDown,
-  CalendarDays, Plus, Trash2, ChevronDown,
+  CalendarDays, Plus, Trash2, Download,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
@@ -15,7 +15,9 @@ import PrintButton from '@/components/print/PrintButton'
 import PrintHeader from '@/components/print/PrintHeader'
 import AttendanceReportTab from './AttendanceReportTab'
 import SiteReportTab from './SiteReportTab'
+import StockReportTab from './StockReportTab'
 import InvitesReportTab from './InvitesReportTab'
+import { downloadSheet, fmtINR } from '@/lib/exportXLS'
 import { formatINR, formatDate, cn } from '@/lib/utils'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -148,7 +150,24 @@ function MonthlyTab({ tenantId, sites }) {
           <option value="">All Sites</option>
           {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        <PrintButton label="Print monthly report" className="ml-auto" />
+        <div className="ml-auto flex items-center gap-2">
+          <PrintButton label="Print monthly report" />
+          <button
+            onClick={() => {
+              if (!monthlyData) return
+              const rows = [
+                ['Material', 'Unit', 'Qty received', 'Transferred out', 'Cost'],
+                ...monthlyData.rows.map((r) => [r.name, r.unit, r.received, r.transferred || 0, r.cost || 0]),
+                ['', '', '', 'Total', monthlyData.totalCost],
+              ]
+              downloadSheet(rows, 'Materials', `materials-${month}`)
+            }}
+            disabled={!monthlyData}
+            className="btn-secondary flex items-center gap-1.5 text-sm"
+          >
+            <Download className="h-4 w-4" /> Export XLS
+          </button>
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -365,6 +384,23 @@ function BudgetTab({ tenantId, sites }) {
         <div className="ml-auto flex items-center gap-2">
           <PrintButton label="Print" />
           <button
+            onClick={() => {
+              if (!budgetData) return
+              const rows = [
+                ['Material', 'Budgeted qty', 'Unit', 'Budgeted cost', 'Actual cost', 'Variance', 'Variance %'],
+                ...budgetData.items.map((i) => [
+                  i.material, i.budgeted_qty, i.unit, i.budgeted_cost, i.actual, i.variance, `${i.variance_pct}%`,
+                ]),
+                ['Total', '', '', budgetData.totalBudgeted, budgetData.totalActual, budgetData.totalVariance, ''],
+              ]
+              downloadSheet(rows, 'Budget vs Actual', `budget-vs-actual-${month}-${siteName.replace(/\s+/g, '-')}`)
+            }}
+            disabled={!budgetData}
+            className="btn-secondary flex items-center gap-1.5 text-sm"
+          >
+            <Download className="h-4 w-4" /> Export XLS
+          </button>
+          <button
             onClick={() => setModalOpen(true)}
             disabled={!siteId}
             className="btn-primary"
@@ -506,6 +542,7 @@ function BudgetTab({ tenantId, sites }) {
 
 const TABS = [
   { id: 'overview',   label: 'Overview' },
+  { id: 'stock',      label: 'Stock Snapshot' },
   { id: 'attendance', label: 'Attendance & Pay' },
   { id: 'site',       label: 'Site Report' },
   { id: 'monthly',    label: 'Materials' },
@@ -549,6 +586,7 @@ export default function Reports() {
       </div>
 
       {tab === 'overview'   && <OverviewTab sites={sites} />}
+      {tab === 'stock'      && <StockReportTab sites={sites} />}
       {tab === 'attendance' && <AttendanceReportTab sites={sites} />}
       {tab === 'site'       && <SiteReportTab sites={sites} />}
       {tab === 'monthly'    && <MonthlyTab  tenantId={tenantId} sites={sites} />}

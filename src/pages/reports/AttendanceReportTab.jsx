@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Users, CalendarDays, IndianRupee, Building2 } from 'lucide-react'
+import { Users, CalendarDays, IndianRupee, Building2, Download } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
 import useReportsStore from '@/stores/reportsStore'
 import StatCard from '@/components/ui/StatCard'
 import PrintButton from '@/components/print/PrintButton'
 import PrintHeader from '@/components/print/PrintHeader'
+import { downloadSheet, fmtINR } from '@/lib/exportXLS'
 import { formatINR, cn } from '@/lib/utils'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -117,8 +118,26 @@ export default function AttendanceReportTab({ sites }) {
             {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
           <PrintButton label="Print attendance" />
+          <button
+            onClick={() => {
+              if (!attendanceData) return
+              const header = ['Worker', 'Trade', 'Vendor', 'Wage/day', ...attendanceData.dates, 'Pay days', 'Total pay']
+              const dataRows = attendanceData.rows.map((r) => [
+                r.name, r.trade || '', r.employment_type === 'vendor' ? (r.vendor_name || 'Vendor') : 'Direct',
+                r.wage,
+                ...attendanceData.dates.map((d) => r.days[d] || ''),
+                r.payDays.toFixed(1), fmtINR(r.totalPay),
+              ])
+              dataRows.push(['', '', '', '', ...attendanceData.dates.map(() => ''), attendanceData.totals.payDays.toFixed(1), fmtINR(attendanceData.totals.totalPay)])
+              downloadSheet([header, ...dataRows], 'Attendance', `attendance-${startDate}-to-${endDate}`)
+            }}
+            disabled={!attendanceData}
+            className="btn-secondary flex items-center gap-1.5 text-sm"
+          >
+            <Download className="h-4 w-4" /> Export XLS
+          </button>
         </div>
       </div>
 

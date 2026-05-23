@@ -415,6 +415,21 @@ const useReportsStore = create((set, get) => ({
       siteReportLoading: false,
     })
   },
+  // ─── Stock snapshot (current inventory across sites) ────────────────────
+  stockData:    null,
+  stockLoading: false,
+
+  fetchStockReport: async (tenantId, siteId = null) => {
+    set({ stockLoading: true, stockData: null })
+    let q = supabase
+      .from('materials')
+      .select('id, name, brand, unit, work_type, quantity_available, site_id, sites(name, type)')
+      .eq('tenant_id', tenantId)
+      .order('name')
+    if (siteId) q = q.eq('site_id', siteId)
+    const { data } = await q
+    set({ stockData: data ?? [], stockLoading: false })
+  },
 }))
 
 export default useReportsStore

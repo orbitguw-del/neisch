@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import {
   Building2, CalendarDays, Users, Package, ArrowDown, ArrowUp,
-  IndianRupee, FileText, AlertCircle, Cloud, Wallet,
+  IndianRupee, FileText, AlertCircle, Cloud, Wallet, Download,
 } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
 import useReportsStore from '@/stores/reportsStore'
@@ -9,6 +9,7 @@ import StatCard from '@/components/ui/StatCard'
 import PrintButton from '@/components/print/PrintButton'
 import PrintHeader from '@/components/print/PrintHeader'
 import PhotoThumb from '@/components/photo/PhotoThumb'
+import { downloadWorkbook, fmtINR } from '@/lib/exportXLS'
 import { formatINR, formatDate, cn } from '@/lib/utils'
 
 function todayISO() {
@@ -83,8 +84,63 @@ export default function SiteReportTab({ sites }) {
             onChange={(e) => setEndDate(e.target.value)}
           />
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
           <PrintButton label="Print site report" />
+          <button
+            onClick={() => {
+              if (!d) return
+              const sheets = [
+                {
+                  name: 'Summary',
+                  rows: [
+                    ['Site report', d.site?.name ?? '—'],
+                    ['Period', `${startDate} to ${endDate}`],
+                    [],
+                    ['Payroll', fmtINR(d.attendance.totalPay)],
+                    ['Materials received', fmtINR(d.materials.totalReceivedCost)],
+                    ['Expenses (approved)', fmtINR(d.expenses?.approved ?? 0)],
+                    ['Total spend', fmtINR(d.totalSpend ?? 0)],
+                  ],
+                },
+                {
+                  name: 'Materials received',
+                  rows: [
+                    ['Material', 'Unit', 'Qty', 'Cost', 'Date'],
+                    ...d.materials.receipts.map((r) => [
+                      r.materials?.name ?? '—', r.materials?.unit ?? '—',
+                      Number(r.quantity), r.unit_cost ? Number(r.quantity) * Number(r.unit_cost) : '',
+                      r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : '—',
+                    ]),
+                    ['', '', Number(d.materials.totalReceived).toFixed(2), fmtINR(d.materials.totalReceivedCost), ''],
+                  ],
+                },
+                {
+                  name: 'Expenses',
+                  rows: [
+                    ['Date', 'Category', 'Paid by', 'Status', 'Amount'],
+                    ...(d.expenses?.rows ?? []).map((e) => [
+                      e.expense_date, e.category + (e.note ? ` — ${e.note}` : ''), e.paid_by || '—', e.status, Number(e.amount),
+                    ]),
+                    ['', '', '', 'Approved total', fmtINR(d.expenses?.approved ?? 0)],
+                  ],
+                },
+                {
+                  name: 'Daily logs',
+                  rows: [
+                    ['Date', 'Workers', 'Weather', 'Work done', 'Issues'],
+                    ...d.logs.map((l) => [
+                      l.log_date, l.workers_present ?? '', l.weather ?? '', l.work_done ?? '', l.issues ?? '',
+                    ]),
+                  ],
+                },
+              ]
+              downloadWorkbook(sheets, `site-report-${d.site?.name ?? 'site'}-${startDate}-to-${endDate}`)
+            }}
+            disabled={!d}
+            className="btn-secondary flex items-center gap-1.5 text-sm"
+          >
+            <Download className="h-4 w-4" /> Export XLS
+          </button>
         </div>
       </div>
 
