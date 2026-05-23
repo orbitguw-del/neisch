@@ -279,10 +279,10 @@ function WorkerRow({ worker, onToggleStatus, siteName }) {
           <div className="flex items-center justify-end gap-2">
             <button
               onClick={(e) => { e.stopPropagation(); onToggleStatus(worker) }}
-              className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-md px-2.5 py-1 text-xs font-semibold border transition-colors ${
                 worker.status === 'active'
-                  ? 'text-red-600 hover:bg-red-50'
-                  : 'text-green-600 hover:bg-green-50'
+                  ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
+                  : 'border-green-300 bg-green-100 text-green-700 hover:bg-green-200 shadow-sm'
               }`}
             >
               {worker.status === 'active' ? 'Deactivate' : 'Activate'}

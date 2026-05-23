@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, AlertTriangle, Package, ArrowUpCircle, History, SlidersHorizontal, Hammer, ExternalLink, ChevronLeft } from 'lucide-react'
+import { Plus, AlertTriangle, Package, ArrowUpCircle, History, SlidersHorizontal, Hammer, ExternalLink, ChevronLeft, Pencil } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import MaterialPresetPicker from '@/components/materials/MaterialPresetPicker'
 import { WORK_TYPES, WORK_TYPE_COLORS } from '@/lib/materialPresets'
@@ -318,6 +318,57 @@ function LedgerModal({ material, transactions, loading }) {
   )
 }
 
+// ─── Edit Material Form ───────────────────────────────────────────────────────
+function EditMaterialForm({ material, onSubmit, loading }) {
+  const [form, setForm] = useState({
+    unit_cost:         material.unit_cost         ?? '',
+    quantity_minimum:  material.quantity_minimum  ?? '',
+    brand:             material.brand             ?? '',
+    work_type:         material.work_type         ?? '',
+    supplier:          material.supplier          ?? '',
+  })
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
+      <div className="rounded-lg bg-gray-50 px-4 py-3">
+        <p className="text-sm font-medium text-gray-900">{material.name}</p>
+        <p className="text-xs text-gray-500">{material.site?.name} · {material.unit}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="label">Unit cost (₹)</label>
+          <input className="input" type="number" min="0" step="any" value={form.unit_cost} onChange={set('unit_cost')} placeholder="0" />
+        </div>
+        <div>
+          <label className="label">{material.category === 'equipment' ? 'Min count' : 'Reorder level'}</label>
+          <input className="input" type="number" min="0" step="any" value={form.quantity_minimum} onChange={set('quantity_minimum')} placeholder="0" />
+        </div>
+      </div>
+      <div>
+        <label className="label">Brand</label>
+        <input className="input" value={form.brand} onChange={set('brand')} placeholder="Generic" />
+      </div>
+      <div>
+        <label className="label">Work type</label>
+        <select className="input" value={form.work_type} onChange={set('work_type')}>
+          <option value="">— None —</option>
+          {WORK_TYPES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+        </select>
+      </div>
+      <div>
+        <label className="label">Supplier</label>
+        <input className="input" value={form.supplier} onChange={set('supplier')} placeholder="Supplier name" />
+      </div>
+      <div className="flex justify-end pt-1">
+        <button type="submit" disabled={loading} className="btn-primary">
+          {loading ? 'Saving…' : 'Save Changes'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Inventory() {
   const navigate = useNavigate()
@@ -346,6 +397,10 @@ export default function Inventory() {
 
   const [ledgerMaterial, setLedgerMaterial] = useState(null)
 
+  const [editMat,    setEditMat]    = useState(null)   // material being edited
+  const [editSaving, setEditSaving] = useState(false)
+  const [editError,  setEditError]  = useState(null)
+
   const tenantId = profile?.tenant_id
   const role     = profile?.role
 
@@ -353,6 +408,7 @@ export default function Inventory() {
   const canAddMaterial = ['superadmin', 'contractor', 'site_manager', 'store_keeper'].includes(role)
   const canConsume     = ['superadmin', 'site_manager'].includes(role)
   const canAdjust      = ['superadmin', 'contractor', 'site_manager', 'store_keeper'].includes(role)
+  const canEdit        = ['superadmin', 'contractor', 'site_manager', 'store_keeper'].includes(role)
   // Supervisor added 2026-05-20 — they're the on-site role who actually
   // consumes material against work. RLS in 20260520020000_supervisor_can_allocate
   // enforces site-assignment scoping at the DB layer.
@@ -394,6 +450,28 @@ export default function Inventory() {
     try { await createMaterial(payload); setAddOpen(false); await loadMaterials() }
     catch (err) { setError(err.message) }
     finally { setSaving(false) }
+  }
+
+  const handleEditSave = async (form) => {
+    if (!editMat) return
+    setEditSaving(true); setEditError(null)
+    try {
+      const { error: e } = await supabase.from('materials').update({
+        unit_cost:        form.unit_cost        ? Number(form.unit_cost)       : null,
+        quantity_minimum: form.quantity_minimum ? Number(form.quantity_minimum): null,
+        brand:            form.brand.trim()     || null,
+        work_type:        form.work_type        || null,
+        supplier:         form.supplier.trim()  || null,
+        updated_at:       new Date().toISOString(),
+      }).eq('id', editMat.id)
+      if (e) throw e
+      setEditMat(null)
+      await loadMaterials()
+    } catch (err) {
+      setEditError(err.message)
+    } finally {
+      setEditSaving(false)
+    }
   }
 
   const handleRecord = async ({ quantity, note }) => {
@@ -598,6 +676,13 @@ export default function Inventory() {
                           <SlidersHorizontal className="h-4 w-4" />
                         </button>
                       )}
+                      {/* Edit details */}
+                      {canEdit && (
+                        <button onClick={() => { setEditMat(m); setEditError(null) }}
+                          title="Edit material details" className="rounded p-1 text-blue-500 hover:bg-blue-50">
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      )}
                       {/* Ledger */}
                       <button onClick={() => openLedger(m)}
                         title="View ledger" className="rounded p-1 text-gray-500 hover:bg-gray-100">
@@ -612,6 +697,16 @@ export default function Inventory() {
           </div>
         </div>
       )}
+
+      {/* Edit material modal */}
+      <Modal open={!!editMat} onClose={() => { setEditMat(null); setEditError(null) }} title="Edit Material">
+        {editMat && (
+          <>
+            {editError && <p className="mb-3 text-sm text-red-600">{editError}</p>}
+            <EditMaterialForm material={editMat} onSubmit={handleEditSave} loading={editSaving} />
+          </>
+        )}
+      </Modal>
 
       {/* Add material modal */}
       <Modal open={addOpen} onClose={() => { setAddOpen(false); setError(null) }} title="Add Material">

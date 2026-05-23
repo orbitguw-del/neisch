@@ -109,14 +109,19 @@ function WorkerAttendanceRow({ worker, status, onCycle, siteName }) {
           })}
         </div>
 
-        {/* Mobile: tap to cycle */}
-        <button
-          onClick={() => onCycle(worker.id, STATUS_CYCLE[(STATUS_CYCLE.indexOf(status ?? 'absent') + 1) % STATUS_CYCLE.length])}
-          className={`sm:hidden rounded-xl px-4 py-2 text-sm font-bold transition-all ${cfg ? cfg.cls : 'bg-gray-100 text-gray-500'}`}
-          title="Tap to cycle status"
+        {/* Mobile: dropdown picker */}
+        <select
+          value={status ?? ''}
+          onChange={(e) => onCycle(worker.id, e.target.value)}
+          className={`sm:hidden rounded-xl px-2 py-2 text-sm font-bold border-0 outline-none cursor-pointer transition-all ${cfg ? cfg.cls : 'bg-gray-100 text-gray-500'}`}
         >
-          {cfg ? cfg.label : '?'}
-        </button>
+          <option value="" disabled>—</option>
+          {STATUS_CYCLE.map((s) => (
+            <option key={s} value={s} style={{ background: '#fff', color: '#111' }}>
+              {STATUS_CONFIG[s].label} {STATUS_CONFIG[s].fullLabel}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   )
@@ -347,19 +352,21 @@ export default function Attendance() {
           </div>
 
           {/* Save bar */}
-          <div className="sticky bottom-4 flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-lg">
-            <p className="text-sm text-gray-500">
-              {markedCount} / {activeWorkers.length} workers marked
-              {allMarked && <span className="ml-2 text-green-600 font-medium">✓ All marked</span>}
-            </p>
-            <div className="flex items-center gap-3">
+          <div className="sticky bottom-4 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-lg">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-gray-500">
+                {markedCount} / {activeWorkers.length} workers marked
+                {allMarked && <span className="ml-2 text-green-600 font-medium">✓ All marked</span>}
+              </p>
               {dayConfirmed
                 ? <span className="text-sm font-medium text-green-600">✓ Confirmed</span>
-                : saved && <span className="text-sm font-medium text-amber-600">Saved — pending confirmation</span>}
+                : saved && <span className="text-sm font-medium text-amber-600">Saved</span>}
+            </div>
+            <div className="mt-2 flex gap-2">
               <button
                 onClick={handleSave}
                 disabled={saving || markedCount === 0}
-                className="btn-secondary flex items-center gap-2"
+                className="btn-secondary flex flex-1 items-center justify-center gap-2 text-sm"
               >
                 <Save className="h-4 w-4" />
                 {saving ? 'Saving…' : 'Save Attendance'}
@@ -368,9 +375,9 @@ export default function Attendance() {
                 <button
                   onClick={handleConfirm}
                   disabled={confirming || dayConfirmed || markedCount === 0}
-                  className="btn-primary flex items-center gap-2"
+                  className="btn-primary flex flex-1 items-center justify-center gap-2 text-sm"
                 >
-                  {confirming ? 'Confirming…' : dayConfirmed ? 'Confirmed' : 'Confirm Day'}
+                  {confirming ? 'Confirming…' : dayConfirmed ? 'Confirmed ✓' : 'Confirm Day'}
                 </button>
               )}
             </div>
