@@ -16,6 +16,7 @@ import PrintHeader from '@/components/print/PrintHeader'
 import AttendanceReportTab from './AttendanceReportTab'
 import SiteReportTab from './SiteReportTab'
 import StockReportTab from './StockReportTab'
+import ConsumptionReportTab from './ConsumptionReportTab'
 import InvitesReportTab from './InvitesReportTab'
 import { downloadSheet, fmtINR } from '@/lib/exportXLS'
 import { formatINR, formatDate, cn } from '@/lib/utils'
@@ -541,13 +542,14 @@ function BudgetTab({ tenantId, sites }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: 'overview',   label: 'Overview' },
-  { id: 'stock',      label: 'Stock Snapshot' },
-  { id: 'attendance', label: 'Attendance & Pay' },
-  { id: 'site',       label: 'Site Report' },
-  { id: 'monthly',    label: 'Materials' },
-  { id: 'budget',     label: 'Budget vs Actual' },
-  { id: 'invites',    label: 'Invites' },
+  { id: 'overview',     label: 'Overview' },
+  { id: 'stock',        label: 'Stock Snapshot' },
+  { id: 'consumption',  label: 'Consumption' },
+  { id: 'attendance',   label: 'Attendance & Pay' },
+  { id: 'site',         label: 'Site Report' },
+  { id: 'monthly',      label: 'Materials In' },
+  { id: 'budget',       label: 'Budget vs Actual' },
+  { id: 'invites',      label: 'Invites' },
 ]
 
 export default function Reports() {
@@ -585,9 +587,10 @@ export default function Reports() {
         ))}
       </div>
 
-      {tab === 'overview'   && <OverviewTab sites={sites} />}
-      {tab === 'stock'      && <StockReportTab sites={sites} />}
-      {tab === 'attendance' && <AttendanceReportTab sites={sites} />}
+      {tab === 'overview'    && <OverviewTab sites={sites} />}
+      {tab === 'stock'       && <StockReportTab sites={sites} />}
+      {tab === 'consumption' && <ConsumptionReportTab sites={sites} />}
+      {tab === 'attendance'  && <AttendanceReportTab sites={sites} />}
       {tab === 'site'       && <SiteReportTab sites={sites} />}
       {tab === 'monthly'    && <MonthlyTab  tenantId={tenantId} sites={sites} />}
       {tab === 'budget'     && <BudgetTab   tenantId={tenantId} sites={sites} />}

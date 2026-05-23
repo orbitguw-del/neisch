@@ -297,6 +297,7 @@ const useReportsStore = create((set, get) => ({
       { data: transfersOut },
       { data: transfersIn },
       { data: expenses },
+      { data: allocations },
     ] = await Promise.all([
       supabase.from('sites').select('name, location, status, budget').eq('id', siteId).single(),
       supabase
@@ -353,6 +354,14 @@ const useReportsStore = create((set, get) => ({
         .gte('expense_date', startDate)
         .lte('expense_date', endDate)
         .order('expense_date', { ascending: false }),
+      supabase
+        .from('material_allocations')
+        .select('material_id, quantity_allocated, work_description, allocated_date, materials(name, unit)')
+        .eq('tenant_id', tenantId)
+        .eq('site_id', siteId)
+        .gte('allocated_date', startDate)
+        .lte('allocated_date', endDate)
+        .order('allocated_date', { ascending: false }),
     ])
 
     // ── Attendance summary ───
@@ -399,10 +408,12 @@ const useReportsStore = create((set, get) => ({
           receipts:      receipts ?? [],
           transfersOut:  transfersOut ?? [],
           transfersIn:   transfersIn ?? [],
+          allocations:   allocations ?? [],
           totalReceived,
           totalReceivedCost,
           totalTransferOut,
           totalTransferIn,
+          totalConsumed: (allocations ?? []).reduce((s, a) => s + Number(a.quantity_allocated), 0),
         },
         expenses: {
           rows: expRows,
@@ -415,6 +426,48 @@ const useReportsStore = create((set, get) => ({
       siteReportLoading: false,
     })
   },
+  // ─── Consumption report (material_allocations) ──────────────────────────
+  consumptionData:    null,
+  consumptionLoading: false,
+
+  fetchConsumptionReport: async (tenantId, siteId = null, startDate, endDate) => {
+    set({ consumptionLoading: true, consumptionData: null })
+
+    let q = supabase
+      .from('material_allocations')
+      .select('id, material_id, site_id, quantity_allocated, work_description, allocated_date, note, materials(name, unit, work_type, brand), sites(name)')
+      .eq('tenant_id', tenantId)
+      .gte('allocated_date', startDate)
+      .lte('allocated_date', endDate)
+      .order('allocated_date', { ascending: false })
+    if (siteId) q = q.eq('site_id', siteId)
+
+    const { data } = await q
+    const rows = data ?? []
+
+    // Aggregate by material for summary
+    const byMaterial = {}
+    rows.forEach((r) => {
+      const key = r.material_id
+      if (!byMaterial[key]) {
+        byMaterial[key] = {
+          name:  r.materials?.name  ?? 'Unknown',
+          unit:  r.materials?.unit  ?? '',
+          brand: r.materials?.brand ?? null,
+          work_type: r.materials?.work_type ?? null,
+          total: 0,
+          entries: 0,
+        }
+      }
+      byMaterial[key].total   += Number(r.quantity_allocated)
+      byMaterial[key].entries += 1
+    })
+
+    const summary = Object.values(byMaterial).sort((a, b) => b.total - a.total)
+
+    set({ consumptionData: { rows, summary, startDate, endDate }, consumptionLoading: false })
+  },
+
   // ─── Stock snapshot (current inventory across sites) ────────────────────
   stockData:    null,
   stockLoading: false,

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import {
   Building2, CalendarDays, Users, Package, ArrowDown, ArrowUp,
-  IndianRupee, FileText, AlertCircle, Cloud, Wallet, Download,
+  IndianRupee, FileText, AlertCircle, Cloud, Wallet, Download, Hammer,
 } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
 import useReportsStore from '@/stores/reportsStore'
@@ -122,6 +122,16 @@ export default function SiteReportTab({ sites }) {
                       e.expense_date, e.category + (e.note ? ` — ${e.note}` : ''), e.paid_by || '—', e.status, Number(e.amount),
                     ]),
                     ['', '', '', 'Approved total', fmtINR(d.expenses?.approved ?? 0)],
+                  ],
+                },
+                {
+                  name: 'Consumption',
+                  rows: [
+                    ['Date', 'Material', 'Work description', 'Qty consumed', 'Unit'],
+                    ...(d.materials.allocations ?? []).map((a) => [
+                      a.allocated_date, a.materials?.name ?? '—', a.work_description || '—',
+                      Number(a.quantity_allocated), a.materials?.unit ?? '',
+                    ]),
                   ],
                 },
                 {
@@ -250,6 +260,43 @@ export default function SiteReportTab({ sites }) {
               />
             </Section>
           )}
+
+          {/* ── Materials consumed (allocations) ───────────────────────── */}
+          <Section title="Materials consumed" icon={Hammer} count={d.materials.allocations.length}>
+            {d.materials.allocations.length === 0 ? (
+              <p className="px-5 py-6 text-sm text-gray-500">No material allocations in this period.</p>
+            ) : (
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    {['Date', 'Material', 'Work description', 'Qty consumed'].map((h) => (
+                      <th key={h} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {d.materials.allocations.map((a, i) => (
+                    <tr key={i} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 text-gray-600 whitespace-nowrap">
+                        {new Date(a.allocated_date + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                      </td>
+                      <td className="px-4 py-2 font-medium text-gray-900">{a.materials?.name ?? '—'}</td>
+                      <td className="px-4 py-2 text-gray-700">{a.work_description || '—'}</td>
+                      <td className="px-4 py-2 text-right font-semibold text-gray-900">
+                        {Number(a.quantity_allocated).toLocaleString('en-IN')} {a.materials?.unit}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className="bg-gray-50 font-semibold">
+                    <td colSpan={3} className="px-4 py-2 text-right text-gray-700">Total consumed</td>
+                    <td className="px-4 py-2 text-right text-gray-900">
+                      {Number(d.materials.totalConsumed).toLocaleString('en-IN')} units
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
+          </Section>
 
           {/* ── Site expenses ────────────────────────────────────────────── */}
           <Section title="Site expenses" icon={Wallet} count={d.expenses?.rows.length ?? 0}>
