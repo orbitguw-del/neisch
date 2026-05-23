@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ShieldCheck, AlertCircle } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
-import supabase from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 // Bump these in lockstep with the values in Register.jsx and CLAUDE.md.
 const TERMS_VERSION   = '2026-05-22'

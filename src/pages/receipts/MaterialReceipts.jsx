@@ -29,9 +29,17 @@ const DISCREPANCY_ACTIONS = [
 ]
 
 function ReceiptForm({ sites, onSubmit, loading }) {
+  const warehouses        = sites.filter((s) => s.type === 'warehouse')
+  const constructionSites = sites.filter((s) => s.type !== 'warehouse')
+  const hasWarehouses     = warehouses.length > 0
+
+  const defaultSiteId = hasWarehouses
+    ? (warehouses[0]?.id ?? '')
+    : (constructionSites[0]?.id ?? '')
+
   const [allMaterials, setAllMaterials] = useState([])
   const [form, setForm] = useState({
-    site_id: sites[0]?.id ?? '',
+    site_id: defaultSiteId,
     material_id: '',
     source_type: 'supplier',
     source_name: '',
@@ -43,11 +51,13 @@ function ReceiptForm({ sites, onSubmit, loading }) {
     challan_date: '',
     vehicle_number: '',
     note: '',
+    // warehouse-flow only
+    sendToSite:      false,
+    destinationSiteId: constructionSites[0]?.id ?? '',
   })
   const [photo, setPhoto] = useState(null)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
-  // Load materials for selected site
   useEffect(() => {
     if (!form.site_id) return
     supabase
@@ -68,23 +78,27 @@ function ReceiptForm({ sites, onSubmit, loading }) {
       onSubmit={(e) => {
         e.preventDefault()
         const site = sites.find((s) => s.id === form.site_id)
+        const { sendToSite, destinationSiteId, ...rest } = form
         onSubmit({
-          ...form,
-          tenant_id: site?.tenant_id,
-          unit_cost:  form.unit_cost  || null,
-          lr_date:    form.lr_date    || null,
-          challan_date: form.challan_date || null,
-          _photo: photo,
+          ...rest,
+          tenant_id:          site?.tenant_id,
+          unit_cost:          form.unit_cost    || null,
+          lr_date:            form.lr_date      || null,
+          challan_date:       form.challan_date || null,
+          _photo:             photo,
+          _destinationSiteId: hasWarehouses && sendToSite ? destinationSiteId || null : null,
         })
       }}
       className="space-y-4"
     >
-      {/* Site + Material */}
+      {/* Arriving at (warehouse) or site */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label">Site *</label>
+          <label className="label">{hasWarehouses ? 'Arriving at *' : 'Site *'}</label>
           <select className="input" required value={form.site_id} onChange={set('site_id')}>
-            {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            {(hasWarehouses ? warehouses : constructionSites).map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
           </select>
         </div>
         <div>
@@ -168,6 +182,41 @@ function ReceiptForm({ sites, onSubmit, loading }) {
           <input className="input" value={form.note} onChange={set('note')} placeholder="Optional remarks" />
         </div>
       </div>
+
+      {/* Final destination — only shown when contractor has warehouses */}
+      {hasWarehouses && (
+        <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 space-y-3">
+          <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Final destination</p>
+          <div className="flex gap-4">
+            {[
+              { value: false, label: 'Keep in warehouse' },
+              { value: true,  label: 'Send to construction site' },
+            ].map(({ value, label }) => (
+              <label key={String(value)} className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="sendToSite"
+                  checked={form.sendToSite === value}
+                  onChange={() => setForm((f) => ({ ...f, sendToSite: value }))} />
+                <span className="text-sm">{label}</span>
+              </label>
+            ))}
+          </div>
+          {form.sendToSite && (
+            <div>
+              <label className="label">Construction site *</label>
+              <select className="input" required value={form.destinationSiteId}
+                onChange={set('destinationSiteId')}>
+                <option value="">— select site —</option>
+                {constructionSites.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-blue-600">
+                A transfer will be created automatically. Site supervisor confirms arrival.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       <PhotoCapture value={photo} onChange={setPhoto} label="Challan / delivery photo" />
 
@@ -530,7 +579,7 @@ export default function MaterialReceipts() {
 
   const pendingCount = receipts.filter((r) => r.status === 'pending').length
 
-  const handleCreate = async ({ _photo, ...payload }) => {
+  const handleCreate = async ({ _photo, _destinationSiteId, ...payload }) => {
     setSaving(true); setError(null)
     try {
       let photo_path = null
@@ -539,7 +588,7 @@ export default function MaterialReceipts() {
           blob: _photo, tenantId: payload.tenant_id, siteId: payload.site_id, entity: 'receipt',
         })
       }
-      await createReceipt({ ...payload, photo_path, created_by: profile?.id })
+      await createReceipt({ ...payload, photo_path, created_by: profile?.id }, _destinationSiteId)
       setCreateOpen(false)
     } catch (err) { setError(err.message) }
     finally { setSaving(false) }

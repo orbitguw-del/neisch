@@ -108,7 +108,7 @@ function TransferForm({ sites, onSubmit, loading }) {
         <input className="input" value={form.note} onChange={set('note')} placeholder="Why is this being moved?" />
       </div>
       <p className="text-xs text-gray-500">
-        The from-site supervisor will fill the dispatch details (vehicle, challan) before it's sent.
+        The contractor or store keeper (warehouse) / supervisor (site) confirms dispatch details before it's sent.
       </p>
       <div className="flex justify-end pt-1">
         <button type="submit" disabled={loading} className="btn-primary">
@@ -214,8 +214,15 @@ function ReceiveModal({ transfer, onClose, onSubmit, loading }) {
 // ── Transfer card ──────────────────────────────────────────────────────────────
 function TransferCard({ t, role, onPrepare, onApprove, onReject, onReceive, busy }) {
   const [open, setOpen] = useState(false)
+  const fromIsWarehouse = t.from_site?.type === 'warehouse'
   const can = {
-    prepare: t.status === 'initiated' && ['contractor', 'site_manager', 'store_keeper', 'supervisor'].includes(role),
+    // Warehouse dispatch: contractor / store_keeper / site_manager (supervisor not at warehouse)
+    // Site dispatch: supervisor / site_manager / contractor (person on the ground)
+    prepare: t.status === 'initiated' && (
+      fromIsWarehouse
+        ? ['contractor', 'site_manager', 'store_keeper'].includes(role)
+        : ['contractor', 'site_manager', 'supervisor'].includes(role)
+    ),
     approve: t.status === 'prepared'  && ['contractor', 'site_manager', 'store_keeper'].includes(role),
     receive: t.status === 'approved'  && ['contractor', 'site_manager', 'store_keeper', 'supervisor'].includes(role),
   }

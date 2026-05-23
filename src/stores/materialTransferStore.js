@@ -18,7 +18,7 @@ async function enrichTransfers(list) {
   const [pRes, mRes, sRes] = await Promise.all([
     profileIds.length  ? supabase.from('profiles').select('id, full_name').in('id', profileIds)   : { data: [] },
     materialIds.length ? supabase.from('materials').select('id, name, unit').in('id', materialIds) : { data: [] },
-    siteIds.length     ? supabase.from('sites').select('id, name').in('id', siteIds)               : { data: [] },
+    siteIds.length     ? supabase.from('sites').select('id, name, type').in('id', siteIds)          : { data: [] },
   ])
   const pMap = Object.fromEntries((pRes.data ?? []).map((p) => [p.id, p]))
   const mMap = Object.fromEntries((mRes.data ?? []).map((m) => [m.id, m]))

@@ -43,13 +43,28 @@ const useMaterialReceiptStore = create((set, get) => ({
     set({ receipts: enriched, loading: false })
   },
 
-  createReceipt: async (payload) => {
+  createReceipt: async (payload, destinationSiteId = null) => {
     const { data, error } = await supabase
       .from('material_receipts')
       .insert(payload)
       .select('*')
       .single()
     if (error) throw error
+
+    if (destinationSiteId) {
+      const { error: tErr } = await supabase.from('material_transfers').insert({
+        material_id:  payload.material_id,
+        from_site_id: payload.site_id,
+        to_site_id:   destinationSiteId,
+        tenant_id:    payload.tenant_id,
+        quantity:     payload.quantity,
+        status:       'initiated',
+        initiated_by: payload.created_by,
+        note:         `Auto-created from receipt ${data.id}`,
+      })
+      if (tErr) throw tErr
+    }
+
     const [enriched] = await enrichReceipts([data])
     set((s) => ({ receipts: [enriched, ...s.receipts] }))
     return enriched
