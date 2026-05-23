@@ -7,7 +7,7 @@ import { downloadSheet, fmtINR } from '@/lib/exportXLS'
 import PrintButton from '@/components/print/PrintButton'
 import PrintHeader from '@/components/print/PrintHeader'
 import StatCard from '@/components/ui/StatCard'
-import { cn } from '@/lib/utils'
+import { formatINR, cn } from '@/lib/utils'
 
 const WORK_LABEL = Object.fromEntries(WORK_TYPES.map(({ value, label }) => [value, label]))
 
@@ -15,8 +15,9 @@ export default function StockReportTab({ sites }) {
   const profile   = useAuthStore((s) => s.profile)
   const tenantId  = profile?.tenant_id
   const { stockData, stockLoading, fetchStockReport } = useReportsStore()
-  const [siteId, setSiteId] = useState('')
+  const [siteId,   setSiteId]   = useState('')
   const [workType, setWorkType] = useState('')
+  const [category, setCategory] = useState('')
 
   useEffect(() => {
     if (tenantId) fetchStockReport(tenantId, siteId || null)
@@ -24,8 +25,15 @@ export default function StockReportTab({ sites }) {
 
   const filtered = useMemo(() => {
     if (!stockData) return []
-    return workType ? stockData.filter((m) => m.work_type === workType) : stockData
-  }, [stockData, workType])
+    return stockData.filter((m) => {
+      if (workType && m.work_type !== workType) return false
+      if (category && m.category !== category) return false
+      return true
+    })
+  }, [stockData, workType, category])
+
+  const totalStockValue = filtered.reduce((s, m) =>
+    s + Number(m.quantity_available ?? 0) * Number(m.unit_cost ?? 0), 0)
 
   const totalItems = filtered.length
   const lowStock   = filtered.filter((m) => Number(m.quantity_available) <= 0).length
@@ -49,15 +57,18 @@ export default function StockReportTab({ sites }) {
 
   function handleExport() {
     const rows = [
-      ['Site', 'Material', 'Brand', 'Work type', 'Unit', 'Stock'],
-      ...filtered.map((m) => [
-        m.sites?.name ?? '—',
-        m.name,
-        m.brand || 'Generic',
-        WORK_LABEL[m.work_type] ?? m.work_type ?? '—',
-        m.unit,
-        Number(m.quantity_available ?? 0),
-      ]),
+      ['Site', 'Material', 'Brand', 'Category', 'Work type', 'Unit', 'Rate (₹)', 'Stock', 'Value (₹)'],
+      ...filtered.map((m) => {
+        const qty  = Number(m.quantity_available ?? 0)
+        const rate = Number(m.unit_cost ?? 0)
+        return [
+          m.sites?.name ?? '—', m.name, m.brand || 'Generic',
+          m.category === 'equipment' ? 'Equipment' : 'Consumable',
+          WORK_LABEL[m.work_type] ?? m.work_type ?? '—',
+          m.unit, rate || '', qty, rate > 0 && qty > 0 ? qty * rate : '',
+        ]
+      }),
+      ['', '', '', '', '', '', 'Total value', '', totalStockValue],
     ]
     const date = new Date().toISOString().slice(0, 10)
     downloadSheet(rows, 'Stock', `stock-snapshot-${date}`)
@@ -90,6 +101,15 @@ export default function StockReportTab({ sites }) {
             <option key={value} value={value}>{label}</option>
           ))}
         </select>
+        <select
+          className="input py-1.5 pr-8 text-sm"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          <option value="">All categories</option>
+          <option value="consumable">Consumable</option>
+          <option value="equipment">Equipment</option>
+        </select>
         <div className="ml-auto flex items-center gap-2">
           <PrintButton label="Print" />
           <button
@@ -103,10 +123,11 @@ export default function StockReportTab({ sites }) {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <StatCard label="Total materials" value={totalItems}  icon={Package} color="brand" />
-        <StatCard label="Zero stock"      value={lowStock}    icon={Package} color="red"   />
-        <StatCard label="Sites covered"   value={bySite.length} icon={Package} color="sage" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <StatCard label="Total materials" value={totalItems}             icon={Package} color="brand" />
+        <StatCard label="Zero stock"      value={lowStock}               icon={Package} color="red"   />
+        <StatCard label="Stock value"     value={formatINR(totalStockValue)} icon={Package} color="sage" />
+        <StatCard label="Sites covered"   value={bySite.length}          icon={Package} color="brand" />
       </div>
 
       {/* Table per site */}
@@ -129,7 +150,7 @@ export default function StockReportTab({ sites }) {
               <table className="min-w-full divide-y divide-gray-100">
                 <thead className="bg-gray-50">
                   <tr>
-                    {['Material', 'Brand', 'Work type', 'Unit', 'Stock'].map((h) => (
+                    {['Material', 'Brand', 'Category', 'Work type', 'Unit', 'Rate (₹)', 'Stock', 'Value (₹)'].map((h) => (
                       <th key={h} className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
                     ))}
                   </tr>
@@ -140,6 +161,11 @@ export default function StockReportTab({ sites }) {
                       <td className="px-4 py-2.5 text-sm font-medium text-gray-900">{m.name}</td>
                       <td className="px-4 py-2.5 text-sm text-gray-500">{m.brand || <span className="text-gray-300">Generic</span>}</td>
                       <td className="px-4 py-2.5">
+                        <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', m.category === 'equipment' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600')}>
+                          {m.category === 'equipment' ? 'Equipment' : 'Consumable'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5">
                         {m.work_type ? (
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${WORK_TYPE_COLORS[m.work_type]}`}>
                             {WORK_LABEL[m.work_type] ?? m.work_type}
@@ -147,11 +173,19 @@ export default function StockReportTab({ sites }) {
                         ) : <span className="text-gray-300 text-xs">—</span>}
                       </td>
                       <td className="px-4 py-2.5 text-sm text-gray-600">{m.unit}</td>
+                      <td className="px-4 py-2.5 text-sm text-gray-600">
+                        {m.unit_cost ? formatINR(m.unit_cost) : <span className="text-gray-300">—</span>}
+                      </td>
                       <td className={cn(
                         'px-4 py-2.5 text-sm font-semibold',
                         Number(m.quantity_available) <= 0 ? 'text-red-600' : 'text-gray-900',
                       )}>
                         {Number(m.quantity_available ?? 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-4 py-2.5 text-sm text-gray-900">
+                        {m.unit_cost && Number(m.quantity_available) > 0
+                          ? formatINR(Number(m.quantity_available) * Number(m.unit_cost))
+                          : <span className="text-gray-300">—</span>}
                       </td>
                     </tr>
                   ))}

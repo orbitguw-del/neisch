@@ -356,7 +356,7 @@ const useReportsStore = create((set, get) => ({
         .order('expense_date', { ascending: false }),
       supabase
         .from('material_allocations')
-        .select('material_id, quantity_allocated, work_description, allocated_date, materials(name, unit)')
+        .select('material_id, quantity_allocated, work_description, allocated_date, materials(name, unit, unit_cost, category)')
         .eq('tenant_id', tenantId)
         .eq('site_id', siteId)
         .gte('allocated_date', startDate)
@@ -435,7 +435,7 @@ const useReportsStore = create((set, get) => ({
 
     let q = supabase
       .from('material_allocations')
-      .select('id, material_id, site_id, quantity_allocated, work_description, allocated_date, note, materials(name, unit, work_type, brand), sites(name)')
+      .select('id, material_id, site_id, quantity_allocated, work_description, allocated_date, note, materials(name, unit, work_type, brand, unit_cost, category), sites(name)')
       .eq('tenant_id', tenantId)
       .gte('allocated_date', startDate)
       .lte('allocated_date', endDate)
@@ -451,15 +451,20 @@ const useReportsStore = create((set, get) => ({
       const key = r.material_id
       if (!byMaterial[key]) {
         byMaterial[key] = {
-          name:  r.materials?.name  ?? 'Unknown',
-          unit:  r.materials?.unit  ?? '',
-          brand: r.materials?.brand ?? null,
+          name:      r.materials?.name      ?? 'Unknown',
+          unit:      r.materials?.unit      ?? '',
+          brand:     r.materials?.brand     ?? null,
           work_type: r.materials?.work_type ?? null,
-          total: 0,
+          unit_cost: Number(r.materials?.unit_cost ?? 0),
+          category:  r.materials?.category  ?? 'consumable',
+          total:   0,
+          value:   0,
           entries: 0,
         }
       }
-      byMaterial[key].total   += Number(r.quantity_allocated)
+      const qty = Number(r.quantity_allocated)
+      byMaterial[key].total   += qty
+      byMaterial[key].value   += qty * Number(r.materials?.unit_cost ?? 0)
       byMaterial[key].entries += 1
     })
 

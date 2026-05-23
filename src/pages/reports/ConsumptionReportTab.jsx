@@ -3,7 +3,8 @@ import { Hammer, Download, CalendarDays } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
 import useReportsStore from '@/stores/reportsStore'
 import { WORK_TYPES, WORK_TYPE_COLORS } from '@/lib/materialPresets'
-import { downloadWorkbook, fmtINR } from '@/lib/exportXLS'
+import { downloadWorkbook, fmtINR, downloadSheet } from '@/lib/exportXLS'
+import { formatINR } from '@/lib/utils'
 import PrintButton from '@/components/print/PrintButton'
 import PrintHeader from '@/components/print/PrintHeader'
 import StatCard from '@/components/ui/StatCard'
@@ -28,6 +29,7 @@ export default function ConsumptionReportTab({ sites }) {
   const [startDate, setStartDate] = useState(firstOfMonthISO)
   const [endDate,   setEndDate]   = useState(todayISO)
   const [workType,  setWorkType]  = useState('')
+  const [category,  setCategory]  = useState('') // '' | 'consumable' | 'equipment'
   const [view,      setView]      = useState('summary') // 'summary' | 'detail'
 
   useEffect(() => {
@@ -38,17 +40,23 @@ export default function ConsumptionReportTab({ sites }) {
 
   const filteredRows = useMemo(() => {
     if (!consumptionData) return []
-    return workType
-      ? consumptionData.rows.filter((r) => r.materials?.work_type === workType)
-      : consumptionData.rows
-  }, [consumptionData, workType])
+    return consumptionData.rows.filter((r) => {
+      if (workType && r.materials?.work_type !== workType) return false
+      if (category && r.materials?.category !== category) return false
+      return true
+    })
+  }, [consumptionData, workType, category])
 
   const filteredSummary = useMemo(() => {
     if (!consumptionData) return []
-    return workType
-      ? consumptionData.summary.filter((s) => s.work_type === workType)
-      : consumptionData.summary
-  }, [consumptionData, workType])
+    return consumptionData.summary.filter((s) => {
+      if (workType && s.work_type !== workType) return false
+      if (category && s.category !== category) return false
+      return true
+    })
+  }, [consumptionData, workType, category])
+
+  const totalValue = filteredSummary.reduce((s, r) => s + r.value, 0)
 
   const siteName    = siteId ? (sites.find((s) => s.id === siteId)?.name ?? '—') : 'All sites'
   const periodLabel = `${shortDate(startDate)} – ${shortDate(endDate)}`
@@ -59,27 +67,30 @@ export default function ConsumptionReportTab({ sites }) {
       {
         name: 'Summary by material',
         rows: [
-          ['Material', 'Brand', 'Work type', 'Unit', 'Total consumed', 'No. of entries'],
+          ['Material', 'Brand', 'Category', 'Work type', 'Unit', 'Rate (₹)', 'Qty consumed', 'Value (₹)', 'Entries'],
           ...filteredSummary.map((s) => [
             s.name, s.brand || 'Generic',
+            s.category === 'equipment' ? 'Equipment' : 'Consumable',
             WORK_LABEL[s.work_type] ?? s.work_type ?? '—',
-            s.unit, s.total, s.entries,
+            s.unit, s.unit_cost || '', s.total, s.value || '', s.entries,
           ]),
+          ['', '', '', '', '', 'Total', '', filteredSummary.reduce((t, s) => t + s.value, 0), ''],
         ],
       },
       {
         name: 'Detail',
         rows: [
-          ['Date', 'Material', 'Brand', 'Work description', 'Site', 'Qty consumed', 'Note'],
-          ...filteredRows.map((r) => [
-            r.allocated_date,
-            r.materials?.name ?? '—',
-            r.materials?.brand || 'Generic',
-            r.work_description || '—',
-            r.sites?.name ?? '—',
-            Number(r.quantity_allocated),
-            r.note || '',
-          ]),
+          ['Date', 'Material', 'Brand', 'Category', 'Work description', 'Site', 'Rate (₹)', 'Qty consumed', 'Value (₹)', 'Note'],
+          ...filteredRows.map((r) => {
+            const qty  = Number(r.quantity_allocated)
+            const rate = Number(r.materials?.unit_cost ?? 0)
+            return [
+              r.allocated_date, r.materials?.name ?? '—', r.materials?.brand || 'Generic',
+              r.materials?.category === 'equipment' ? 'Equipment' : 'Consumable',
+              r.work_description || '—', r.sites?.name ?? '—',
+              rate || '', qty, rate > 0 ? qty * rate : '', r.note || '',
+            ]
+          }),
         ],
       },
     ]
@@ -121,6 +132,14 @@ export default function ConsumptionReportTab({ sites }) {
             {WORK_TYPES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
           </select>
         </div>
+        <div>
+          <label className="label">Category</label>
+          <select className="input py-1.5 pr-8 text-sm" value={category} onChange={(e) => setCategory(e.target.value)}>
+            <option value="">All</option>
+            <option value="consumable">Consumable</option>
+            <option value="equipment">Equipment</option>
+          </select>
+        </div>
         <div className="ml-auto flex items-center gap-2">
           <PrintButton label="Print" />
           <button
@@ -135,10 +154,11 @@ export default function ConsumptionReportTab({ sites }) {
 
       {/* Summary cards */}
       {consumptionData && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <StatCard label="Materials used"    value={filteredSummary.length}   icon={Hammer} color="brand" />
-          <StatCard label="Allocation entries" value={filteredRows.length}      icon={Hammer} color="sage"  />
-          <StatCard label="Period"             value={periodLabel}              icon={CalendarDays} color="brand" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard label="Materials used"    value={filteredSummary.length}        icon={Hammer}      color="brand" />
+          <StatCard label="Allocation entries" value={filteredRows.length}          icon={Hammer}      color="sage"  />
+          <StatCard label="Total value"       value={formatINR(totalValue)}         icon={Hammer}      color="red"   />
+          <StatCard label="Period"            value={periodLabel}                   icon={CalendarDays} color="brand" />
         </div>
       )}
 
@@ -170,7 +190,7 @@ export default function ConsumptionReportTab({ sites }) {
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
-                {['Material', 'Brand', 'Work type', 'Unit', 'Total consumed', 'Entries'].map((h) => (
+                {['Material', 'Brand', 'Category', 'Work type', 'Unit', 'Qty consumed', 'Value (₹)', 'Entries'].map((h) => (
                   <th key={h} className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
@@ -180,6 +200,11 @@ export default function ConsumptionReportTab({ sites }) {
                 <tr key={i} className="hover:bg-gray-50">
                   <td className="px-4 py-2.5 text-sm font-medium text-gray-900">{s.name}</td>
                   <td className="px-4 py-2.5 text-sm text-gray-500">{s.brand || <span className="text-gray-300">Generic</span>}</td>
+                  <td className="px-4 py-2.5">
+                    <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', s.category === 'equipment' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600')}>
+                      {s.category === 'equipment' ? 'Equipment' : 'Consumable'}
+                    </span>
+                  </td>
                   <td className="px-4 py-2.5">
                     {s.work_type ? (
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${WORK_TYPE_COLORS[s.work_type]}`}>
@@ -191,9 +216,17 @@ export default function ConsumptionReportTab({ sites }) {
                   <td className="px-4 py-2.5 text-sm font-semibold text-gray-900">
                     {Number(s.total).toLocaleString('en-IN')}
                   </td>
+                  <td className="px-4 py-2.5 text-sm text-gray-900">
+                    {s.unit_cost > 0 ? formatINR(s.value) : <span className="text-gray-300">—</span>}
+                  </td>
                   <td className="px-4 py-2.5 text-sm text-gray-500">{s.entries}</td>
                 </tr>
               ))}
+              <tr className="bg-gray-50 font-semibold">
+                <td colSpan={6} className="px-4 py-2.5 text-right text-sm text-gray-700">Total value</td>
+                <td className="px-4 py-2.5 text-sm text-gray-900">{formatINR(totalValue)}</td>
+                <td />
+              </tr>
             </tbody>
           </table>
         </div>
@@ -203,7 +236,7 @@ export default function ConsumptionReportTab({ sites }) {
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
-                {['Date', 'Material', 'Work description', 'Site', 'Qty'].map((h) => (
+                {['Date', 'Material', 'Category', 'Work description', 'Site', 'Qty', 'Value (₹)'].map((h) => (
                   <th key={h} className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
@@ -218,6 +251,11 @@ export default function ConsumptionReportTab({ sites }) {
                     <p className="text-sm font-medium text-gray-900">{r.materials?.name ?? '—'}</p>
                     {r.materials?.brand && <p className="text-xs text-gray-400">{r.materials.brand}</p>}
                   </td>
+                  <td className="px-4 py-2.5">
+                    <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', r.materials?.category === 'equipment' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600')}>
+                      {r.materials?.category === 'equipment' ? 'Equipment' : 'Consumable'}
+                    </span>
+                  </td>
                   <td className="px-4 py-2.5 text-sm text-gray-700 max-w-xs">
                     {r.work_description || <span className="text-gray-300">—</span>}
                     {r.note && <p className="text-xs text-gray-400 mt-0.5">{r.note}</p>}
@@ -225,6 +263,11 @@ export default function ConsumptionReportTab({ sites }) {
                   <td className="px-4 py-2.5 text-sm text-gray-600">{r.sites?.name ?? '—'}</td>
                   <td className="px-4 py-2.5 text-sm font-semibold text-gray-900 whitespace-nowrap">
                     {Number(r.quantity_allocated).toLocaleString('en-IN')} {r.materials?.unit}
+                  </td>
+                  <td className="px-4 py-2.5 text-sm text-gray-900 whitespace-nowrap">
+                    {r.materials?.unit_cost > 0
+                      ? formatINR(Number(r.quantity_allocated) * Number(r.materials.unit_cost))
+                      : <span className="text-gray-300">—</span>}
                   </td>
                 </tr>
               ))}

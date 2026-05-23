@@ -269,13 +269,15 @@ export default function SiteReportTab({ sites }) {
               <table className="min-w-full text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    {['Date', 'Material', 'Work description', 'Qty consumed'].map((h) => (
+                    {['Date', 'Material', 'Work description', 'Qty consumed', 'Value (₹)'].map((h) => (
                       <th key={h} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {d.materials.allocations.map((a, i) => (
+                  {d.materials.allocations.map((a, i) => {
+                    const val = Number(a.quantity_allocated) * Number(a.materials?.unit_cost ?? 0)
+                    return (
                     <tr key={i} className="hover:bg-gray-50">
                       <td className="px-4 py-2 text-gray-600 whitespace-nowrap">
                         {new Date(a.allocated_date + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
@@ -285,10 +287,13 @@ export default function SiteReportTab({ sites }) {
                       <td className="px-4 py-2 text-right font-semibold text-gray-900">
                         {Number(a.quantity_allocated).toLocaleString('en-IN')} {a.materials?.unit}
                       </td>
+                      <td className="px-4 py-2 text-right text-gray-900">
+                        {a.materials?.unit_cost > 0 ? formatINR(val) : <span className="text-gray-300">—</span>}
+                      </td>
                     </tr>
-                  ))}
+                  )})}
                   <tr className="bg-gray-50 font-semibold">
-                    <td colSpan={3} className="px-4 py-2 text-right text-gray-700">Total consumed</td>
+                    <td colSpan={4} className="px-4 py-2 text-right text-gray-700">Total consumed</td>
                     <td className="px-4 py-2 text-right text-gray-900">
                       {Number(d.materials.totalConsumed).toLocaleString('en-IN')} units
                     </td>
