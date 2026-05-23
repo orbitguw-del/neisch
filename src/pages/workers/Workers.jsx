@@ -252,9 +252,9 @@ function WorkerRow({ worker, onToggleStatus, siteName }) {
                 {worker.name.slice(0, 2).toUpperCase()}
               </div>
             )}
-            <div>
-              <p className="text-sm font-medium text-gray-900">{worker.name}</p>
-              <p className="text-xs text-gray-400">{worker.trade}</p>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate max-w-[130px]">{worker.name}</p>
+              <p className="text-xs text-gray-400 truncate max-w-[130px]">{worker.trade}</p>
             </div>
           </div>
         </td>

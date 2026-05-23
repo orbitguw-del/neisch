@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, ClipboardCheck, Truck, Warehouse, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react'
+import { Plus, ClipboardCheck, Truck, Warehouse, CheckCircle, XCircle, Clock, AlertTriangle, Eye } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
@@ -680,9 +680,16 @@ export default function MaterialReceipts() {
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
-                {['Date', 'Material', 'Site', 'Source', 'Qty', 'Qty Received', 'GRN No.', 'LR No.', 'Challan No.', 'Status', 'Actions'].map((h) => (
-                  <th key={h} className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                ))}
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Date</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Material</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap hidden sm:table-cell">Site</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap hidden md:table-cell">Source</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Qty</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap hidden sm:table-cell">Received</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap hidden lg:table-cell">GRN</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap hidden lg:table-cell">LR / Challan</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
@@ -697,8 +704,8 @@ export default function MaterialReceipts() {
                       {new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </td>
                     <td className="px-3 py-3 text-sm font-medium text-gray-900">{r.material?.name ?? '—'}</td>
-                    <td className="px-3 py-3 text-xs text-gray-500 max-w-[120px] truncate">{r.site?.name ?? '—'}</td>
-                    <td className="px-3 py-3 text-sm text-gray-600">
+                    <td className="px-3 py-3 text-xs text-gray-500 max-w-[120px] truncate hidden sm:table-cell">{r.site?.name ?? '—'}</td>
+                    <td className="px-3 py-3 text-sm text-gray-600 hidden md:table-cell">
                       <div className="flex items-center gap-1">
                         {r.source_type === 'supplier'
                           ? <Truck className="h-3.5 w-3.5 text-gray-400" />
@@ -710,7 +717,7 @@ export default function MaterialReceipts() {
                     <td className="px-3 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
                       {r.quantity} {r.material?.unit ?? ''}
                     </td>
-                    <td className="px-3 py-3 text-sm whitespace-nowrap">
+                    <td className="px-3 py-3 text-sm whitespace-nowrap hidden sm:table-cell">
                       {r.quantity_received != null ? (
                         <span className={`flex items-center gap-1 ${hasDiscrepancy ? 'text-amber-700 font-medium' : 'text-gray-900'}`}>
                           {hasDiscrepancy && <AlertTriangle className="h-3 w-3 flex-shrink-0" />}
@@ -718,11 +725,12 @@ export default function MaterialReceipts() {
                         </span>
                       ) : '—'}
                     </td>
-                    <td className="px-3 py-3 text-xs text-gray-500">{r.grn_number || '—'}</td>
-                    <td className="px-3 py-3 text-xs text-gray-500">{r.lr_number || '—'}</td>
-                    <td className="px-3 py-3 text-xs text-gray-500">{r.challan_number || '—'}</td>
+                    <td className="px-3 py-3 text-xs text-gray-500 hidden lg:table-cell">{r.grn_number || '—'}</td>
+                    <td className="px-3 py-3 text-xs text-gray-500 hidden lg:table-cell">
+                      {[r.lr_number, r.challan_number].filter(Boolean).join(' / ') || '—'}
+                    </td>
                     <td className="px-3 py-3">
-                      <span className={`${STATUS_BADGE[r.status] ?? 'badge-gray'} flex items-center gap-1 w-fit`}>
+                      <span className={`${STATUS_BADGE[r.status] ?? 'badge-gray'} flex items-center gap-1 w-fit capitalize`}>
                         <StatusIcon className="h-3 w-3" />{r.status}
                       </span>
                     </td>
@@ -730,25 +738,28 @@ export default function MaterialReceipts() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => setDetailItem(r)}
-                          className="rounded px-2 py-1 text-xs text-brand-600 hover:bg-brand-50"
+                          title="View details"
+                          className="rounded-lg p-1.5 text-brand-600 hover:bg-brand-50"
                         >
-                          View
+                          <Eye className="h-4 w-4" />
                         </button>
                         {r.status === 'pending' && canConfirm && (
                           <>
                             <button
                               disabled={acting === r.id}
                               onClick={() => setConfirmTarget(r)}
-                              className="rounded px-2 py-1 text-xs text-green-700 hover:bg-green-50 disabled:opacity-50"
+                              title="Receive"
+                              className="rounded-lg p-1.5 text-green-700 hover:bg-green-50 disabled:opacity-50"
                             >
-                              Receive
+                              <CheckCircle className="h-4 w-4" />
                             </button>
                             <button
                               disabled={acting === r.id}
                               onClick={() => setRejectTarget(r)}
-                              className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+                              title="Reject"
+                              className="rounded-lg p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-50"
                             >
-                              Reject
+                              <XCircle className="h-4 w-4" />
                             </button>
                           </>
                         )}

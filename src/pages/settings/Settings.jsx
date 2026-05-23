@@ -404,7 +404,7 @@ export default function Settings() {
       {/* ── App info ── */}
       <div className="text-center text-xs text-gray-400 pb-4 space-y-1">
         <p>Storey — Construction Management</p>
-        <p>v1.0.2 · <a href="/#/privacy" className="hover:underline">Privacy Policy</a></p>
+        <p>v1.2.1 · <a href="/#/privacy" className="hover:underline">Privacy Policy</a></p>
       </div>
 
       <div className="card p-6">

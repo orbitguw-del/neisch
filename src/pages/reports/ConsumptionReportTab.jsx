@@ -187,6 +187,7 @@ export default function ConsumptionReportTab({ sites }) {
       ) : view === 'summary' ? (
         /* ── Summary: one row per material ─────────────────────────── */
         <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
@@ -229,10 +230,12 @@ export default function ConsumptionReportTab({ sites }) {
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
       ) : (
         /* ── Detail: every allocation entry ────────────────────────── */
         <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
@@ -273,6 +276,7 @@ export default function ConsumptionReportTab({ sites }) {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

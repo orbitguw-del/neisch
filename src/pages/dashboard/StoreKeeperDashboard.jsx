@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Package, AlertTriangle, Warehouse, HardHat } from 'lucide-react'
+import { Package, AlertTriangle, Warehouse, HardHat, MapPin } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
@@ -82,7 +82,7 @@ export default function StoreKeeperDashboard() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Assigned Sites"  value={sites.length}      icon={HardHat}       color="brand" />
+        <StatCard label="Assigned Sites"  value={sites.length}      icon={MapPin}        color="brand" />
         <StatCard label="Material Items"  value={totalItems}        icon={Package}       color="sage" />
         <StatCard label="Low Stock Alerts" value={lowStockItems.length} icon={AlertTriangle} color="red" />
         <StatCard
@@ -132,7 +132,14 @@ export default function StoreKeeperDashboard() {
         {matLoading ? (
           <p className="px-5 py-8 text-sm text-gray-500">Loading inventory…</p>
         ) : materials.length === 0 ? (
-          <p className="px-5 py-8 text-sm text-gray-500">No materials tracked yet.</p>
+          <div className="px-5 py-10 flex flex-col items-center gap-3 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50">
+              <Package className="h-7 w-7 text-brand-400" />
+            </div>
+            <p className="text-sm font-medium text-gray-700">No materials tracked yet</p>
+            <p className="text-xs text-gray-400">Add materials from the Inventory page to start tracking stock.</p>
+            <button onClick={() => navigate('/inventory')} className="btn-primary text-sm">Go to Inventory</button>
+          </div>
         ) : (
           <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">

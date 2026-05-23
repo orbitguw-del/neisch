@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Wrench, CheckCircle, AlertCircle, Clock, XCircle, UserCheck, RotateCcw, Settings } from 'lucide-react'
+import { Plus, Wrench, CheckCircle, AlertCircle, Clock, XCircle, UserCheck, RotateCcw, Settings, Eye } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
 import useEquipmentAssetStore from '@/stores/equipmentAssetStore'
@@ -422,9 +422,13 @@ export default function EquipmentAssets() {
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
-                {['Asset Code', 'Type', 'Make / Model', 'Serial No.', 'Site', 'Status', 'Assignee', 'Warranty', 'Actions'].map((h) => (
-                  <th key={h} className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
-                ))}
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Asset / Type</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide hidden sm:table-cell">Make / Serial</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide hidden md:table-cell">Site</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide hidden sm:table-cell">Assignee</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide hidden lg:table-cell">Warranty</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
@@ -433,43 +437,60 @@ export default function EquipmentAssets() {
                 const warrantyExpired = asset.warranty_expiry && new Date(asset.warranty_expiry) < new Date()
                 return (
                   <tr key={asset.id} className="hover:bg-gray-50">
-                    <td className="px-3 py-3 text-sm font-mono font-semibold text-brand-700">{asset.asset_code}</td>
-                    <td className="px-3 py-3 text-sm font-medium text-gray-900">{asset.material?.name ?? '—'}</td>
-                    <td className="px-3 py-3 text-sm text-gray-600">
-                      {[asset.make, asset.model].filter(Boolean).join(' ') || '—'}
+                    <td className="px-3 py-3">
+                      <p className="text-sm font-mono font-semibold text-brand-700">{asset.asset_code}</p>
+                      <p className="text-xs text-gray-600 truncate max-w-[120px]">{asset.material?.name ?? '—'}</p>
                     </td>
-                    <td className="px-3 py-3 text-xs font-mono text-gray-500">{asset.serial_number || '—'}</td>
-                    <td className="px-3 py-3 text-xs text-gray-500 max-w-[100px] truncate">{asset.site?.name ?? '—'}</td>
+                    <td className="px-3 py-3 hidden sm:table-cell">
+                      <p className="text-sm text-gray-600">{[asset.make, asset.model].filter(Boolean).join(' ') || '—'}</p>
+                      <p className="text-xs font-mono text-gray-400">{asset.serial_number || ''}</p>
+                    </td>
+                    <td className="px-3 py-3 text-xs text-gray-500 max-w-[100px] truncate hidden md:table-cell">{asset.site?.name ?? '—'}</td>
                     <td className="px-3 py-3">
                       <span className={`${STATUS_BADGE[asset.status] ?? 'badge-gray'} flex items-center gap-1 w-fit`}>
                         <StatusIcon className="h-3 w-3" />
                         {STATUS_LABELS[asset.status] ?? asset.status}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-sm text-gray-600 max-w-[120px] truncate">
+                    <td className="px-3 py-3 text-sm text-gray-600 max-w-[120px] truncate hidden sm:table-cell">
                       {asset.current_assignee_name ?? (asset.status === 'in_use' ? 'Assigned' : '—')}
                       {asset.current_zone && <span className="block text-xs text-gray-400">{asset.current_zone}</span>}
                     </td>
-                    <td className="px-3 py-3 text-xs">
+                    <td className="px-3 py-3 text-xs hidden lg:table-cell">
                       {asset.warranty_expiry
-                        ? <span className={warrantyExpired ? 'text-red-600' : 'text-gray-500'}>{asset.warranty_expiry}{warrantyExpired ? ' (expired)' : ''}</span>
+                        ? <span className={warrantyExpired ? 'text-red-600' : 'text-gray-500'}>{asset.warranty_expiry}{warrantyExpired ? ' (exp.)' : ''}</span>
                         : <span className="text-gray-400">—</span>
                       }
                     </td>
                     <td className="px-3 py-3">
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => setDetailAsset(asset)} className="rounded px-2 py-1 text-xs text-brand-600 hover:bg-brand-50">View</button>
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => setDetailAsset(asset)} title="View details"
+                          className="rounded-lg p-1.5 text-brand-600 hover:bg-brand-50">
+                          <Eye className="h-4 w-4" />
+                        </button>
                         {asset.status === 'available' && canManage && (
-                          <button onClick={() => setAssignTarget(asset)} className="rounded px-2 py-1 text-xs text-blue-700 hover:bg-blue-50">Assign</button>
+                          <button onClick={() => setAssignTarget(asset)} title="Assign"
+                            className="rounded-lg p-1.5 text-blue-700 hover:bg-blue-50">
+                            <UserCheck className="h-4 w-4" />
+                          </button>
                         )}
                         {asset.status === 'in_use' && canManage && (
-                          <button onClick={() => setReturnTarget(asset)} className="rounded px-2 py-1 text-xs text-green-700 hover:bg-green-50">Return</button>
+                          <button onClick={() => setReturnTarget(asset)} title="Return"
+                            className="rounded-lg p-1.5 text-green-700 hover:bg-green-50">
+                            <RotateCcw className="h-4 w-4" />
+                          </button>
                         )}
                         {['available', 'in_use'].includes(asset.status) && canManage && (
-                          <button onClick={() => setMaintTarget(asset)} className="rounded px-2 py-1 text-xs text-yellow-700 hover:bg-yellow-50">Service</button>
+                          <button onClick={() => setMaintTarget(asset)} title="Send to service"
+                            className="rounded-lg p-1.5 text-yellow-700 hover:bg-yellow-50">
+                            <Settings className="h-4 w-4" />
+                          </button>
                         )}
                         {asset.status !== 'retired' && canRetire && (
-                          <button onClick={() => setRetireTarget(asset)} className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50">Retire</button>
+                          <button onClick={() => setRetireTarget(asset)} title="Retire"
+                            className="rounded-lg p-1.5 text-red-600 hover:bg-red-50">
+                            <XCircle className="h-4 w-4" />
+                          </button>
                         )}
                       </div>
                     </td>

@@ -95,7 +95,7 @@ export default function SiteReportTab({ sites }) {
                 ``,
                 `👷 Payroll: ${fmtINR(d.attendance.totalPay)} (${d.attendance.activeWorkers} workers)`,
                 `📦 Materials in: ${fmtINR(d.materials.totalReceivedCost)}`,
-                `🔨 Consumed: ${fmtINR(d.materials.allocations?.reduce((s,a)=>s+Number(a.quantity_allocated)*Number(a.materials?.unit_cost??0),0) ?? 0)}`,
+                `🔨 Consumed: ${fmtINR(d.materials.allocations?.reduce((s,a)=>s+Number(a.quantity_allocated||0)*Number(a.materials?.unit_cost||0),0) ?? 0)}`,
                 `💸 Expenses: ${fmtINR(d.expenses?.approved ?? 0)}`,
                 ``,
                 `📊 Total spend: ${fmtINR(d.totalSpend ?? 0)}`,
@@ -406,7 +406,9 @@ function Section({ title, icon: Icon, count, children }) {
           <span className="text-xs text-gray-500">{count} {count === 1 ? 'entry' : 'entries'}</span>
         )}
       </div>
-      {children}
+      <div className="overflow-x-auto">
+        {children}
+      </div>
     </div>
   )
 }

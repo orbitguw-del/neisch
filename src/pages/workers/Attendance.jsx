@@ -109,19 +109,25 @@ function WorkerAttendanceRow({ worker, status, onCycle, siteName }) {
           })}
         </div>
 
-        {/* Mobile: dropdown picker */}
-        <select
-          value={status ?? ''}
-          onChange={(e) => onCycle(worker.id, e.target.value)}
-          className={`sm:hidden rounded-xl px-2 py-2 text-sm font-bold border-0 outline-none cursor-pointer transition-all ${cfg ? cfg.cls : 'bg-gray-100 text-gray-500'}`}
-        >
-          <option value="" disabled>—</option>
-          {STATUS_CYCLE.map((s) => (
-            <option key={s} value={s} style={{ background: '#fff', color: '#111' }}>
-              {STATUS_CONFIG[s].label} {STATUS_CONFIG[s].fullLabel}
-            </option>
-          ))}
-        </select>
+        {/* Mobile: colour-coded pill buttons */}
+        <div className="sm:hidden flex gap-1">
+          {STATUS_CYCLE.map((s) => {
+            const c = STATUS_CONFIG[s]
+            return (
+              <button
+                key={s}
+                onClick={() => onCycle(worker.id, s)}
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-bold transition-all ${
+                  status === s
+                    ? `${c.cls} ring-2 ${c.ring} ring-offset-1`
+                    : 'bg-gray-100 text-gray-500'
+                }`}
+              >
+                {c.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
