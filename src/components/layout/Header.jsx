@@ -47,8 +47,12 @@ export default function Header({ onMenuClick }) {
       <div className="hidden lg:block" />
 
       <div className="flex items-center gap-3">
-        {/* Notifications */}
-        <button className="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+        {/* Notifications — coming soon */}
+        <button
+          className="relative rounded-lg p-2 text-gray-400 cursor-default opacity-50"
+          title="Notifications — coming soon"
+          disabled
+        >
           <Bell className="h-5 w-5" />
         </button>
 

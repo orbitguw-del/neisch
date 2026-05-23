@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   HardHat, ListTodo, MapPin, Pencil, Calendar, Package,
-  Truck, Wallet, Camera, ClipboardList, AlertTriangle,
+  Truck, Wallet, Camera, ClipboardList, AlertTriangle, ChevronRight,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
@@ -169,7 +169,9 @@ export default function SupervisorDashboard() {
               {awaitingDispatch.map((t) => t.material?.name ?? 'Material').join(', ')}
             </p>
           </div>
-          <span className="flex-shrink-0 text-xs font-semibold text-amber-700">Open →</span>
+          <span className="flex flex-shrink-0 items-center gap-1 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white">
+            Open <ChevronRight className="h-3.5 w-3.5" />
+          </span>
         </button>
       )}
 

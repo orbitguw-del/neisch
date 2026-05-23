@@ -386,7 +386,7 @@ export default function EquipmentAssets() {
             className={`rounded-lg border p-3 text-center transition-all ${cls} ${filterStatus === key ? 'ring-2 ring-offset-1 ring-brand-400' : ''}`}
           >
             <p className="text-xl font-bold">{statusCounts[key] ?? 0}</p>
-            <p className="text-[10px] font-medium leading-tight truncate">{label}</p>
+            <p className="text-xs font-medium leading-tight truncate">{label}</p>
           </button>
         ))}
       </div>

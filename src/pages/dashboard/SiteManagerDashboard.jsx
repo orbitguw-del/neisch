@@ -167,7 +167,7 @@ export default function SiteManagerDashboard() {
                     <Icon className="h-4 w-4 text-amber-700" />
                   </div>
                   <span className="flex-1 text-sm font-medium text-gray-800">{i.label}</span>
-                  <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-amber-600 px-2 text-xs font-bold text-white tabular-nums">
+                  <span className="flex h-7 min-h-7 min-w-7 items-center justify-center rounded-full bg-amber-600 px-2 text-xs font-bold text-white tabular-nums">
                     {i.n}
                   </span>
                   <ChevronRight className="h-4 w-4 text-gray-300" />
@@ -222,8 +222,8 @@ export default function SiteManagerDashboard() {
               <span className="text-xs text-gray-400">· {sites.length}</span>
             )}
           </div>
-          <button onClick={() => navigate('/sites')} className="text-xs font-medium text-brand-600 hover:text-brand-700">
-            View all →
+          <button onClick={() => navigate('/sites')} className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50 transition-colors">
+            View all <ChevronRight className="h-3.5 w-3.5" />
           </button>
         </div>
 
@@ -246,7 +246,7 @@ export default function SiteManagerDashboard() {
                   className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-gray-50"
                 >
                   <div
-                    className="h-10 w-1 flex-shrink-0 rounded-full"
+                    className="h-10 w-1.5 flex-shrink-0 rounded-full"
                     style={{ backgroundColor: stripeColor }}
                   />
                   <div className="min-w-0 flex-1">

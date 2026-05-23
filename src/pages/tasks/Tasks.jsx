@@ -192,8 +192,9 @@ function UpdateForm({ onSubmit, loading }) {
 function TaskDetail({ task, allTasks, profile, sites, onOpenTask, onClose }) {
   const { updates, fetchUpdates, addUpdate, startTask, submitTask, blockTask,
           confirmTask, sendBack, createTask } = useTaskStore()
-  const [busy, setBusy]       = useState(false)
-  const [subOpen, setSubOpen] = useState(false)
+  const [busy, setBusy]         = useState(false)
+  const [actError, setActError] = useState(null)
+  const [subOpen, setSubOpen]   = useState(false)
   const taskUpdates = updates[task.id] ?? []
   const subtasks    = allTasks.filter((t) => t.parent_task_id === task.id)
   const subDone     = subtasks.filter((t) => t.status === 'done').length
@@ -208,21 +209,24 @@ function TaskDetail({ task, allTasks, profile, sites, onOpenTask, onClose }) {
 
   useEffect(() => { fetchUpdates(task.id) }, [task.id, fetchUpdates])
 
-  const act = async (fn) => { setBusy(true); try { await fn() } catch (e) { alert(e.message) } finally { setBusy(false) } }
+  const act = async (fn) => {
+    setBusy(true); setActError(null)
+    try { await fn() } catch (e) { setActError(e.message) } finally { setBusy(false) }
+  }
 
   const handleUpdate = async ({ note, photo }) => {
-    setBusy(true)
+    setBusy(true); setActError(null)
     try {
       let photo_path = null
       if (photo) photo_path = await uploadPhoto({ blob: photo, tenantId: task.tenant_id, siteId: task.site_id, entity: 'task' })
       await addUpdate({ task_id: task.id, tenant_id: task.tenant_id, site_id: task.site_id, note: note || null, photo_path, created_by: profile?.id })
-    } catch (e) { alert(e.message) } finally { setBusy(false) }
+    } catch (e) { setActError(e.message) } finally { setBusy(false) }
   }
 
   const handleSub = async (payload) => {
-    setBusy(true)
+    setBusy(true); setActError(null)
     try { await createTask({ ...payload, assigned_by: profile?.id }); setSubOpen(false) }
-    catch (e) { alert(e.message) } finally { setBusy(false) }
+    catch (e) { setActError(e.message) } finally { setBusy(false) }
   }
 
   const overdue = isOverdue(task)
@@ -230,6 +234,11 @@ function TaskDetail({ task, allTasks, profile, sites, onOpenTask, onClose }) {
   return (
     <Modal open onClose={onClose} title="Task">
       <div className="space-y-4">
+        {actError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+            {actError}
+          </div>
+        )}
         {/* header */}
         <div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -348,7 +357,7 @@ function TaskCard({ task, subCount, subDone, onOpen }) {
           )}
         </div>
         <p className="mt-1.5 font-semibold text-gray-900 truncate">{task.title}</p>
-        <p className="mt-0.5 text-xs text-gray-500">
+        <p className="mt-0.5 text-xs text-gray-500 truncate">
           {task.site?.name ?? '—'} · {assigneeName(task)}
           {task.due_date && ` · due ${formatDate(task.due_date)}`}
           {subCount > 0 && ` · ${subDone}/${subCount} sub-tasks`}

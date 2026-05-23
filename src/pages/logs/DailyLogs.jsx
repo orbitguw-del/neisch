@@ -257,7 +257,7 @@ export default function DailyLogs() {
                   {log.weather && (
                     <div className="flex items-center gap-1 text-xs text-gray-600">
                       <CloudRain className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline truncate max-w-[140px]">{log.weather}</span>
+                      <span className="truncate max-w-[140px]">{log.weather}</span>
                     </div>
                   )}
                 </div>

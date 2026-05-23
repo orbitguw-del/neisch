@@ -211,12 +211,12 @@ export default function Expenses() {
         </div>
         <div>
           <label className="label">From</label>
-          <input type="date" className="input py-1.5 text-sm" value={startDate}
+          <input type="date" className="input py-1.5 text-sm min-w-[120px]" value={startDate}
             max={endDate} onChange={(e) => setStartDate(e.target.value)} />
         </div>
         <div>
           <label className="label">To</label>
-          <input type="date" className="input py-1.5 text-sm" value={endDate}
+          <input type="date" className="input py-1.5 text-sm min-w-[120px]" value={endDate}
             min={startDate} max={todayISO()} onChange={(e) => setEndDate(e.target.value)} />
         </div>
         <div>
@@ -233,7 +233,7 @@ export default function Expenses() {
 
       {/* Summary */}
       <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard label="Approved spend" value={formatINR(totals.approved)} icon={CheckCircle2} color="red" />
+        <StatCard label="Approved spend" value={formatINR(totals.approved)} icon={CheckCircle2} color="green" />
         <StatCard label="Pending approval" value={formatINR(totals.pending)} icon={Clock} color="sage" />
         <StatCard label="Total entries" value={totals.count} icon={Wallet} color="brand" />
       </div>

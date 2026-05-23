@@ -276,7 +276,7 @@ export default function Attendance() {
         <div>
           <label className="label">Date</label>
           <div className="flex items-center gap-1">
-            <button onClick={() => shiftDate(-1)} className="rounded-lg border border-gray-200 p-2 hover:bg-gray-50">
+            <button onClick={() => shiftDate(-1)} className="rounded-lg border border-gray-200 p-2.5 hover:bg-gray-50">
               <ChevronLeft className="h-4 w-4 text-gray-500" />
             </button>
             <input
@@ -289,7 +289,7 @@ export default function Attendance() {
             <button
               onClick={() => shiftDate(1)}
               disabled={date >= todayISO()}
-              className="rounded-lg border border-gray-200 p-2 hover:bg-gray-50 disabled:opacity-40"
+              className="rounded-lg border border-gray-200 p-2.5 hover:bg-gray-50 disabled:opacity-40"
             >
               <ChevronRight className="h-4 w-4 text-gray-500" />
             </button>
@@ -345,8 +345,8 @@ export default function Attendance() {
             </div>
           </div>
 
-          {/* Worker rows */}
-          <div className="space-y-2 mb-5">
+          {/* Worker rows — pb-28 ensures last row isn't hidden behind sticky save bar */}
+          <div className="space-y-2 mb-2 pb-28">
             {activeWorkers.map((w) => (
               <WorkerAttendanceRow
                 key={w.id}

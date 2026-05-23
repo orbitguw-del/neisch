@@ -209,9 +209,9 @@ export default function ContractorDashboard() {
           </div>
           <button
             onClick={() => navigate('/sites')}
-            className="text-xs font-medium text-brand-600 hover:text-brand-700"
+            className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50 transition-colors"
           >
-            View all →
+            View all <ChevronRight className="h-3.5 w-3.5" />
           </button>
         </div>
 
@@ -241,7 +241,7 @@ export default function ContractorDashboard() {
                 >
                   {/* Status stripe */}
                   <div
-                    className="h-10 w-1 flex-shrink-0 rounded-full"
+                    className="h-10 w-1.5 flex-shrink-0 rounded-full"
                     style={{ backgroundColor: stripeColor }}
                   />
                   <div className="min-w-0 flex-1">
