@@ -9,7 +9,7 @@ function Nav() {
     <nav className="sticky top-0 z-50 border-b border-sand-300 bg-sand-200/90 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5">
         <div className="flex items-center gap-2.5">
-          <StoreyIcon size={28} />
+          <StoreyIcon size={28} showText={false} />
           <span className="font-display text-lg font-bold text-charcoal-900">Storey</span>
         </div>
         <div className="flex items-center gap-3">
@@ -206,8 +206,8 @@ export default function Landing() {
               'You find out cement ran out only when work stops',
               'Month-end reports take two days to put together',
             ].map(pain => (
-              <li key={pain} className="flex items-start gap-3">
-                <span className="mt-1 shrink-0 text-brand-400">✕</span>
+              <li key={pain} className="flex items-center gap-3">
+                <span className="shrink-0 text-brand-400">✕</span>
                 <span className="text-sm leading-relaxed text-charcoal-600">{pain}</span>
               </li>
             ))}
@@ -363,7 +363,7 @@ export default function Landing() {
       <footer className="border-t border-sand-300 px-5 py-10">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex items-center gap-2">
-            <StoreyIcon size={22} />
+            <StoreyIcon size={22} showText={false} />
             <span className="font-display font-bold text-charcoal-700">Storey</span>
             <span className="ml-1 text-xs text-charcoal-400">Construction, organised.</span>
           </div>
