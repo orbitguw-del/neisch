@@ -1,34 +1,73 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Plus, Package, ArrowLeft, AlertTriangle, Upload, ClipboardList } from 'lucide-react'
+import { Plus, Package, ArrowLeft, AlertTriangle, Upload, ClipboardList, ChevronLeft } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import useMaterialStore from '@/stores/materialStore'
 import useAuthStore from '@/stores/authStore'
 import PageHeader from '@/components/ui/PageHeader'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
+import MaterialPresetPicker from '@/components/materials/MaterialPresetPicker'
+import { WORK_TYPES, WORK_TYPE_COLORS } from '@/lib/materialPresets'
 import { formatINR } from '@/lib/utils'
 
-const UNIT_OPTIONS = ['bags', 'kg', 'tonnes', 'pieces', 'sq ft', 'cu ft', 'cu m', 'litres', 'bundles', 'nos']
+const UNIT_OPTIONS = ['bags', 'kg', 'tonnes', 'pieces', 'sq ft', 'cu ft', 'cu m', 'litres', 'bundles', 'metres', 'nos']
+
+const BLANK = { name: '', brand: '', unit: 'bags', category: 'consumable', work_type: '', quantity_available: '', quantity_minimum: '', unit_cost: '', supplier: '' }
 
 function MaterialForm({ siteId, onSubmit, loading }) {
-  const [form, setForm] = useState({
-    name: '', unit: 'bags', quantity_available: '',
-    quantity_minimum: '', unit_cost: '', supplier: '',
-  })
+  const [step, setStep] = useState('pick')   // 'pick' | 'detail'
+  const [form, setForm] = useState(BLANK)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  const handleSelect = (preset) => {
+    setForm({ ...BLANK, ...preset, brand: preset.brand ?? '', quantity_available: '', quantity_minimum: '', unit_cost: '', supplier: '' })
+    setStep('detail')
+  }
+
+  if (step === 'pick') {
+    return (
+      <MaterialPresetPicker
+        onSelect={handleSelect}
+        onCustom={() => { setForm(BLANK); setStep('detail') }}
+      />
+    )
+  }
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit({ ...form, site_id: siteId }) }} className="space-y-4">
+      <button type="button" onClick={() => setStep('pick')}
+        className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 -mt-1 mb-1">
+        <ChevronLeft className="h-3.5 w-3.5" /> Back to list
+      </button>
+
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="label">Material name *</label>
-          <input className="input" required value={form.name} onChange={set('name')} placeholder="Portland Cement (OPC 53)" />
+          <input className="input" required value={form.name} onChange={set('name')} placeholder="OPC 53 Grade Cement" />
+        </div>
+        <div>
+          <label className="label">Brand <span className="text-gray-400 font-normal">(or leave blank for Generic)</span></label>
+          <input className="input" value={form.brand} onChange={set('brand')} placeholder="Ultratech, ACC, SAIL…" />
+        </div>
+        <div>
+          <label className="label">Work type</label>
+          <select className="input" value={form.work_type} onChange={set('work_type')}>
+            <option value="">— select —</option>
+            {WORK_TYPES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+          </select>
         </div>
         <div>
           <label className="label">Unit</label>
           <select className="input" value={form.unit} onChange={set('unit')}>
             {UNIT_OPTIONS.map((u) => <option key={u}>{u}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="label">Category</label>
+          <select className="input" value={form.category} onChange={set('category')}>
+            <option value="consumable">Consumable</option>
+            <option value="equipment">Equipment</option>
           </select>
         </div>
         <div>
@@ -311,10 +350,20 @@ export default function Materials() {
               <tbody className="divide-y divide-gray-100 bg-white">
                 {materials.map((m) => (
                   <tr key={m.id} className={isLow(m) ? 'bg-red-50' : 'hover:bg-gray-50'}>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         {isLow(m) && <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />}
-                        {m.name}
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900">{m.name}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-xs text-gray-400">{m.brand || 'Generic'}</span>
+                            {m.work_type && (
+                              <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${WORK_TYPE_COLORS[m.work_type] ?? 'bg-gray-100 text-gray-500'}`}>
+                                {WORK_TYPES.find((w) => w.value === m.work_type)?.label}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{m.unit}</td>

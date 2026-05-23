@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, AlertTriangle, Package, ArrowUpCircle, History, SlidersHorizontal, Hammer, ExternalLink } from 'lucide-react'
+import { Plus, AlertTriangle, Package, ArrowUpCircle, History, SlidersHorizontal, Hammer, ExternalLink, ChevronLeft } from 'lucide-react'
+import MaterialPresetPicker from '@/components/materials/MaterialPresetPicker'
+import { WORK_TYPES, WORK_TYPE_COLORS } from '@/lib/materialPresets'
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
@@ -11,19 +13,39 @@ import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import { formatINR } from '@/lib/utils'
 
-const UNIT_OPTIONS = ['bags', 'kg', 'tonnes', 'pieces', 'sq ft', 'cu ft', 'cu m', 'litres', 'bundles', 'nos']
+const UNIT_OPTIONS = ['bags', 'kg', 'tonnes', 'pieces', 'sq ft', 'cu ft', 'cu m', 'litres', 'bundles', 'metres', 'nos']
+const BLANK_MAT = { name: '', brand: '', unit: 'bags', category: 'consumable', work_type: '', quantity_available: '', quantity_minimum: '', unit_cost: '', supplier: '' }
 
 const TXN_COLORS = { receipt: 'badge-green', consumption: 'badge-red', adjustment: 'badge-yellow' }
 const TXN_LABELS = { receipt: 'Receipt', consumption: 'Consumption', adjustment: 'Adjustment' }
 
 // ─── Add Material Form ─────────────────────────────────────────────────────────
 function MaterialForm({ sites, onSubmit, loading }) {
-  const [form, setForm] = useState({
-    site_id: sites[0]?.id ?? '',
-    name: '', unit: 'bags', category: 'consumable',
-    quantity_available: '', quantity_minimum: '', unit_cost: '', supplier: '',
-  })
+  const [step, setStep] = useState('pick')
+  const [form, setForm] = useState({ site_id: sites[0]?.id ?? '', ...BLANK_MAT })
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  const handleSelect = (preset) => {
+    setForm((f) => ({ ...f, ...preset, brand: preset.brand ?? '', quantity_available: '', quantity_minimum: '', unit_cost: '', supplier: '' }))
+    setStep('detail')
+  }
+
+  if (step === 'pick') {
+    return (
+      <div className="space-y-3">
+        <div>
+          <label className="label">Site *</label>
+          <select className="input" required value={form.site_id} onChange={set('site_id')}>
+            {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+        <MaterialPresetPicker
+          onSelect={handleSelect}
+          onCustom={() => { setForm((f) => ({ ...f, ...BLANK_MAT })); setStep('detail') }}
+        />
+      </div>
+    )
+  }
 
   return (
     <form
@@ -32,14 +54,20 @@ function MaterialForm({ sites, onSubmit, loading }) {
         const site = sites.find((s) => s.id === form.site_id)
         onSubmit({
           ...form,
-          tenant_id: site?.tenant_id,
-          unit_cost: form.unit_cost || null,
+          tenant_id:          site?.tenant_id,
+          brand:              form.brand    || null,
+          work_type:          form.work_type || null,
+          unit_cost:          form.unit_cost || null,
           quantity_available: form.quantity_available || null,
-          quantity_minimum: form.quantity_minimum || null,
+          quantity_minimum:   form.quantity_minimum   || null,
         })
       }}
       className="space-y-4"
     >
+      <button type="button" onClick={() => setStep('pick')}
+        className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 -mt-1 mb-1">
+        <ChevronLeft className="h-3.5 w-3.5" /> Back to list
+      </button>
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="label">Site *</label>
@@ -50,6 +78,17 @@ function MaterialForm({ sites, onSubmit, loading }) {
         <div className="col-span-2">
           <label className="label">Material name *</label>
           <input className="input" required value={form.name} onChange={set('name')} placeholder="OPC 53 Grade Cement" />
+        </div>
+        <div>
+          <label className="label">Brand <span className="text-gray-400 font-normal">(blank = Generic)</span></label>
+          <input className="input" value={form.brand} onChange={set('brand')} placeholder="Ultratech, SAIL…" />
+        </div>
+        <div>
+          <label className="label">Work type</label>
+          <select className="input" value={form.work_type} onChange={set('work_type')}>
+            <option value="">— select —</option>
+            {WORK_TYPES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+          </select>
         </div>
         <div>
           <label className="label">Category *</label>

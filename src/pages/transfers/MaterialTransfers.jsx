@@ -92,7 +92,7 @@ function TransferForm({ sites, onSubmit, loading }) {
           <select className="input" required value={form.material_id} onChange={set('material_id')}>
             <option value="">— select —</option>
             {materials.map((m) => (
-              <option key={m.id} value={m.id}>{m.name} ({m.quantity_available ?? 0} {m.unit})</option>
+              <option key={m.id} value={m.id}>{m.brand ? `${m.brand} — ` : ''}{m.name} ({m.quantity_available ?? 0} {m.unit})</option>
             ))}
           </select>
         </div>

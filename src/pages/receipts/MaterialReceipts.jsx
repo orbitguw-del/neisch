@@ -106,7 +106,7 @@ function ReceiptForm({ sites, onSubmit, loading }) {
           <select className="input" required value={form.material_id} onChange={set('material_id')}>
             <option value="">— Select —</option>
             {allMaterials.map((m) => (
-              <option key={m.id} value={m.id}>{m.name} ({m.unit})</option>
+              <option key={m.id} value={m.id}>{m.brand ? `${m.brand} — ` : ''}{m.name} ({m.unit})</option>
             ))}
           </select>
         </div>
