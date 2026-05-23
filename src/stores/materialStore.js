@@ -61,6 +61,38 @@ const useMaterialStore = create((set) => ({
     return data
   },
 
+  setOpeningStock: async (materialId, qty, profileId) => {
+    const now = new Date().toISOString()
+    const { data: mat, error: mErr } = await supabase
+      .from('materials').select('*').eq('id', materialId).single()
+    if (mErr) throw mErr
+
+    const { error: uErr } = await supabase.from('materials').update({
+      quantity_available:    qty,
+      opening_stock_recorded: true,
+      updated_at:            now,
+    }).eq('id', materialId)
+    if (uErr) throw uErr
+
+    await supabase.from('material_transactions').insert({
+      material_id:   materialId,
+      site_id:       mat.site_id,
+      tenant_id:     mat.tenant_id,
+      txn_type:      'opening',
+      quantity:      qty,
+      ref_type:      'opening',
+      balance_after: qty,
+      note:          'Opening stock — set by superadmin during onboarding',
+      created_by:    profileId ?? null,
+    })
+
+    set((s) => ({
+      materials: s.materials.map((m) =>
+        m.id === materialId ? { ...m, quantity_available: qty, opening_stock_recorded: true } : m
+      ),
+    }))
+  },
+
   deleteMaterial: async (materialId) => {
     // Guard: reject if any non-retired equipment assets exist
     const { count } = await supabase
