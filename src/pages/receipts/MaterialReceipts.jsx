@@ -739,7 +739,7 @@ export default function MaterialReceipts() {
                         <button
                           onClick={() => setDetailItem(r)}
                           title="View details"
-                          className="rounded-lg p-1.5 text-brand-600 hover:bg-brand-50"
+                          className="icon-btn text-brand-600 hover:bg-brand-50"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
@@ -749,7 +749,7 @@ export default function MaterialReceipts() {
                               disabled={acting === r.id}
                               onClick={() => setConfirmTarget(r)}
                               title="Receive"
-                              className="rounded-lg p-1.5 text-green-700 hover:bg-green-50 disabled:opacity-50"
+                              className="icon-btn text-green-700 hover:bg-green-50 disabled:opacity-50"
                             >
                               <CheckCircle className="h-4 w-4" />
                             </button>
@@ -757,7 +757,7 @@ export default function MaterialReceipts() {
                               disabled={acting === r.id}
                               onClick={() => setRejectTarget(r)}
                               title="Reject"
-                              className="rounded-lg p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                              className="icon-btn text-red-600 hover:bg-red-50 disabled:opacity-50"
                             >
                               <XCircle className="h-4 w-4" />
                             </button>

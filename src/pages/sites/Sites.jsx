@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, HardHat, Warehouse } from 'lucide-react'
+import { Plus, HardHat, Warehouse, CheckCircle, Clock, PauseCircle, PlayCircle } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
 import PageHeader from '@/components/ui/PageHeader'
@@ -126,6 +126,15 @@ export default function Sites() {
     planning: 'badge-yellow',
     on_hold: 'badge-gray',
   }
+  const statusIcon = {
+    active:    PlayCircle,
+    completed: CheckCircle,
+    planning:  Clock,
+    on_hold:   PauseCircle,
+  }
+  const statusLabel = {
+    active: 'Active', completed: 'Completed', planning: 'Planning', on_hold: 'On hold',
+  }
 
   const warehouses       = sites.filter((s) => s.type === 'warehouse')
   const constructionSites = sites.filter((s) => s.type !== 'warehouse')
@@ -138,7 +147,12 @@ export default function Sites() {
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <p className="font-semibold text-gray-900 leading-tight">{site.name}</p>
-        <span className={statusClass[site.status] ?? 'badge-gray'}>{site.status?.replace('_', ' ')}</span>
+        {(() => { const SI = statusIcon[site.status]; return (
+          <span className={`${statusClass[site.status] ?? 'badge-gray'} gap-1`}>
+            {SI && <SI className="h-3 w-3" />}
+            {statusLabel[site.status] ?? site.status?.replace('_', ' ')}
+          </span>
+        ); })()}
       </div>
       {site.location && <p className="text-xs text-gray-500 mb-3">{site.location}</p>}
       <div className="flex justify-between text-xs text-gray-400">

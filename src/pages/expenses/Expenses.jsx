@@ -288,7 +288,7 @@ export default function Expenses() {
                           {canDelete && (
                             <button
                               onClick={() => handleDelete(e.id)}
-                              className="text-gray-300 hover:text-red-500 transition-colors"
+                              className="icon-btn text-gray-300 hover:text-red-500"
                               title="Delete"
                             >
                               <Trash2 className="h-4 w-4" />

@@ -217,7 +217,7 @@ export default function Team() {
                     </div>
                     <button
                       onClick={() => handleRemove(a.id)}
-                      className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                      className="icon-btn text-gray-400 hover:bg-red-50 hover:text-red-500"
                       title="Remove assignment"
                     >
                       <Trash2 className="h-4 w-4" />

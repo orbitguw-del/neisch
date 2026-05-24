@@ -465,30 +465,30 @@ export default function EquipmentAssets() {
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1.5">
                         <button onClick={() => setDetailAsset(asset)} title="View details"
-                          className="rounded-lg p-1.5 text-brand-600 hover:bg-brand-50">
+                          className="icon-btn text-brand-600 hover:bg-brand-50">
                           <Eye className="h-4 w-4" />
                         </button>
                         {asset.status === 'available' && canManage && (
                           <button onClick={() => setAssignTarget(asset)} title="Assign"
-                            className="rounded-lg p-1.5 text-blue-700 hover:bg-blue-50">
+                            className="icon-btn text-blue-700 hover:bg-blue-50">
                             <UserCheck className="h-4 w-4" />
                           </button>
                         )}
                         {asset.status === 'in_use' && canManage && (
                           <button onClick={() => setReturnTarget(asset)} title="Return"
-                            className="rounded-lg p-1.5 text-green-700 hover:bg-green-50">
+                            className="icon-btn text-green-700 hover:bg-green-50">
                             <RotateCcw className="h-4 w-4" />
                           </button>
                         )}
                         {['available', 'in_use'].includes(asset.status) && canManage && (
                           <button onClick={() => setMaintTarget(asset)} title="Send to service"
-                            className="rounded-lg p-1.5 text-yellow-700 hover:bg-yellow-50">
+                            className="icon-btn text-yellow-700 hover:bg-yellow-50">
                             <Settings className="h-4 w-4" />
                           </button>
                         )}
                         {asset.status !== 'retired' && canRetire && (
                           <button onClick={() => setRetireTarget(asset)} title="Retire"
-                            className="rounded-lg p-1.5 text-red-600 hover:bg-red-50">
+                            className="icon-btn text-red-600 hover:bg-red-50">
                             <XCircle className="h-4 w-4" />
                           </button>
                         )}

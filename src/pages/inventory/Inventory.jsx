@@ -631,7 +631,7 @@ export default function Inventory() {
           const label = id === 'all' ? 'All Sites' : (sites.find((s) => s.id === id)?.name ?? id)
           return (
             <button key={id} onClick={() => setActiveSiteId(id)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors min-h-[44px] ${
                 activeSiteId === id ? 'bg-brand-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -645,7 +645,7 @@ export default function Inventory() {
       <div className="mb-4 flex gap-2">
         {[['all', 'All'], ['consumable', 'Consumables'], ['equipment', 'Equipment']].map(([val, label]) => (
           <button key={val} onClick={() => setActiveCategory(val)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-full px-3 py-2 text-xs font-medium transition-colors min-h-[44px] ${
               activeCategory === val ? 'bg-brand-600 text-white' : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-50'
             }`}
           >
@@ -711,34 +711,34 @@ export default function Inventory() {
                       {/* Consume — site manager only, consumables only */}
                       {canConsume && m.category === 'consumable' && (
                         <button onClick={() => setRecordTarget({ material: m, type: 'consumption' })}
-                          title="Record consumption" className="rounded p-1 text-red-500 hover:bg-red-50">
+                          title="Record consumption" className="flex h-10 w-10 items-center justify-center rounded-lg text-red-500 hover:bg-red-50">
                           <ArrowUpCircle className="h-4 w-4" />
                         </button>
                       )}
                       {/* Allocate to work — consumables only */}
                       {canAllocate && m.category === 'consumable' && (
                         <button onClick={() => setAllocTarget(m)}
-                          title="Allocate to work" className="rounded p-1 text-brand-600 hover:bg-brand-50">
+                          title="Allocate to work" className="flex h-10 w-10 items-center justify-center rounded-lg text-brand-600 hover:bg-brand-50">
                           <Hammer className="h-4 w-4" />
                         </button>
                       )}
                       {/* Adjust */}
                       {canAdjust && (
                         <button onClick={() => setRecordTarget({ material: m, type: 'adjustment' })}
-                          title="Stock adjustment" className="rounded p-1 text-yellow-600 hover:bg-yellow-50">
+                          title="Stock adjustment" className="flex h-10 w-10 items-center justify-center rounded-lg text-yellow-600 hover:bg-yellow-50">
                           <SlidersHorizontal className="h-4 w-4" />
                         </button>
                       )}
                       {/* Edit details */}
                       {canEdit && (
                         <button onClick={() => { setEditMat(m); setEditError(null) }}
-                          title="Edit material details" className="rounded p-1 text-blue-500 hover:bg-blue-50">
+                          title="Edit material details" className="flex h-10 w-10 items-center justify-center rounded-lg text-blue-500 hover:bg-blue-50">
                           <Pencil className="h-4 w-4" />
                         </button>
                       )}
                       {/* Ledger */}
                       <button onClick={() => openLedger(m)}
-                        title="View ledger" className="rounded p-1 text-gray-500 hover:bg-gray-100">
+                        title="View ledger" className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100">
                         <History className="h-4 w-4" />
                       </button>
                     </div>

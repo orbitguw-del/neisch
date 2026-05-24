@@ -48,7 +48,20 @@ function BudgetHealthWidget({ tenantId, sites, onNavigate }) {
       })
   }, [tenantId, sites])
 
-  if (!rows.length) return null
+  if (!rows.length) return (
+    <div className="card px-5 py-4 flex items-center gap-3">
+      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-brand-50">
+        <Target className="h-4 w-4 text-brand-600" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-gray-800">Budget Health</p>
+        <p className="text-xs text-gray-500 mt-0.5">Set Budget Qty + Rate on any material in Inventory to track spend vs budget here.</p>
+      </div>
+      <button onClick={onNavigate} className="flex-shrink-0 text-xs font-medium text-brand-600 hover:underline">
+        Set up →
+      </button>
+    </div>
+  )
 
   return (
     <div className="card overflow-hidden">

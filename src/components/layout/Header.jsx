@@ -39,7 +39,7 @@ export default function Header({ onMenuClick }) {
     <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
       <button
         onClick={onMenuClick}
-        className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 lg:hidden"
+        className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 lg:hidden"
         aria-label="Open menu"
       >
         <Menu className="h-5 w-5" />
@@ -49,7 +49,7 @@ export default function Header({ onMenuClick }) {
       <div className="flex items-center gap-3">
         {/* Notifications — coming soon */}
         <button
-          className="relative rounded-lg p-2 text-gray-400 cursor-default opacity-50"
+          className="relative flex h-11 w-11 items-center justify-center rounded-lg text-gray-400 cursor-default opacity-50"
           title="Notifications — coming soon"
           disabled
         >
@@ -60,7 +60,7 @@ export default function Header({ onMenuClick }) {
         <div className="relative">
           <button
             onClick={() => setOpen((o) => !o)}
-            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+            className="flex h-11 items-center gap-2 rounded-lg px-2 text-sm text-gray-700 hover:bg-gray-100"
           >
             <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold text-white ${avatarColor}`}>
               {initials(name)}
