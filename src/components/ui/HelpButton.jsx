@@ -32,7 +32,7 @@ function getScreenName(pathname) {
 export default function HelpButton() {
   const location   = useLocation()
   const screenName = getScreenName(location.pathname)
-  const [status, setStatus] = useState('idle') // idle | capturing | sent | downloaded | error
+  const [status, setStatus] = useState('idle') // idle | capturing | sent | clipboard | downloaded | error
 
   async function handleTap() {
     if (status !== 'idle') return
@@ -50,6 +50,8 @@ export default function HelpButton() {
 
     if (result === 'shared') {
       setStatus('sent')
+    } else if (result === 'clipboard') {
+      setStatus('clipboard')
     } else if (result === 'downloaded') {
       setStatus('downloaded')
     } else {
@@ -77,6 +79,23 @@ export default function HelpButton() {
         className="fixed bottom-20 right-4 z-50 flex items-center gap-2
                    rounded-full bg-green-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg">
         ✓ Sent to Karun
+      </div>
+    )
+  }
+
+  if (status === 'clipboard') {
+    return (
+      <div id="help-button-root"
+        className="fixed bottom-20 right-4 z-50 max-w-[270px] rounded-2xl
+                   bg-white px-4 py-3 text-sm shadow-xl border border-gray-200">
+        <p className="font-semibold text-gray-900 mb-1">Screenshot copied ✓</p>
+        <p className="text-xs text-gray-500 mb-3">
+          WhatsApp is open — click the chat box and press <strong>Ctrl+V</strong> to paste the screenshot, then send.
+        </p>
+        <button onClick={() => setStatus('idle')}
+          className="w-full rounded-lg bg-green-50 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100">
+          Got it
+        </button>
       </div>
     )
   }

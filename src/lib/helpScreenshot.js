@@ -2,82 +2,79 @@
  * helpScreenshot.js
  *
  * Captures the current screen and sends it via:
- *   1. Web Share API (Android/iOS) → native share sheet → user picks WhatsApp / Email
- *   2. Desktop → opens WhatsApp Web IMMEDIATELY (sync, no popup block)
- *              → then downloads the screenshot so the user can attach it manually
- *   3. Fallback → downloads screenshot + opens mailto:
+ *   1. Web Share API (Android/iOS) → native share sheet → screenshot attached
+ *   2. Desktop (Chrome/Edge) → copies screenshot to clipboard + opens WhatsApp Web
+ *                              → user presses Ctrl+V to paste image directly in chat
+ *   3. Fallback (clipboard unavailable) → downloads file + opens WhatsApp Web
  *
- * KEY FIX: On desktop, window.open() must fire synchronously inside the
- * original click handler — BEFORE any await — otherwise browsers block
- * it as an unsolicited popup. We achieve this by opening a blank window
- * early and setting its location after the async capture.
+ * KEY: window.open() fires synchronously BEFORE any await to avoid popup blocking.
  */
 
 const KARUN_WHATSAPP = '917002500154'
 const SUPPORT_EMAIL  = 'help@storeyinfra.com'
 
 /**
- * Main entry point — called when Help button is tapped.
- * @param {string} screenName  e.g. "Inventory", "Expenses", "Reports"
- * @param {string} [note]      optional extra context from user
- * @param {Window|null} [preOpenedWindow]  window opened synchronously by caller (desktop only)
- * @returns {Promise<'shared'|'downloaded'|'error'>}
+ * Main entry point.
+ * @param {string} screenName
+ * @param {string} [note]
+ * @param {Window|null} [preOpenedWindow]  blank window opened synchronously by caller
+ * @returns {Promise<'shared'|'clipboard'|'downloaded'|'error'>}
  */
 export async function sendHelpScreenshot(screenName = 'App', note = '', preOpenedWindow = null) {
   const message  = buildMessage(screenName, note)
   const filename = `storey-help-${screenName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.png`
 
   let blob = null
-
   try {
     blob = await captureScreen()
   } catch (err) {
     console.warn('Screenshot capture failed:', err)
-    // If we already opened a window on desktop, send it to WhatsApp text
-    if (preOpenedWindow && !preOpenedWindow.closed) {
-      preOpenedWindow.location.href = whatsAppUrl(message)
-    } else {
-      openWhatsAppText(message)
-    }
+    navigateWindow(preOpenedWindow, whatsAppUrl(message))
     return 'error'
   }
 
-  const file = new File([blob], filename, { type: 'image/png' })
-
-  // ── Path 1: Web Share API with file (Android + iOS Safari 15+) ──────────
+  // ── Path 1: Web Share API — Android / iOS ────────────────────────────────
   if (canShareFiles()) {
+    const file = new File([blob], filename, { type: 'image/png' })
     try {
-      await navigator.share({
-        title: 'Storey Help Request',
-        text:  message,
-        files: [file],
-      })
+      await navigator.share({ title: 'Storey Help Request', text: message, files: [file] })
       return 'shared'
     } catch (err) {
       if (err.name === 'AbortError') return 'error'
-      // Share failed — fall through to desktop path
+      // Share failed — fall through
     }
   }
 
-  // ── Path 2: Desktop — download image + navigate pre-opened WhatsApp window ─
-  downloadBlob(blob, filename)
+  // ── Path 2: Desktop — copy to clipboard + open WhatsApp Web ─────────────
+  // WhatsApp Web supports Ctrl+V image paste natively.
+  const copied = await copyToClipboard(blob)
 
-  if (preOpenedWindow && !preOpenedWindow.closed) {
-    // Window was already opened synchronously — just send it to WhatsApp now
-    preOpenedWindow.location.href = whatsAppUrl(
-      message + '\n\n_(screenshot saved to your Downloads folder)_'
-    )
-  } else {
-    // Fallback: open WhatsApp (may be blocked on some browsers — but we tried)
-    openWhatsAppText(message, true)
+  const waText = copied
+    ? message + '\n\n_(screenshot copied — paste with Ctrl+V)_'
+    : message + '\n\n_(screenshot saved to Downloads — attach manually)_'
+
+  if (copied) {
+    // Clipboard succeeded — no download needed
+    navigateWindow(preOpenedWindow, whatsAppUrl(waText))
+    return 'clipboard'
   }
 
+  // ── Path 3: Clipboard failed — fall back to file download ───────────────
+  downloadBlob(blob, filename)
+  navigateWindow(preOpenedWindow, whatsAppUrl(waText))
   return 'downloaded'
 }
 
 /**
- * Fallback: email only (no screenshot — for email clients that can't attach)
+ * Open a blank window synchronously inside the click handler (before any await).
+ * Returns null on mobile — Web Share API or whatsapp:// handles it natively.
  */
+export function openWhatsAppWindowEarly() {
+  if (canShareFiles()) return null
+  if (isMobile())      return null
+  return window.open('about:blank', '_blank', 'noopener,noreferrer')
+}
+
 export function sendHelpEmail(screenName = 'App', note = '') {
   const subject = encodeURIComponent(`Storey Help — ${screenName}`)
   const body    = encodeURIComponent(
@@ -88,36 +85,20 @@ export function sendHelpEmail(screenName = 'App', note = '') {
   window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`
 }
 
-/**
- * Open a blank window synchronously — must be called inside a click handler
- * (no awaits before it). Returns the window reference so we can navigate it
- * later after the async screenshot is ready.
- * Returns null on mobile / when Web Share API is available (not needed there).
- */
-export function openWhatsAppWindowEarly() {
-  if (canShareFiles()) return null      // Mobile: Web Share API will handle it
-  if (isMobile())      return null      // Mobile without Share API — use whatsapp:// deep link directly
-  return window.open('about:blank', '_blank', 'noopener,noreferrer')
-}
-
 // ── Internals ──────────────────────────────────────────────────────────────
 
 async function captureScreen() {
   const html2canvas = (await import('html2canvas')).default
-
-  // Hide the help button itself so it doesn't appear in the screenshot
   const helpBtn = document.getElementById('help-button-root')
   if (helpBtn) helpBtn.style.visibility = 'hidden'
-
   try {
     const canvas = await html2canvas(document.body, {
       useCORS:        true,
       allowTaint:     true,
-      scale:          1,            // 1× = smaller file, faster
+      scale:          1,
       logging:        false,
       ignoreElements: (el) =>
-        el.id === 'help-button-root' ||
-        el.classList?.contains('no-screenshot'),
+        el.id === 'help-button-root' || el.classList?.contains('no-screenshot'),
     })
     return await canvasToBlob(canvas)
   } finally {
@@ -131,6 +112,31 @@ function canvasToBlob(canvas) {
   })
 }
 
+/**
+ * Copy image blob to system clipboard.
+ * Works in Chrome 76+, Edge 79+. Returns true if successful.
+ */
+async function copyToClipboard(blob) {
+  try {
+    if (!navigator.clipboard?.write) return false
+    await navigator.clipboard.write([
+      new ClipboardItem({ 'image/png': blob })
+    ])
+    return true
+  } catch (err) {
+    console.warn('Clipboard write failed:', err)
+    return false
+  }
+}
+
+function navigateWindow(win, url) {
+  if (win && !win.closed) {
+    win.location.href = url
+  } else {
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+}
+
 function canShareFiles() {
   try {
     return (
@@ -138,9 +144,7 @@ function canShareFiles() {
       typeof navigator.canShare === 'function' &&
       navigator.canShare({ files: [new File([''], 'test.png', { type: 'image/png' })] })
     )
-  } catch {
-    return false
-  }
+  } catch { return false }
 }
 
 function isMobile() {
@@ -168,9 +172,4 @@ function buildMessage(screenName, note) {
     note ? `\nDetails: ${note}` : '',
     `\nSee screenshot attached.`,
   ].filter(Boolean).join('')
-}
-
-function openWhatsAppText(message, withAttachNote = false) {
-  const text = message + (withAttachNote ? '\n\n_(screenshot saved to your Downloads folder)_' : '')
-  window.open(whatsAppUrl(text), '_blank', 'noopener,noreferrer')
 }
