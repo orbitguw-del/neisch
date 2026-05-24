@@ -318,6 +318,28 @@ function LedgerModal({ material, transactions, loading }) {
   )
 }
 
+// ─── Budget progress chip ─────────────────────────────────────────────────────
+function BudgetChip({ budgetQty, consumedQty, unit }) {
+  if (!budgetQty) return null
+  const budget   = Number(budgetQty)
+  const consumed = Number(consumedQty ?? 0)
+  const pct      = budget > 0 ? Math.round((consumed / budget) * 100) : 0
+  const clampPct = Math.min(pct, 100)
+  const barColor = pct > 100 ? 'bg-red-500' : pct > 75 ? 'bg-amber-400' : 'bg-green-500'
+  const textColor = pct > 100 ? 'text-red-600 font-semibold' : pct > 75 ? 'text-amber-600' : 'text-gray-500'
+  return (
+    <div className="min-w-[90px] space-y-0.5">
+      <div className="flex items-center justify-between gap-1">
+        <span className="text-xs text-gray-500 truncate">{consumed}/{budget} {unit}</span>
+        <span className={`text-xs ${textColor}`}>{pct}%</span>
+      </div>
+      <div className="h-1.5 w-full rounded-full bg-gray-200">
+        <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${clampPct}%` }} />
+      </div>
+    </div>
+  )
+}
+
 // ─── Edit Material Form ───────────────────────────────────────────────────────
 function EditMaterialForm({ material, onSubmit, loading }) {
   const [form, setForm] = useState({
@@ -326,6 +348,8 @@ function EditMaterialForm({ material, onSubmit, loading }) {
     brand:             material.brand             ?? '',
     work_type:         material.work_type         ?? '',
     supplier:          material.supplier          ?? '',
+    budget_qty:        material.budget_qty        ?? '',
+    budget_rate:       material.budget_rate       ?? '',
   })
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
@@ -360,6 +384,29 @@ function EditMaterialForm({ material, onSubmit, loading }) {
         <label className="label">Supplier</label>
         <input className="input" value={form.supplier} onChange={set('supplier')} placeholder="Supplier name" />
       </div>
+
+      {/* ── Budget section ─────────────────────────────────────── */}
+      <div className="border-t border-gray-100 pt-3">
+        <p className="mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Project Budget</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="label">Budget qty ({material.unit})</label>
+            <input className="input" type="number" min="0" step="any" value={form.budget_qty}
+              onChange={set('budget_qty')} placeholder="e.g. 500" />
+          </div>
+          <div>
+            <label className="label">Budget rate (₹/{material.unit})</label>
+            <input className="input" type="number" min="0" step="any" value={form.budget_rate}
+              onChange={set('budget_rate')} placeholder="e.g. 385" />
+          </div>
+        </div>
+        {form.budget_qty && form.budget_rate && (
+          <p className="mt-1.5 text-xs text-gray-500">
+            Total budget: <strong className="text-gray-700">{formatINR(Number(form.budget_qty) * Number(form.budget_rate))}</strong>
+          </p>
+        )}
+      </div>
+
       <div className="flex justify-end pt-1">
         <button type="submit" disabled={loading} className="btn-primary">
           {loading ? 'Saving…' : 'Save Changes'}
@@ -419,7 +466,8 @@ export default function Inventory() {
   const loadMaterials = async () => {
     if (!tenantId) return
     setMatLoading(true)
-    const { data } = await supabase.from('materials').select('*').order('name')
+    // Query the budget view — includes all materials columns + consumed_qty, pct_consumed, etc.
+    const { data } = await supabase.from('site_material_budget_v').select('*').order('name')
     if (data) {
       const siteIds = [...new Set(data.map((m) => m.site_id).filter(Boolean))]
       let siteMap = {}
@@ -457,11 +505,13 @@ export default function Inventory() {
     setEditSaving(true); setEditError(null)
     try {
       const { error: e } = await supabase.from('materials').update({
-        unit_cost:        form.unit_cost        ? Number(form.unit_cost)       : null,
-        quantity_minimum: form.quantity_minimum ? Number(form.quantity_minimum): null,
+        unit_cost:        form.unit_cost        ? Number(form.unit_cost)        : null,
+        quantity_minimum: form.quantity_minimum ? Number(form.quantity_minimum) : null,
         brand:            form.brand.trim()     || null,
         work_type:        form.work_type        || null,
         supplier:         form.supplier.trim()  || null,
+        budget_qty:       form.budget_qty       ? Number(form.budget_qty)       : null,
+        budget_rate:      form.budget_rate      ? Number(form.budget_rate)      : null,
         updated_at:       new Date().toISOString(),
       }).eq('id', editMat.id)
       if (e) throw e
@@ -621,7 +671,7 @@ export default function Inventory() {
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
-                {['Material', 'Category', 'Site', 'Unit', 'Available', 'Reorder', 'Unit cost', 'Status', 'Actions'].map((h) => (
+                {['Material', 'Category', 'Site', 'Unit', 'Available', 'Reorder', 'Unit cost', 'Budget', 'Status', 'Actions'].map((h) => (
                   <th key={h} className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -645,6 +695,9 @@ export default function Inventory() {
                   <td className="px-3 py-3 text-sm font-semibold text-gray-900">{m.quantity_available ?? '—'}</td>
                   <td className="px-3 py-3 text-sm text-gray-600">{m.category === 'consumable' ? (m.quantity_minimum ?? '—') : '—'}</td>
                   <td className="px-3 py-3 text-sm text-gray-600">{m.unit_cost ? formatINR(m.unit_cost) : '—'}</td>
+                  <td className="px-3 py-3">
+                    <BudgetChip budgetQty={m.budget_qty} consumedQty={m.consumed_qty} unit={m.unit} />
+                  </td>
                   <td className="px-3 py-3">
                     {m.category === 'equipment'
                       ? <span className="badge-blue">Equipment</span>

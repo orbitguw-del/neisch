@@ -1,0 +1,21 @@
+*Storey v1.2.0 is live on Play Store.*
+
+Big update this week. Here is what changed:
+
+*Reports, rebuilt from scratch*
+Stock levels across all sites, material consumption by work type, tasks with overdue tracking — all on one screen.
+
+*Excel export on every report*
+Attendance, materials, budget vs actual, site report — download any of them as an Excel file in one tap.
+
+*WhatsApp share*
+Open any report and send a summary straight to your client or owner. No screenshots, no typing.
+
+*Material presets and brands*
+60+ ready-made materials to pick from. Add brand name and work type (civil, painting, electrical, etc.) so your reports are always clean.
+
+Update on Play Store and let me know how it runs on your site.
+
+— Karun
++91 98640 66898
+storeyinfra.com

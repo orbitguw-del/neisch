@@ -183,6 +183,123 @@ const useReportsStore = create((set, get) => ({
     set((s) => ({ budgetLines: s.budgetLines.filter((b) => b.id !== id) }))
   },
 
+  // ─── Project budget report (from site_material_budget_v) ────────────────
+  projectBudgetData:    null,
+  projectBudgetLoading: false,
+
+  fetchProjectBudget: async (tenantId, siteId) => {
+    set({ projectBudgetLoading: true, projectBudgetData: null })
+
+    const { data } = await supabase
+      .from('site_material_budget_v')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('site_id', siteId)
+      .order('name')
+
+    const rows = (data ?? []).filter((m) => m.budget_qty != null)
+
+    const totalBudgetAmt  = rows.reduce((s, r) => s + Number(r.budget_amount  ?? 0), 0)
+    const totalActualCost = rows.reduce((s, r) => s + Number(r.actual_cost    ?? 0), 0)
+    const totalConsumedQty= rows.reduce((s, r) => s + Number(r.consumed_qty   ?? 0), 0)
+    const overBudgetCount = rows.filter((r) => Number(r.pct_consumed ?? 0) > 100).length
+
+    set({
+      projectBudgetData: {
+        siteId,
+        rows,
+        totalBudgetAmt,
+        totalActualCost,
+        totalConsumedQty,
+        overBudgetCount,
+        costVariance: totalBudgetAmt - totalActualCost,
+        // % of total budget amount spent
+        pctSpent: totalBudgetAmt > 0
+          ? Math.round((totalActualCost / totalBudgetAmt) * 100)
+          : 0,
+      },
+      projectBudgetLoading: false,
+    })
+  },
+
+  // ─── Monthly trend: planned (budget_lines) vs actual (material_transactions)
+  trendData:    null,
+  trendLoading: false,
+
+  fetchMonthlyTrend: async (tenantId, siteId, materialId, year) => {
+    set({ trendLoading: true, trendData: null })
+
+    // Build 12 month strings for the year
+    const months = Array.from({ length: 12 }, (_, i) =>
+      `${year}-${String(i + 1).padStart(2, '0')}`
+    )
+    const startTs = `${year}-01-01T00:00:00`
+    const endTs   = `${year}-12-31T23:59:59`
+
+    // Planned — from budget_lines (period_month based)
+    let planQ = supabase
+      .from('budget_lines')
+      .select('period_month, budgeted_quantity, budgeted_cost, material_id')
+      .eq('tenant_id', tenantId)
+      .eq('site_id', siteId)
+      .in('period_month', months)
+    if (materialId) planQ = planQ.eq('material_id', materialId)
+
+    // Actual consumed — from material_transactions
+    let actualQ = supabase
+      .from('material_transactions')
+      .select('created_at, quantity, material_id')
+      .eq('site_id', siteId)
+      .eq('txn_type', 'consumption')
+      .gte('created_at', startTs)
+      .lte('created_at', endTs)
+    if (materialId) actualQ = actualQ.eq('material_id', materialId)
+
+    // Actual cost — from material_receipts (received, within the year)
+    let costQ = supabase
+      .from('material_receipts')
+      .select('created_at, quantity, unit_cost, material_id')
+      .eq('site_id', siteId)
+      .eq('status', 'received')
+      .gte('created_at', startTs)
+      .lte('created_at', endTs)
+    if (materialId) costQ = costQ.eq('material_id', materialId)
+
+    const [{ data: planned }, { data: actual }, { data: costs }] = await Promise.all([
+      planQ, actualQ, costQ,
+    ])
+
+    // Aggregate by month
+    const byMonth = {}
+    months.forEach((m) => {
+      byMonth[m] = { month: m, planned_qty: 0, planned_cost: 0, actual_qty: 0, actual_cost: 0 }
+    })
+
+    ;(planned ?? []).forEach((p) => {
+      if (byMonth[p.period_month]) {
+        byMonth[p.period_month].planned_qty  += Number(p.budgeted_quantity)
+        byMonth[p.period_month].planned_cost += Number(p.budgeted_cost)
+      }
+    })
+
+    ;(actual ?? []).forEach((a) => {
+      const m = a.created_at.slice(0, 7) // 'YYYY-MM'
+      if (byMonth[m]) byMonth[m].actual_qty += Number(a.quantity)
+    })
+
+    ;(costs ?? []).forEach((c) => {
+      const m = c.created_at.slice(0, 7)
+      if (byMonth[m]) byMonth[m].actual_cost += Number(c.quantity) * Number(c.unit_cost || 0)
+    })
+
+    const chartData = months.map((m) => ({
+      ...byMonth[m],
+      label: new Date(m + '-01').toLocaleString('en-IN', { month: 'short' }),
+    }))
+
+    set({ trendData: { year, siteId, materialId, chartData }, trendLoading: false })
+  },
+
   // ─── Attendance + payroll report ─────────────────────────────────────────
   attendanceData:    null,
   attendanceLoading: false,

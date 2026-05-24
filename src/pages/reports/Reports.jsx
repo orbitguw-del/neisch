@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react'
 import {
   BarChart3, HardHat, Package, TrendingUp, TrendingDown,
-  CalendarDays, Plus, Trash2, Download,
+  CalendarDays, Plus, Trash2, Download, Target,
 } from 'lucide-react'
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ComposedChart, Line, Cell,
+} from 'recharts'
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
@@ -349,56 +353,100 @@ function BudgetLineForm({ siteId, tenantId, month, onSuccess, onClose }) {
   )
 }
 
+// ─── Donut chart (inline SVG, zero dependency) ───────────────────────────────
+
+function DonutChart({ pct, label, color = '#B85042' }) {
+  const r = 52, cx = 60, cy = 60
+  const circ = 2 * Math.PI * r
+  const fill = Math.min(pct, 100)
+  const dash = (fill / 100) * circ
+  const ringColor = pct > 100 ? '#dc2626' : pct > 90 ? '#f59e0b' : color
+  return (
+    <div className="flex flex-col items-center">
+      <svg width={120} height={120} viewBox="0 0 120 120">
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e5e7eb" strokeWidth={12} />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={ringColor} strokeWidth={12}
+          strokeDasharray={`${dash} ${circ}`}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${cx} ${cy})`}
+        />
+        <text x={cx} y={cy - 6} textAnchor="middle" fontSize={20} fontWeight={700}
+          fill={pct > 100 ? '#dc2626' : '#111827'}>{pct}%</text>
+        <text x={cx} y={cy + 12} textAnchor="middle" fontSize={10} fill="#6b7280">{label}</text>
+      </svg>
+    </div>
+  )
+}
+
 // ─── Tab: Budget vs Actual ────────────────────────────────────────────────────
 
 function BudgetTab({ tenantId, sites }) {
   const {
-    budgetData, budgetLoading, fetchBudgetReport,
-    budgetLines, budgetLinesLoading, fetchBudgetLines, deleteBudgetLine,
+    projectBudgetData, projectBudgetLoading, fetchProjectBudget,
+    trendData, trendLoading, fetchMonthlyTrend,
+    budgetLines, fetchBudgetLines, deleteBudgetLine,
   } = useReportsStore()
-  const [month,  setMonth]  = useState(currentMonth)
-  const [siteId, setSiteId] = useState(sites[0]?.id ?? '')
-  const [modalOpen, setModalOpen] = useState(false)
+  const { materials, fetchMaterials } = useMaterialStore()
+
+  const [siteId,     setSiteId]     = useState(sites[0]?.id ?? '')
+  const [year,       setYear]       = useState(String(new Date().getFullYear()))
+  const [materialId, setMaterialId] = useState('')   // '' = all materials
+  const [modalOpen,  setModalOpen]  = useState(false)
+  const [month,      setMonth]      = useState(currentMonth)  // for Add Budget Line modal
   const months = monthOptions()
 
-  useEffect(() => {
-    if (sites.length > 0 && !siteId) setSiteId(sites[0].id)
-  }, [sites])
+  const currentYear = new Date().getFullYear()
+  const yearOptions = [currentYear - 1, currentYear, currentYear + 1].map(String)
+
+  useEffect(() => { if (sites.length > 0 && !siteId) setSiteId(sites[0].id) }, [sites])
 
   useEffect(() => {
     if (!tenantId || !siteId) return
-    fetchBudgetReport(tenantId, siteId, month)
+    fetchProjectBudget(tenantId, siteId)
     fetchBudgetLines(tenantId, siteId, month)
-  }, [tenantId, siteId, month])
+    fetchMaterials(siteId)
+  }, [tenantId, siteId])
 
-  const handleDelete = async (id) => {
+  useEffect(() => {
+    if (!tenantId || !siteId) return
+    fetchMonthlyTrend(tenantId, siteId, materialId || null, Number(year))
+  }, [tenantId, siteId, materialId, year])
+
+  const handleDeleteBL = async (id) => {
     await deleteBudgetLine(id)
-    fetchBudgetReport(tenantId, siteId, month)
+    fetchBudgetLines(tenantId, siteId, month)
   }
 
   const varClass = (v) => v >= 0 ? 'text-green-600' : 'text-red-600'
   const varIcon  = (v) => v >= 0
     ? <TrendingDown className="h-3.5 w-3.5 inline mr-0.5" />
     : <TrendingUp   className="h-3.5 w-3.5 inline mr-0.5" />
+  const siteName = sites.find((s) => s.id === siteId)?.name ?? '—'
 
-  const siteName = sites.find((s) => s.id === siteId)?.name ?? 'Unknown site'
+  // Bar chart data — sorted worst first (highest % consumed)
+  const barData = (projectBudgetData?.rows ?? [])
+    .filter((r) => r.budget_qty > 0)
+    .sort((a, b) => Number(b.pct_consumed ?? 0) - Number(a.pct_consumed ?? 0))
+    .map((r) => ({
+      name:         r.name.length > 18 ? r.name.slice(0, 17) + '…' : r.name,
+      fullName:     r.name,
+      budget_qty:   Number(r.budget_qty),
+      consumed_qty: Number(r.consumed_qty ?? 0),
+      unit:         r.unit,
+      pct:          Number(r.pct_consumed ?? 0),
+    }))
+
+  // Bar fill by consumption %
+  const barFill = (pct) => pct > 100 ? '#dc2626' : pct > 75 ? '#f59e0b' : '#B85042'
 
   return (
     <div className="space-y-6">
-      <PrintHeader
-        title={`Budget vs Actual — ${monthLabel(month)}`}
-        subtitle={`Site: ${siteName}`}
-      />
+      <PrintHeader title={`Budget vs Actual — ${siteName}`} subtitle={`Project total · ${year}`} />
 
-      {/* Filters */}
+      {/* ── Filters ──────────────────────────────────────────────────────── */}
       <div className="no-print flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-gray-400" />
-          <select className="input py-1.5 pr-8 text-sm" value={month} onChange={(e) => setMonth(e.target.value)}>
-            {months.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-          </select>
-        </div>
-        <select className="input py-1.5 pr-8 text-sm" value={siteId} onChange={(e) => setSiteId(e.target.value)}>
+        <select className="input py-1.5 pr-8 text-sm" value={siteId}
+          onChange={(e) => setSiteId(e.target.value)}>
           <option value="">Select site</option>
           {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
@@ -406,120 +454,239 @@ function BudgetTab({ tenantId, sites }) {
           <PrintButton label="Print" />
           <button
             onClick={() => {
-              if (!budgetData) return
+              if (!projectBudgetData) return
               const rows = [
-                ['Material', 'Budgeted qty', 'Unit', 'Budgeted cost', 'Actual cost', 'Variance', 'Variance %'],
-                ...budgetData.items.map((i) => [
-                  i.material, i.budgeted_qty, i.unit, i.budgeted_cost, i.actual, i.variance, `${i.variance_pct}%`,
+                ['Material', 'Unit', 'Budget Qty', 'Consumed', '% Used', 'Budget ₹', 'Spent ₹', 'Variance ₹'],
+                ...projectBudgetData.rows.map((r) => [
+                  r.name, r.unit,
+                  r.budget_qty, Number(r.consumed_qty ?? 0).toFixed(1),
+                  `${r.pct_consumed ?? 0}%`,
+                  r.budget_amount ?? 0, r.actual_cost ?? 0, r.cost_variance ?? 0,
                 ]),
-                ['Total', '', '', budgetData.totalBudgeted, budgetData.totalActual, budgetData.totalVariance, ''],
               ]
-              downloadSheet(rows, 'Budget vs Actual', `budget-vs-actual-${month}-${siteName.replace(/\s+/g, '-')}`)
+              downloadSheet(rows, 'Budget vs Actual', `budget-${siteName.replace(/\s+/g, '-')}`)
             }}
-            disabled={!budgetData}
+            disabled={!projectBudgetData}
             className="btn-secondary flex items-center gap-1.5 text-sm"
           >
             <Download className="h-4 w-4" /> Export XLS
           </button>
-          <button
-            onClick={() => setModalOpen(true)}
-            disabled={!siteId}
-            className="btn-primary"
-          >
-            <Plus className="h-4 w-4" /> Add budget line
+          <button onClick={() => setModalOpen(true)} disabled={!siteId} className="btn-primary">
+            <Plus className="h-4 w-4" /> Set monthly target
           </button>
         </div>
       </div>
 
-      {/* Summary cards */}
-      {budgetData && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard label="Budgeted"  value={formatINR(budgetData.totalBudgeted)} icon={BarChart3}    color="brand" />
-          <StatCard label="Actual"    value={formatINR(budgetData.totalActual)}   icon={TrendingUp}   color="red"   />
-          <div className={cn(
-            'card px-5 py-4',
-            budgetData.totalVariance >= 0 ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50',
-          )}>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Variance</p>
-            <p className={cn('text-2xl font-bold', varClass(budgetData.totalVariance))}>
-              {formatINR(Math.abs(budgetData.totalVariance))}
-            </p>
-            <p className={cn('text-xs mt-0.5', varClass(budgetData.totalVariance))}>
-              {budgetData.totalVariance >= 0 ? 'Under budget' : 'Over budget'}
-            </p>
-          </div>
-        </div>
-      )}
+      {/* ── Section 1: Project Total ─────────────────────────────────────── */}
+      <div>
+        <h2 className="mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wide">Project Total</h2>
 
-      {/* Comparison table */}
-      <div className="card overflow-hidden">
-        <div className="border-b border-gray-200 px-5 py-4">
-          <h2 className="text-sm font-semibold text-gray-900">
-            Budget vs Actual — {monthLabel(month)}
-          </h2>
-        </div>
-
-        {budgetLoading ? (
-          <p className="px-5 py-8 text-sm text-gray-500">Loading…</p>
-        ) : !budgetData || budgetData.items.length === 0 ? (
-          <div className="px-5 py-8 text-center">
-            <p className="text-sm text-gray-500 mb-2">No budget lines for {monthLabel(month)}.</p>
-            <p className="text-xs text-gray-400">Click "Add budget line" to set targets for this site & month.</p>
+        {projectBudgetLoading ? (
+          <p className="text-sm text-gray-500">Loading…</p>
+        ) : !projectBudgetData || projectBudgetData.rows.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-gray-300 px-6 py-8 text-center">
+            <Target className="mx-auto h-8 w-8 text-gray-300 mb-2" />
+            <p className="text-sm text-gray-500">No budget set yet.</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Go to <strong>Inventory → Edit a material</strong> and set Budget Qty + Budget Rate.
+            </p>
           </div>
         ) : (
-          <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-100">
-            <thead className="bg-gray-50">
-              <tr>
-                {['Material', 'Budgeted qty', 'Budgeted cost', 'Actual cost', 'Variance', ''].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {budgetData.items.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.material}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
-                    {item.budgeted_qty.toFixed(2)} {item.unit}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{formatINR(item.budgeted_cost)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{formatINR(item.actual)}</td>
-                  <td className={cn('px-4 py-3 text-sm font-medium', varClass(item.variance))}>
-                    {varIcon(item.variance)}
-                    {formatINR(Math.abs(item.variance))}
-                    <span className="ml-1 text-xs opacity-70">({item.variance_pct}%)</span>
-                  </td>
-                  <td className="px-4 py-3 no-print">
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="text-gray-300 hover:text-red-500 transition-colors"
-                      title="Delete budget line"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              <tr className="bg-gray-50 font-semibold">
-                <td colSpan={2} className="px-4 py-3 text-sm text-gray-700">Total</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{formatINR(budgetData.totalBudgeted)}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{formatINR(budgetData.totalActual)}</td>
-                <td className={cn('px-4 py-3 text-sm font-semibold', varClass(budgetData.totalVariance))}>
-                  {varIcon(budgetData.totalVariance)}
-                  {formatINR(Math.abs(budgetData.totalVariance))}
-                </td>
-                <td className="no-print" />
-              </tr>
-            </tbody>
-          </table></div>
+          <>
+            {/* Summary row: donut + stat cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+              <div className="col-span-2 sm:col-span-1 flex items-center justify-center card py-4">
+                <DonutChart
+                  pct={projectBudgetData.pctSpent}
+                  label="of budget spent"
+                />
+              </div>
+              <StatCard label="Total budget"  value={formatINR(projectBudgetData.totalBudgetAmt)}  icon={Target}     color="brand" />
+              <StatCard label="Total spent"   value={formatINR(projectBudgetData.totalActualCost)} icon={TrendingUp} color={projectBudgetData.costVariance >= 0 ? 'green' : 'red'} />
+              <div className={cn(
+                'card px-5 py-4',
+                projectBudgetData.costVariance >= 0 ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50',
+              )}>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Variance</p>
+                <p className={cn('text-2xl font-bold', varClass(projectBudgetData.costVariance))}>
+                  {formatINR(Math.abs(projectBudgetData.costVariance))}
+                </p>
+                <p className={cn('text-xs mt-0.5', varClass(projectBudgetData.costVariance))}>
+                  {projectBudgetData.costVariance >= 0 ? 'Under budget' : 'OVER BUDGET'}
+                  {projectBudgetData.overBudgetCount > 0 && (
+                    <span className="ml-1 text-red-600 font-semibold">
+                      · {projectBudgetData.overBudgetCount} material{projectBudgetData.overBudgetCount > 1 ? 's' : ''} over
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Horizontal bar chart */}
+            {barData.length > 0 && (
+              <div className="card overflow-hidden mb-4 no-print">
+                <div className="border-b border-gray-200 px-5 py-3">
+                  <p className="text-sm font-semibold text-gray-900">Consumption vs Budget (qty)</p>
+                  <p className="text-xs text-gray-500">Sorted by usage — worst overruns at top</p>
+                </div>
+                <div className="px-2 py-4">
+                  <ResponsiveContainer width="100%" height={Math.max(barData.length * 48 + 60, 160)}>
+                    <BarChart layout="vertical" data={barData}
+                      margin={{ top: 0, right: 40, left: 10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11 }}
+                        tickFormatter={(v) => v % 1 === 0 ? v : v.toFixed(1)} />
+                      <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11 }} />
+                      <Tooltip
+                        formatter={(val, name, props) => {
+                          const u = props?.payload?.unit ?? ''
+                          return [`${Number(val).toFixed(1)} ${u}`, name]
+                        }}
+                        labelFormatter={(label, payload) => payload?.[0]?.payload?.fullName ?? label}
+                      />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="budget_qty" name="Budget" fill="#d1d5db" radius={[0, 3, 3, 0]} />
+                      <Bar dataKey="consumed_qty" name="Used" radius={[0, 3, 3, 0]}>
+                        {barData.map((entry, i) => (
+                          <Cell key={i} fill={barFill(entry.pct)} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+            {/* Detail table */}
+            <div className="card overflow-hidden">
+              <div className="border-b border-gray-200 px-5 py-3">
+                <p className="text-sm font-semibold text-gray-900">Project Budget Detail</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-100">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      {['Material', 'Budget Qty', 'Used', '% Used', 'Budget ₹', 'Spent ₹', 'Variance'].map((h) => (
+                        <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {projectBudgetData.rows.map((r) => {
+                      const pct = Number(r.pct_consumed ?? 0)
+                      const pctColor = pct > 100 ? 'text-red-600 font-semibold' : pct > 75 ? 'text-amber-600' : 'text-green-600'
+                      const barW = Math.min(pct, 100)
+                      const barClr = pct > 100 ? 'bg-red-500' : pct > 75 ? 'bg-amber-400' : 'bg-green-500'
+                      return (
+                        <tr key={r.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{r.name}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                            {Number(r.budget_qty).toFixed(1)} {r.unit}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
+                            {Number(r.consumed_qty ?? 0).toFixed(1)} {r.unit}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2 min-w-[80px]">
+                              <div className="h-1.5 w-16 rounded-full bg-gray-200">
+                                <div className={`h-full rounded-full ${barClr}`} style={{ width: `${barW}%` }} />
+                              </div>
+                              <span className={`text-xs ${pctColor}`}>{pct.toFixed(0)}%</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                            {r.budget_amount != null ? formatINR(r.budget_amount) : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
+                            {formatINR(r.actual_cost ?? 0)}
+                          </td>
+                          <td className={cn('px-4 py-3 text-sm font-medium whitespace-nowrap',
+                            r.cost_variance != null ? varClass(r.cost_variance) : 'text-gray-400')}>
+                            {r.cost_variance != null ? (
+                              <>{varIcon(r.cost_variance)}{formatINR(Math.abs(r.cost_variance))}</>
+                            ) : '—'}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
-      {/* Budget lines list (for management) — manage UI, not part of printed report */}
+      {/* ── Section 2: Monthly Trend ─────────────────────────────────────── */}
+      <div>
+        <h2 className="mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wide">Monthly Trend</h2>
+
+        <div className="no-print mb-4 flex flex-wrap items-center gap-3">
+          <select className="input py-1.5 pr-8 text-sm" value={year}
+            onChange={(e) => setYear(e.target.value)}>
+            {yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <select className="input py-1.5 pr-8 text-sm" value={materialId}
+            onChange={(e) => setMaterialId(e.target.value)}>
+            <option value="">All materials</option>
+            {materials.map((m) => (
+              <option key={m.id} value={m.id}>{m.name} ({m.unit})</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="card overflow-hidden">
+          <div className="border-b border-gray-200 px-5 py-3">
+            <p className="text-sm font-semibold text-gray-900">
+              Planned vs Actual — {year}
+              {materialId && materials.find((m) => m.id === materialId) &&
+                ` · ${materials.find((m) => m.id === materialId).name}`}
+            </p>
+            <p className="text-xs text-gray-500">Bars = actual consumed · Dashed line = monthly target (set via "Set monthly target")</p>
+          </div>
+          <div className="px-2 py-4">
+            {trendLoading ? (
+              <p className="py-6 text-center text-sm text-gray-500">Loading…</p>
+            ) : !trendData ? null : (
+              <ResponsiveContainer width="100%" height={280}>
+                <ComposedChart data={trendData.chartData}
+                  margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => v.toFixed(0)} />
+                  <Tooltip
+                    formatter={(val, name) => [Number(val).toFixed(1), name]}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="actual_qty" name="Actual used" fill="#B85042"
+                    radius={[3, 3, 0, 0]} maxBarSize={40}>
+                    {trendData.chartData.map((entry, i) => (
+                      <Cell key={i}
+                        fill={entry.planned_qty > 0 && entry.actual_qty > entry.planned_qty
+                          ? '#dc2626' : '#B85042'}
+                      />
+                    ))}
+                  </Bar>
+                  <Line dataKey="planned_qty" name="Monthly target"
+                    stroke="#6b7280" strokeWidth={2}
+                    strokeDasharray="6 3" dot={{ r: 3 }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            )}
+            {trendData && trendData.chartData.every((d) => d.planned_qty === 0) && (
+              <p className="mt-2 text-center text-xs text-gray-400">
+                No monthly targets set yet — click "Set monthly target" above to add planned quantities.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Manage monthly budget lines ──────────────────────────────────── */}
       {budgetLines.length > 0 && (
         <div className="card overflow-hidden no-print">
-          <div className="border-b border-gray-200 px-5 py-4">
-            <h2 className="text-sm font-semibold text-gray-900">Budget Lines (manage)</h2>
+          <div className="border-b border-gray-200 px-5 py-3">
+            <p className="text-sm font-semibold text-gray-900">Monthly Targets (manage)</p>
           </div>
           <div className="divide-y divide-gray-100">
             {budgetLines.map((bl) => (
@@ -527,14 +694,12 @@ function BudgetTab({ tenantId, sites }) {
                 <div>
                   <p className="text-sm font-medium text-gray-900">{bl.materials?.name}</p>
                   <p className="text-xs text-gray-500">
-                    {bl.budgeted_quantity} {bl.materials?.unit} · {formatINR(bl.budgeted_cost)}
+                    {bl.period_month} · {bl.budgeted_quantity} {bl.materials?.unit} · {formatINR(bl.budgeted_cost)}
                     {bl.note ? ` · ${bl.note}` : ''}
                   </p>
                 </div>
-                <button
-                  onClick={() => handleDelete(bl.id)}
-                  className="text-gray-300 hover:text-red-500 transition-colors"
-                >
+                <button onClick={() => handleDeleteBL(bl.id)}
+                  className="text-gray-300 hover:text-red-500 transition-colors">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
@@ -543,15 +708,19 @@ function BudgetTab({ tenantId, sites }) {
         </div>
       )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={`Add Budget Line — ${monthLabel(month)}`}>
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)}
+        title={`Set Monthly Target — ${monthLabel(month)}`}>
+        <div className="mb-3">
+          <label className="label">Month</label>
+          <select className="input" value={month} onChange={(e) => setMonth(e.target.value)}>
+            {months.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+          </select>
+        </div>
         <BudgetLineForm
           siteId={siteId}
           tenantId={tenantId}
           month={month}
-          onSuccess={() => {
-            fetchBudgetReport(tenantId, siteId, month)
-            fetchBudgetLines(tenantId, siteId, month)
-          }}
+          onSuccess={() => fetchBudgetLines(tenantId, siteId, month)}
           onClose={() => setModalOpen(false)}
         />
       </Modal>

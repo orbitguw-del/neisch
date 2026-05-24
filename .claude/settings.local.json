@@ -26,7 +26,17 @@
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f''''Total: {len\\(d\\)}''''\\)\" echo \"=== DAILY LOGS count ===\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f''''Total: {len\\(d\\)}''''\\)\")",
       "Bash(mkdir -p C:/garment-poster)",
-      "Read(//c//**)"
+      "Read(//c//**)",
+      "Bash(npx supabase *)",
+      "mcp__Claude_Preview__preview_start",
+      "WebSearch",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(npx cap *)",
+      "Bash(./gradlew bundleRelease)",
+      "Bash(git log *)",
+      "Bash(git branch *)"
     ]
   }
 }

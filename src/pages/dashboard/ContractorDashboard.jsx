@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   HardHat, MapPin, ListTodo, IndianRupee, AlertTriangle,
-  Building2, Users, Package, Wallet, BarChart3, Calendar, ChevronRight,
+  Building2, Users, Package, Wallet, BarChart3, Calendar, ChevronRight, Target,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
@@ -11,6 +11,88 @@ import HeroStatsCard from '@/components/dashboard/HeroStatsCard'
 import QuickActionTile from '@/components/dashboard/QuickActionTile'
 import SiteStockWidget from '@/components/dashboard/SiteStockWidget'
 import { formatINR } from '@/lib/utils'
+
+// ── Budget Health widget ──────────────────────────────────────────────────────
+function BudgetHealthWidget({ tenantId, sites, onNavigate }) {
+  const [rows, setRows] = useState([])
+
+  useEffect(() => {
+    if (!tenantId || !sites.length) return
+    const siteIds = sites.filter((s) => s.status === 'active').map((s) => s.id)
+    if (!siteIds.length) return
+    supabase
+      .from('site_material_budget_v')
+      .select('site_id, budget_qty, consumed_qty, budget_amount, actual_cost, pct_consumed')
+      .in('site_id', siteIds)
+      .not('budget_qty', 'is', null)
+      .then(({ data }) => {
+        if (!data?.length) return
+        // Aggregate per site
+        const bySite = {}
+        data.forEach((r) => {
+          if (!bySite[r.site_id]) bySite[r.site_id] = { budgeted: 0, spent: 0, over: 0, total: 0 }
+          bySite[r.site_id].budgeted += Number(r.budget_amount ?? 0)
+          bySite[r.site_id].spent    += Number(r.actual_cost ?? 0)
+          bySite[r.site_id].total    += 1
+          if (Number(r.pct_consumed ?? 0) > 100) bySite[r.site_id].over += 1
+        })
+        const siteSummary = sites
+          .filter((s) => bySite[s.id])
+          .map((s) => {
+            const d = bySite[s.id]
+            const pct = d.budgeted > 0 ? Math.round((d.spent / d.budgeted) * 100) : 0
+            return { id: s.id, name: s.name, budgeted: d.budgeted, spent: d.spent, pct, over: d.over }
+          })
+          .sort((a, b) => b.pct - a.pct)
+        setRows(siteSummary)
+      })
+  }, [tenantId, sites])
+
+  if (!rows.length) return null
+
+  return (
+    <div className="card overflow-hidden">
+      <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3">
+        <div className="flex items-center gap-2">
+          <Target className="h-4 w-4 text-brand-600" />
+          <p className="text-sm font-semibold text-gray-900">Budget Health</p>
+        </div>
+        <button onClick={onNavigate}
+          className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50">
+          View full report <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <div className="divide-y divide-gray-100">
+        {rows.map((r) => {
+          const barClr = r.pct > 100 ? 'bg-red-500' : r.pct > 75 ? 'bg-amber-400' : 'bg-green-500'
+          const pctClr = r.pct > 100 ? 'text-red-600 font-semibold' : r.pct > 75 ? 'text-amber-600' : 'text-green-600'
+          return (
+            <div key={r.id} className="px-5 py-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-sm font-medium text-gray-900 truncate max-w-[60%]">{r.name}</p>
+                <div className="flex items-center gap-2">
+                  {r.over > 0 && (
+                    <span className="text-xs text-red-600 font-semibold">⚠ {r.over} over</span>
+                  )}
+                  <span className={`text-xs ${pctClr}`}>{r.pct}%</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-2 flex-1 rounded-full bg-gray-200">
+                  <div className={`h-full rounded-full ${barClr}`}
+                    style={{ width: `${Math.min(r.pct, 100)}%` }} />
+                </div>
+                <span className="text-xs text-gray-500 whitespace-nowrap">
+                  {formatINR(r.spent)} / {formatINR(r.budgeted)}
+                </span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 // Status colour map (stripe colour on each site card)
 const STATUS_STRIPE = {
@@ -266,6 +348,13 @@ export default function ContractorDashboard() {
 
       {/* ── Stock at a glance — reuse the existing widget ────────── */}
       <SiteStockWidget />
+
+      {/* ── Budget health per site ───────────────────────────────── */}
+      <BudgetHealthWidget
+        tenantId={tenantId}
+        sites={sites}
+        onNavigate={() => navigate('/reports')}
+      />
     </div>
   )
 }
