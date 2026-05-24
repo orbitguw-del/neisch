@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storey CTA Card</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f5f0e8;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .card {
+    width: 640px;
+    background: #fff8f0;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, #c1440e 0%, #e05a1f 60%, #f07030 100%);
+    padding: 36px 36px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 50%;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; left: 30%;
+    width: 220px; height: 220px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .logo-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .logo-text {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .logo-sub {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .headline {
+    font-size: 28px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 8px;
+    position: relative; z-index: 1;
+  }
+  .subhead {
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+    font-weight: 500;
+    position: relative; z-index: 1;
+  }
+
+  /* ── Body ── */
+  .body { padding: 0 28px 28px; }
+
+  /* ── Section title ── */
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #c1440e;
+    margin: 24px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e8d5c4;
+  }
+
+  /* ── Feature grid ── */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .feature-item {
+    background: #fff;
+    border: 1px solid #ede5d8;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .feature-icon {
+    font-size: 18px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .feature-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.3;
+  }
+  .feature-desc {
+    font-size: 10.5px;
+    color: #6b5e52;
+    margin-top: 2px;
+    line-height: 1.4;
+  }
+
+  /* ── Timeline ── */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .timeline-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    position: relative;
+  }
+  .timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 17px;
+    top: 34px;
+    width: 2px;
+    height: calc(100% - 12px);
+    background: #e8d5c4;
+  }
+  .tl-dot {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .tl-dot.done  { background: #e8f5e9; border: 2px solid #4caf50; }
+  .tl-dot.soon  { background: #fff3e0; border: 2px solid #ff9800; }
+  .tl-dot.later { background: #e8f0fe; border: 2px solid #5c6bc0; }
+  .tl-content { padding: 6px 0 16px; }
+  .tl-label {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-bottom: 4px;
+  }
+  .tl-label.done  { background: #e8f5e9; color: #2e7d32; }
+  .tl-label.soon  { background: #fff3e0; color: #e65100; }
+  .tl-label.later { background: #e8f0fe; color: #3949ab; }
+  .tl-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.3;
+    margin-bottom: 2px;
+  }
+  .tl-desc {
+    font-size: 11px;
+    color: #6b5e52;
+    line-height: 1.4;
+  }
+
+  /* ── Founding offer ── */
+  .offer-box {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-radius: 16px;
+    padding: 20px 22px;
+    margin-top: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .offer-box::before {
+    content: '';
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 100px; height: 100px;
+    background: rgba(193,68,14,0.3);
+    border-radius: 50%;
+  }
+  .offer-badge {
+    display: inline-block;
+    background: #c1440e;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+  .offer-title {
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 6px;
+    position: relative; z-index: 1;
+  }
+  .offer-title span {
+    color: #f07030;
+  }
+  .offer-subtitle {
+    font-size: 11.5px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 14px;
+  }
+  .offer-price-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    position: relative; z-index: 1;
+  }
+  .offer-price-new {
+    font-size: 32px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+  }
+  .offer-price-new sub {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+  }
+  .offer-price-old {
+    font-size: 18px;
+    color: rgba(255,255,255,0.35);
+    text-decoration: line-through;
+    font-weight: 600;
+  }
+  .offer-price-save {
+    background: #c1440e;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+  .offer-slots {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 14px;
+  }
+  .offer-slots strong {
+    color: #f07030;
+  }
+  .offer-cta {
+    background: #c1440e;
+    color: #fff;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative; z-index: 1;
+  }
+  .offer-cta-right {
+    font-size: 11px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 500;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    background: #1a1a1a;
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-left {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+  }
+  .footer-left strong {
+    color: rgba(255,255,255,0.85);
+    font-weight: 600;
+    display: block;
+    font-size: 12px;
+  }
+  .footer-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+  .footer-url {
+    font-size: 11px;
+    color: #f07030;
+    font-weight: 600;
+  }
+  .footer-number {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-row">
+      <div class="logo-icon">
+        <svg width='38' height='38' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'>
+          <rect width='32' height='32' rx='8' fill='#B85042'/>
+          <rect x='5'  y='18' width='6' height='9'  rx='1' fill='white'/>
+          <rect x='13' y='13' width='6' height='14' rx='1' fill='white'/>
+          <rect x='21' y='7'  width='6' height='20' rx='1' fill='white'/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-text">Storey</div>
+        <div class="logo-sub">Site Management App</div>
+      </div>
+    </div>
+    <div class="headline">Run your sites.<br>Stop the leakage.</div>
+    <div class="subhead">Built for NE-India contractors · Works on any Android phone</div>
+  </div>
+
+  <div class="body">
+
+    <!-- LIVE NOW -->
+    <div class="section-title">✅ Live right now — free to use</div>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="feature-icon">📦</div>
+        <div>
+          <div class="feature-name">Inventory</div>
+          <div class="feature-desc">Track every material across all sites. Reorder alerts.</div>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">💰</div>
+        <div>
+          <div class="feature-name">Expenses</div>
+          <div class="feature-desc">Log fuel, transport, advance. Approved by Site Manager.</div>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">📋</div>
+        <div>
+          <div class="feature-name">Tasks</div>
+          <div class="feature-desc">Assign work. Track progress without calling anyone.</div>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">👷</div>
+        <div>
+          <div class="feature-name">Workers</div>
+          <div class="feature-desc">Attendance records. Labour disputes resolved in seconds.</div>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">📊</div>
+        <div>
+          <div class="feature-name">Reports</div>
+          <div class="feature-desc">Consumption + Budget vs Actual. Share to WhatsApp in 1 tap.</div>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">🎯</div>
+        <div>
+          <div class="feature-name">Budget Health</div>
+          <div class="feature-desc">See spend vs budget per site. Catch overruns early.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMING SOON TIMELINE -->
+    <div class="section-title">🔜 Coming soon</div>
+    <div class="timeline">
+
+      <div class="timeline-item">
+        <div class="tl-dot soon">🤝</div>
+        <div class="tl-content">
+          <div class="tl-label soon">Jun 2026</div>
+          <div class="tl-title">Sub-Contractor Module</div>
+          <div class="tl-desc">Add Mistri, track agreed amount → advance → balance. No more paper ledger.</div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-dot soon">📄</div>
+        <div class="tl-content">
+          <div class="tl-label soon">Jun 2026</div>
+          <div class="tl-title">Work Order PDF</div>
+          <div class="tl-desc">Generate signed Work Order in one click. Court-admissible.</div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-dot soon">🔄</div>
+        <div class="tl-content">
+          <div class="tl-label soon">Jul 2026</div>
+          <div class="tl-title">Tally Integration</div>
+          <div class="tl-desc">Export bills directly to Tally. Your accountant saves 3 hours a week.</div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-dot later">📱</div>
+        <div class="tl-content">
+          <div class="tl-label later">Aug 2026</div>
+          <div class="tl-title">Works Offline</div>
+          <div class="tl-desc">Log attendance and materials without network. Syncs when signal returns.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CTA BOX -->
+    <div class="offer-box">
+      <div class="offer-badge">🚀 Built for NE-India contractors</div>
+      <div class="offer-title">Your first site is<br><span>always free.</span></div>
+      <div class="offer-subtitle">No credit card. No setup fees. Start tracking your site in under 5 minutes.</div>
+      <div class="offer-cta" style="margin-top: 18px;">
+        <span>Try free · storeyinfra.com</span>
+        <span class="offer-cta-right">No card needed →</span>
+      </div>
+    </div>
+
+  </div><!-- /body -->
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-left">
+      <strong>Karun — Founder, Storey</strong>
+      Built in NE-India, for NE-India
+    </div>
+    <div class="footer-right">
+      <div class="footer-url">storeyinfra.com</div>
+      <div class="footer-number">+91 70025 00154</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
