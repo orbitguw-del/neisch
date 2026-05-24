@@ -27,6 +27,7 @@
     "browser-image-compression": "^2.0.2",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "html2canvas": "^1.4.1",
     "idb": "^8.0.3",
     "lucide-react": "^0.454.0",
     "react": "^18.3.1",
