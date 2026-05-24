@@ -7,7 +7,7 @@
  *   3. Fallback → downloads screenshot + opens mailto:
  */
 
-const KARUN_WHATSAPP = '919615888555' // ← replace with real number (no + or spaces)
+const KARUN_WHATSAPP = '917002500154'
 const SUPPORT_EMAIL  = 'help@storeyinfra.com'
 
 /**
