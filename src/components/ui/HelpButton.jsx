@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { HelpCircle, X, MessageCircle, Mail, Camera, Loader2 } from 'lucide-react'
-import { sendHelpScreenshot, sendHelpEmail } from '@/lib/helpScreenshot'
+import { sendHelpScreenshot, sendHelpEmail, openWhatsAppWindowEarly } from '@/lib/helpScreenshot'
 import { useLocation } from 'react-router-dom'
 
 // Map routes → friendly screen names
@@ -41,13 +41,18 @@ export default function HelpButton() {
   const inputRef = useRef(null)
 
   async function handleWhatsApp() {
+    // ── Open the WhatsApp window NOW, synchronously, while we still have
+    //    the click event. On desktop, window.open() is blocked if called
+    //    after any await. On mobile (Web Share API), returns null.
+    const preOpenedWindow = openWhatsAppWindowEarly()
+
     setStatus('capturing')
     setOpen(false) // close panel so it's not in the screenshot
 
     // Small delay so panel finishes closing before capture
     await new Promise((r) => setTimeout(r, 120))
 
-    const result = await sendHelpScreenshot(screenName, note)
+    const result = await sendHelpScreenshot(screenName, note, preOpenedWindow)
     setNote('')
 
     if (result === 'shared') {
