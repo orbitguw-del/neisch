@@ -45,6 +45,9 @@ Last reprioritised: 2026-05-24.
 - [ ] **Play Store icon + screenshots upload** — manual upload via Play Console
   (asset paths under `C:\consne\*`).
 
+- [x] ~~**Upload v1.2.1 AAB to Play Console**~~ ✅ **DONE 2026-05-24.**
+  versionCode 23, versionName "1.2.1", 3.3 MB. Submitted to closed testing track.
+
 - [ ] **Data Safety form** — fill in Play Console with declared data types
   (name, email, phone, address, worker ID-proof, app content; collected not shared).
 
