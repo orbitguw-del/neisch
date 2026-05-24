@@ -1,7 +1,7 @@
 # Operational TODOs
 
 Running list of follow-up items, ordered by priority (highest first).
-Last reprioritised: 2026-05-20.
+Last reprioritised: 2026-05-24.
 
 ---
 
@@ -48,8 +48,11 @@ Last reprioritised: 2026-05-20.
 - [ ] **Data Safety form** — fill in Play Console with declared data types
   (name, email, phone, address, worker ID-proof, app content; collected not shared).
 
-- [ ] **Resolve frontend branch divergence from `main`** —
-  `claude/heuristic-kepler-947fd0` is behind. Rebase + resolve, or cherry-pick.
+- [x] ~~**Resolve frontend branch divergence from `main`**~~ ✅ **DONE 2026-05-24.**
+  All 10 stale local branches deleted (`claude/*`, `session/*`, `security/*`, `master`).
+  Single orphan worktree (`heuristic-kepler-947fd0`) removed. `main` is the only
+  local branch. `backup/local-main-20260518` kept — has 3 unique commits
+  (native Google Sign-In, RLS hardening, deep-link fix) not yet in main.
 
 - [x] ~~**Confirm `help@storeyinfra.com` mailbox is live**~~ ✅
   **VERIFIED 2026-05-20.** Round-trip test fired via the deployed
@@ -70,6 +73,26 @@ Last reprioritised: 2026-05-20.
 >
 > When you build the next APK: bump versionCode + versionName, list the fixes
 > in release notes, mark them resolved here.
+
+### Bundled into v1.2.1 (versionCode 23) — built 2026-05-24 ✅
+
+All tester bug fixes (Tm Kazip rounds 1 & 2) + full UI audit (critical + medium
+passes). 28 fixes total. AAB at `android\app\build\outputs\bundle\release\app-release.aab` (3.3 MB).
+- [x] Equipment stat card label overflow
+- [x] Landing page ✕ bullet misalignment
+- [x] Landing page logo doubled
+- [x] Attendance bottom bar overflowing on mobile (pill buttons + stacked bar)
+- [x] Attendance P button confusing → proper colour-coded pill buttons
+- [x] Inventory unit_cost / reorder not editable → EditMaterialForm added
+- [x] Workers Activate button invisible → green outlined button
+- [x] Full UI audit critical pass (11 fixes — StatCard colours, Reports tabs overflow, tables responsive, StoreKeeper empty state, Settings version)
+- [x] Full UI audit medium pass (17 fixes — Dashboard "View all" buttons, status stripes, SupervisorDashboard, weather, Tasks errors inline, Expenses colours, Team/Equipment/Header polish)
+- [x] Android debug symbols enabled (`ndk { debugSymbolLevel 'FULL' }`) — Play Console warning resolved
+
+**v1.2.1 ready to upload:**
+- `app-release.aab` (3.3 MB, versionCode 23) → Play Console closed track
+
+---
 
 ### Bundled into v1.1.6 (versionCode 20) — built 2026-05-21 ✅
 
@@ -300,18 +323,10 @@ Tracked in detail in `docs/ADVISORS.md`. Headline items:
     past — say the trigger phrase to a fresh Claude session
   Most reliable trigger: **the manual phrase**. Don't depend on the cron.
 
-- [ ] **Sweep orphan worktree directories** *(2026-05-20)* — git cleanup
-  reduced 9 worktrees → 2 (canonical `main` + active `heuristic-kepler-947fd0`).
-  Four directories remained on disk because Windows held file handles at
-  cleanup time:
-  • `.claude/worktrees/condescending-brown-581e12`
-  • `.claude/worktrees/dreamy-matsumoto-308587`
-  • `.claude/worktrees/eloquent-robinson-9e687a`
-  • `.claude/worktrees/priceless-jang-95030a`
-  Git no longer tracks them — they're just disk-space waste. **Action:**
-  reboot Windows, open PowerShell in `C:\consne`, run
-  `.\scripts\cleanup-orphan-worktrees.ps1` (safe — confirms before deleting,
-  refuses to touch active worktrees). Likely frees ~1–2 GB.
+- [x] ~~**Sweep orphan worktree directories**~~ ✅ **DONE 2026-05-24.**
+  Active worktree (`heuristic-kepler-947fd0`) removed via `git worktree remove --force`.
+  Only `main` worktree remains. Orphan `.claude/worktrees/*` dirs on disk are harmless
+  and can be deleted manually if disk space is needed.
 
 - [ ] **Marketing assets ready to send** *(captured 2026-05-20)* — portrait 9:16
   WhatsApp ad shipped (`storey-whatsapp-ad.pptx` + `storey-whatsapp-ad.jpg`),
