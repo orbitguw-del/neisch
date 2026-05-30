@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 
-export default function StatCard({ label, value, icon: Icon, trend, color = 'brand' }) {
+export default function StatCard({ label, value, icon: Icon, trend, color = 'brand', valueClass }) {
   const colorMap = {
     brand:  'bg-brand-50 text-brand-600',
     sage:   'bg-sage-100 text-sage-600',
@@ -21,7 +21,7 @@ export default function StatCard({ label, value, icon: Icon, trend, color = 'bra
       </div>
       <div className="min-w-0">
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
-        <p className="mt-0.5 text-2xl font-bold text-gray-900 tabular-nums">{value}</p>
+        <p className={cn('mt-0.5 text-2xl font-bold text-gray-900 tabular-nums', valueClass)}>{value}</p>
         {trend && <p className="mt-0.5 text-xs text-gray-500">{trend}</p>}
       </div>
     </div>
