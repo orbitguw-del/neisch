@@ -42,6 +42,23 @@ Last reprioritised: 2026-05-24.
 
 ## 🟠 P1 — High (launch blockers + security)
 
+- [ ] **🔑 Rotate exposed Supabase `service_role` key** *(added 2026-05-30)* —
+  the service_role key (bypasses ALL RLS) is hardcoded in `scripts/seed.mjs`,
+  which is now committed and pushed to the GitHub repo. Treat as compromised.
+  Steps:
+  1. Supabase dashboard → Project `zgvbogxibiilnblmuohg` → **Settings → API**
+     → **service_role** secret → **Roll / Reset** (this invalidates the old key
+     immediately — anything still using it must be updated).
+  2. Update every place that holds the OLD key: Vercel env vars, Supabase Edge
+     Function secrets (`SUPABASE_SERVICE_ROLE_KEY`), any local `.env`,
+     and re-paste the new key into `scripts/seed.mjs` **only locally** when running.
+  3. Remove the hardcoded key from `scripts/seed.mjs` — read it from
+     `process.env.SUPABASE_SERVICE_ROLE_KEY` instead, and run via
+     `SUPABASE_SERVICE_ROLE_KEY=... node scripts/seed.mjs` so it's never committed.
+  4. Optional but recommended: purge the key from git history (`git filter-repo`
+     or BFG) since rolling alone leaves the old key visible in past commits.
+  5. Verify app + edge functions still work after the roll (auth, seed run).
+
 - [ ] **Play Store icon + screenshots upload** — manual upload via Play Console
   (asset paths under `C:\consne\*`).
 
