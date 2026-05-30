@@ -411,6 +411,12 @@ Issues:
   Work-type taxonomy (fixed): electrical · plumbing · masonry · RCC ·
   finishing · MEP · interiors · flooring · waterproofing · earthworks ·
   scaffolding · structural steel · other.
+  **+ `cost_centre_id uuid references cost_centres(id) on delete set null`**
+  *(Karun 2026-05-30)* — assign each sub-contractor's work to a cost centre
+  so their payments fold into `cost_centre_budget_v` alongside material spend.
+  The `cost_centres` hub ships first (see `docs/SPEC-COST-CENTRES.md`); this
+  column + the view's second `left join` land **with this module**. Until then,
+  the hub tracks material spend only.
 
 - [ ] **(2b) Sub-contractor payment ledger** *(new — Arun confirmed v1.2)* —
   track every payment to a sub-contractor against the agreed amount.

@@ -4,6 +4,7 @@ import { Plus, Package, ArrowLeft, AlertTriangle, Upload, ClipboardList, Chevron
 import * as XLSX from 'xlsx'
 import { supabase } from '@/lib/supabase'
 import useMaterialStore from '@/stores/materialStore'
+import useCostCentreStore from '@/stores/costCentreStore'
 import useAuthStore from '@/stores/authStore'
 import PageHeader from '@/components/ui/PageHeader'
 import EmptyState from '@/components/ui/EmptyState'
@@ -14,9 +15,9 @@ import { formatINR } from '@/lib/utils'
 
 const UNIT_OPTIONS = ['bags', 'kg', 'tonnes', 'pieces', 'sq ft', 'cu ft', 'cu m', 'litres', 'bundles', 'metres', 'nos']
 
-const BLANK = { name: '', brand: '', unit: 'bags', category: 'consumable', work_type: '', quantity_available: '', quantity_minimum: '', unit_cost: '', supplier: '' }
+const BLANK = { name: '', brand: '', unit: 'bags', category: 'consumable', work_type: '', quantity_available: '', quantity_minimum: '', unit_cost: '', supplier: '', cost_centre_id: '' }
 
-function MaterialForm({ siteId, onSubmit, loading }) {
+function MaterialForm({ siteId, onSubmit, loading, costCentres = [] }) {
   const [step, setStep]         = useState('pick')
   const [form, setForm]         = useState(BLANK)
   const [dupWarning, setDupWarning] = useState(null)   // existing material row or null
@@ -88,6 +89,15 @@ function MaterialForm({ siteId, onSubmit, loading }) {
             {UNIT_OPTIONS.map((u) => <option key={u}>{u}</option>)}
           </select>
         </div>
+        {costCentres.length > 0 && (
+          <div className="col-span-2">
+            <label className="label">Cost centre <span className="text-gray-400 font-normal">(spend bucket)</span></label>
+            <select className="input" value={form.cost_centre_id} onChange={set('cost_centre_id')}>
+              <option value="">Unassigned</option>
+              {costCentres.map((cc) => <option key={cc.id} value={cc.id}>{cc.name}</option>)}
+            </select>
+          </div>
+        )}
         <div>
           <label className="label">Category</label>
           <select className="input" value={form.category} onChange={set('category')}>
@@ -291,6 +301,7 @@ export default function Materials() {
   const { siteId } = useParams()
   const navigate = useNavigate()
   const { materials, loading, fetchMaterials, createMaterial, setOpeningStock } = useMaterialStore()
+  const { costCentres, fetchCostCentres } = useCostCentreStore()
   const profile  = useAuthStore((s) => s.profile)
   const tenantId = profile?.tenant_id
   const isSuperadmin = profile?.role === 'superadmin'
@@ -299,7 +310,9 @@ export default function Materials() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
-  useEffect(() => { fetchMaterials(siteId) }, [siteId, fetchMaterials])
+  useEffect(() => { fetchMaterials(siteId); fetchCostCentres(siteId) }, [siteId, fetchMaterials, fetchCostCentres])
+
+  const ccById = Object.fromEntries(costCentres.map((c) => [c.id, c.name]))
 
   const handleCreate = async (payload) => {
     setSaving(true)
@@ -309,6 +322,7 @@ export default function Materials() {
         ...payload,
         site_id: siteId,
         tenant_id: tenantId,
+        cost_centre_id: payload.cost_centre_id || null,
         unit_cost: payload.unit_cost || null,
         quantity_available: payload.quantity_available || null,
         quantity_minimum: payload.quantity_minimum || null,
@@ -387,6 +401,11 @@ export default function Materials() {
                                 {WORK_TYPES.find((w) => w.value === m.work_type)?.label}
                               </span>
                             )}
+                            {m.cost_centre_id && ccById[m.cost_centre_id] && (
+                              <span className="text-xs px-1.5 py-0.5 rounded-full font-medium bg-brand-50 text-brand-700">
+                                {ccById[m.cost_centre_id]}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -405,7 +424,7 @@ export default function Materials() {
       )}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Material">
-        <MaterialForm siteId={siteId} onSubmit={handleCreate} loading={saving} />
+        <MaterialForm siteId={siteId} onSubmit={handleCreate} loading={saving} costCentres={costCentres} />
       </Modal>
 
       {openingStockOpen && (

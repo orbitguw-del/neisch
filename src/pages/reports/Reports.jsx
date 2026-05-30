@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
 import useMaterialStore from '@/stores/materialStore'
+import useCostCentreStore from '@/stores/costCentreStore'
 import useReportsStore from '@/stores/reportsStore'
 import PageHeader from '@/components/ui/PageHeader'
 import StatCard from '@/components/ui/StatCard'
@@ -387,6 +388,7 @@ function BudgetTab({ tenantId, sites }) {
     budgetLines, fetchBudgetLines, deleteBudgetLine,
   } = useReportsStore()
   const { materials, fetchMaterials } = useMaterialStore()
+  const { budgetRollup, fetchBudgetRollup } = useCostCentreStore()
 
   const [siteId,     setSiteId]     = useState(sites[0]?.id ?? '')
   const [year,       setYear]       = useState(String(new Date().getFullYear()))
@@ -405,6 +407,7 @@ function BudgetTab({ tenantId, sites }) {
     fetchProjectBudget(tenantId, siteId)
     fetchBudgetLines(tenantId, siteId, month)
     fetchMaterials(siteId)
+    fetchBudgetRollup(siteId)
   }, [tenantId, siteId])
 
   useEffect(() => {
@@ -438,6 +441,18 @@ function BudgetTab({ tenantId, sites }) {
 
   // Bar fill by consumption %
   const barFill = (pct) => pct > 100 ? '#dc2626' : pct > 75 ? '#f59e0b' : '#B85042'
+
+  // Cost-centre rollup → budget vs actual bars (only centres with a budget set)
+  const ccData = (budgetRollup ?? [])
+    .map((c) => ({
+      name:    c.name.length > 18 ? c.name.slice(0, 17) + '…' : c.name,
+      fullName: c.name,
+      budget:  Number(c.budget_amount ?? 0),
+      actual:  Number(c.actual_cost ?? 0),
+      pct:     c.pct_spent != null ? Number(c.pct_spent) : null,
+    }))
+    .sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1))
+  const ccFill = (pct) => pct == null ? '#9ca3af' : pct > 100 ? '#dc2626' : pct > 80 ? '#f59e0b' : '#16a34a'
 
   return (
     <div className="space-y-6">
@@ -616,6 +631,39 @@ function BudgetTab({ tenantId, sites }) {
           </>
         )}
       </div>
+
+      {/* ── Section 1b: By Cost Centre ───────────────────────────────────── */}
+      {ccData.length > 0 && (
+        <div>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wide">By Cost Centre</h2>
+          <div className="card overflow-hidden">
+            <div className="border-b border-gray-200 px-5 py-3">
+              <p className="text-sm font-semibold text-gray-900">Budget vs Spent — spend buckets</p>
+              <p className="text-xs text-gray-500">Green = on track · Amber = near limit · Red = over budget</p>
+            </div>
+            <div className="px-2 py-4">
+              <ResponsiveContainer width="100%" height={Math.max(ccData.length * 48 + 60, 160)}>
+                <BarChart layout="vertical" data={ccData}
+                  margin={{ top: 0, right: 50, left: 10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11 }}
+                    tickFormatter={(v) => formatINR(v)} />
+                  <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11 }} />
+                  <Tooltip
+                    formatter={(val, name) => [formatINR(Number(val)), name]}
+                    labelFormatter={(label, payload) => payload?.[0]?.payload?.fullName ?? label}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="budget" name="Budget" fill="#d1d5db" radius={[0, 3, 3, 0]} />
+                  <Bar dataKey="actual" name="Spent" radius={[0, 3, 3, 0]}>
+                    {ccData.map((entry, i) => <Cell key={i} fill={ccFill(entry.pct)} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Section 2: Monthly Trend ─────────────────────────────────────── */}
       <div>

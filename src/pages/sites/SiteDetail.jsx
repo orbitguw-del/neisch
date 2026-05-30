@@ -4,13 +4,15 @@ import { ArrowLeft, Users, Package, Calendar, MapPin, IndianRupee, ClipboardList
 import useSiteStore from '@/stores/siteStore'
 import useAuthStore from '@/stores/authStore'
 import PageHeader from '@/components/ui/PageHeader'
+import CostCentresSection from '@/components/sites/CostCentresSection'
 import { formatDate, formatINR } from '@/lib/utils'
 
 export default function SiteDetail() {
   const { siteId } = useParams()
   const navigate = useNavigate()
   const { activeSite, fetchSite } = useSiteStore()
-  const role = useAuthStore((s) => s.profile?.role)
+  const profile = useAuthStore((s) => s.profile)
+  const role = profile?.role
   const canManageWorkers    = ['superadmin', 'contractor', 'site_manager', 'supervisor'].includes(role)
   const canManageMaterials  = ['superadmin', 'contractor', 'site_manager', 'store_keeper'].includes(role)
   const canViewLogs         = ['superadmin', 'contractor', 'site_manager', 'supervisor'].includes(role)
@@ -121,6 +123,14 @@ export default function SiteDetail() {
           </Link>
         )}
       </div>
+
+      {/* Cost centres — spend buckets within this site */}
+      <CostCentresSection
+        siteId={siteId}
+        tenantId={site.tenant_id}
+        profileId={profile?.id}
+        role={role}
+      />
     </div>
   )
 }
