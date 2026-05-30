@@ -18,11 +18,20 @@
 //     NOT in this script's fixed-UUID set — it will also remove anything a user
 //     hand-added, so only use it for a deliberate reset.
 //
-// Run (safe, no deletes):   node scripts/seed.mjs
-// Run (one-time reset):     CLEAN_LEGACY=1 node scripts/seed.mjs
-//   (PowerShell:  $env:CLEAN_LEGACY=1; node scripts/seed.mjs)
-const URL  = 'https://zgvbogxibiilnblmuohg.supabase.co'
-const KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpndmJvZ3hpYmlpbG5ibG11b2hnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjY5Mjc2OSwiZXhwIjoyMDg4MjY4NzY5fQ.mRLEyTSnH127gCOGr4PG2A4Ekh9cAFHLJvxj8is-OsA'
+// Run (safe, no deletes):   SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/seed.mjs
+// Run (one-time reset):     CLEAN_LEGACY=1 SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/seed.mjs
+//   (PowerShell:  $env:SUPABASE_SERVICE_ROLE_KEY="<key>"; node scripts/seed.mjs)
+//
+// The service_role key bypasses ALL row-level security — NEVER hardcode it here
+// or commit it. Pass it via the SUPABASE_SERVICE_ROLE_KEY env var at run time.
+const URL  = process.env.SUPABASE_URL || 'https://zgvbogxibiilnblmuohg.supabase.co'
+const KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY
+if (!KEY) {
+  console.error('❌ Missing SUPABASE_SERVICE_ROLE_KEY env var.')
+  console.error('   Run:  SUPABASE_SERVICE_ROLE_KEY=<your-key> node scripts/seed.mjs')
+  console.error('   (PowerShell:  $env:SUPABASE_SERVICE_ROLE_KEY="<your-key>"; node scripts/seed.mjs)')
+  process.exit(1)
+}
 
 const HEADERS = { 'Content-Type': 'application/json', apikey: KEY, Authorization: `Bearer ${KEY}`, Prefer: 'resolution=merge-duplicates' }
 const CLEAN_LEGACY = process.env.CLEAN_LEGACY === '1'
