@@ -63,7 +63,7 @@ serve(async (req) => {
     // Verify the caller is a contractor on this tenant
     const supabaseUser = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
+      (Deno.env.get("SB_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY"))!,
       { global: { headers: { Authorization: authHeader } } }
     )
 
@@ -83,7 +83,7 @@ serve(async (req) => {
     // Use service role for admin operations
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      (Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"))!
     )
 
     const siteUrl    = Deno.env.get("SITE_URL") ?? "https://storeyinfra.com"
