@@ -78,7 +78,11 @@ async function rest(path, body, method = 'POST') {
 }
 async function up(table, rows, conflict = 'id') {
   if (!rows.length) return
-  await rest(`${table}?on_conflict=${conflict}`, rows)
+  // PostgREST requires every object in a bulk insert to share the SAME keys.
+  // Normalise: take the union of all keys and fill missing ones with null.
+  const keys = [...new Set(rows.flatMap(Object.keys))]
+  const norm = rows.map((r) => Object.fromEntries(keys.map((k) => [k, k in r ? r[k] : null])))
+  await rest(`${table}?on_conflict=${conflict}`, norm)
 }
 async function adminUser(user) {
   const r = await fetch(`${URL}/auth/v1/admin/users`, {
