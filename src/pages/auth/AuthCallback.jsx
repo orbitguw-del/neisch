@@ -3,6 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import StoreyIcon from '@/components/brand/StoreyIcon'
 
+// Dev-only logger — never leaks session/code details to the prod console.
+const dlog = (...args) => { if (import.meta.env.DEV) console.log(...args) }
+
 export default function AuthCallback() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -19,7 +22,7 @@ export default function AuthCallback() {
     const rawHash    = window.location.hash
     const hasToken   = rawHash.includes('access_token')
 
-    console.log('[AuthCallback] code:', code, '| error:', oauthErr, '| hash:', rawHash)
+    dlog('[AuthCallback] code:', code, '| error:', oauthErr, '| hash:', rawHash)
 
     // ── OAuth error returned by Google / Supabase ───────────────────────────
     if (oauthErr) {
@@ -33,10 +36,10 @@ export default function AuthCallback() {
 
     // Helper: go to dashboard if session exists, else login
     const finish = async (session) => {
-      console.log('[AuthCallback] finish — session:', !!session)
+      dlog('[AuthCallback] finish — session:', !!session)
       if (session) { navigate('/dashboard', { replace: true }); return }
       const { data } = await supabase.auth.getSession()
-      console.log('[AuthCallback] fallback getSession:', !!data.session)
+      dlog('[AuthCallback] fallback getSession:', !!data.session)
       navigate(data.session ? '/dashboard' : '/login', { replace: true })
     }
 
@@ -44,7 +47,7 @@ export default function AuthCallback() {
     if (code) {
       supabase.auth.exchangeCodeForSession(code)
         .then(async ({ data, error: err }) => {
-          console.log('[AuthCallback] exchangeCodeForSession — session:', !!data?.session, '| err:', err?.message)
+          dlog('[AuthCallback] exchangeCodeForSession — session:', !!data?.session, '| err:', err?.message)
           if (err) {
             const { data: existing } = await supabase.auth.getSession()
             if (existing.session) { navigate('/dashboard', { replace: true }); return }
@@ -71,13 +74,13 @@ export default function AuthCallback() {
       const refreshToken = tokenParams.get('refresh_token') ?? ''
       const tokenType    = tokenParams.get('type') // 'recovery' | 'signup' | null
 
-      console.log('[AuthCallback] magic-link | type:', tokenType, '| hasToken:', !!accessToken)
+      dlog('[AuthCallback] magic-link | type:', tokenType, '| hasToken:', !!accessToken)
 
       if (accessToken) {
         // Explicitly set the session (needed on native — detectSessionInUrl is false)
         supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
           .then(({ data, error: sessErr }) => {
-            console.log('[AuthCallback] setSession — session:', !!data?.session, '| err:', sessErr?.message)
+            dlog('[AuthCallback] setSession — session:', !!data?.session, '| err:', sessErr?.message)
             if (sessErr || !data?.session) { navigate('/login', { replace: true }); return }
             navigate(tokenType === 'recovery' ? '/reset-password' : '/dashboard', { replace: true })
           })
