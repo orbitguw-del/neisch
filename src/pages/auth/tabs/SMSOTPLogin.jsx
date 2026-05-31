@@ -2,9 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Phone } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-
-// Normalise phone: strip spaces/dashes so "+91 7002 500154" → "+917002500154"
-const normPhone = (raw) => raw.replace(/[\s\-().]/g, '')
+import { normalizePhone } from '@/lib/phone'
 
 export default function SMSOTPLogin() {
   const [step,    setStep]    = useState('email')  // 'email' | 'phone' | 'otp'
@@ -29,7 +27,7 @@ export default function SMSOTPLogin() {
     setError('')
 
     const { data, error: sendError } = await supabase.functions.invoke('send-sms-otp', {
-      body: { email, phone_number: normPhone(phone) },
+      body: { email, phone_number: normalizePhone(phone) },
     })
 
     setLoading(false)
@@ -55,7 +53,7 @@ export default function SMSOTPLogin() {
     const { data, error: verifyError } = await supabase.functions.invoke('verify-sms-otp', {
       body: {
         email,
-        phone_number: normPhone(phone),
+        phone_number: normalizePhone(phone),
         otp_code: otp,
         platform: isNative ? 'native' : 'web',
       },
@@ -94,7 +92,7 @@ export default function SMSOTPLogin() {
     setError('')
     setLoading(true)
     const { error: sendError } = await supabase.functions.invoke('send-sms-otp', {
-      body: { email, phone_number: normPhone(phone) },
+      body: { email, phone_number: normalizePhone(phone) },
     })
     setLoading(false)
     if (sendError) {
@@ -137,17 +135,24 @@ export default function SMSOTPLogin() {
       <form onSubmit={handleSendOTP} className="space-y-4">
         <div>
           <label className="label" htmlFor="sms-phone">Phone Number</label>
-          <input
-            id="sms-phone"
-            type="tel"
-            autoComplete="tel"
-            className="input"
-            placeholder="+91 98765 43210"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required
-          />
-          <p className="text-xs text-gray-500 mt-1">Include country code, e.g. +91 for India</p>
+          <div className="flex">
+            <span className="inline-flex items-center rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm font-medium text-gray-600">
+              +91
+            </span>
+            <input
+              id="sms-phone"
+              type="tel"
+              autoComplete="tel"
+              inputMode="numeric"
+              maxLength={10}
+              className="input rounded-l-none"
+              placeholder="98765 43210"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+              required
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-1">Enter your 10-digit mobile number</p>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button type="submit" disabled={loading} className="btn-primary w-full">
@@ -167,7 +172,7 @@ export default function SMSOTPLogin() {
   return (
     <form onSubmit={handleVerifyOTP} className="space-y-4">
       <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
-        OTP sent to <span className="font-medium">{phone}</span>. Check your messages.
+        OTP sent to <span className="font-medium">{normalizePhone(phone)}</span>. Check your messages.
       </div>
       <div>
         <label className="label" htmlFor="sms-otp">6-digit OTP</label>

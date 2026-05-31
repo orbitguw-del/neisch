@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import { Phone } from 'lucide-react'
+import { normalizePhone } from '@/lib/phone'
 
 export default function PhoneEnrollmentCard() {
   const { profile, user, fetchProfile } = useAuthStore()
@@ -26,14 +27,14 @@ export default function PhoneEnrollmentCard() {
     e.preventDefault()
     setLoading(true); setError('')
     const { error: sendError } = await supabase.functions.invoke('enroll-phone-otp', {
-      body: { phone_number: phone },
+      body: { phone_number: normalizePhone(phone) },
     })
     setLoading(false)
     if (sendError) {
       setError(sendError.message || 'Failed to send code.')
       return
     }
-    setMessage(`Code sent to ${phone}.`)
+    setMessage(`Code sent to ${normalizePhone(phone)}.`)
     setStep('otp')
   }
 
@@ -41,7 +42,7 @@ export default function PhoneEnrollmentCard() {
     e.preventDefault()
     setLoading(true); setError('')
     const { error: verifyError } = await supabase.functions.invoke('verify-phone-enrollment', {
-      body: { phone_number: phone, otp_code: otp },
+      body: { phone_number: normalizePhone(phone), otp_code: otp },
     })
     setLoading(false)
     if (verifyError) {
@@ -91,17 +92,24 @@ export default function PhoneEnrollmentCard() {
       ) : step === 'phone' ? (
         <form onSubmit={handleSend} className="space-y-4">
           <div>
-            <label className="label" htmlFor="enroll-phone">Phone (E.164 format)</label>
-            <input
-              id="enroll-phone"
-              type="tel"
-              className="input"
-              placeholder="+919876543210"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/\s/g, ''))}
-              required
-            />
-            <p className="mt-1 text-xs text-gray-500">Include country code, no spaces (e.g. +91 for India).</p>
+            <label className="label" htmlFor="enroll-phone">Phone number</label>
+            <div className="flex">
+              <span className="inline-flex items-center rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm font-medium text-gray-600">
+                +91
+              </span>
+              <input
+                id="enroll-phone"
+                type="tel"
+                inputMode="numeric"
+                maxLength={10}
+                className="input rounded-l-none"
+                placeholder="98765 43210"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                required
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-500">Enter your 10-digit mobile number.</p>
           </div>
           <div className="flex gap-2">
             <button type="submit" className="btn-primary" disabled={loading}>
