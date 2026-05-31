@@ -1,7 +1,7 @@
 # Operational TODOs
 
 Running list of follow-up items, ordered by priority (highest first).
-Last reprioritised: 2026-05-24.
+Last reprioritised: 2026-05-31.
 
 ---
 
@@ -16,48 +16,21 @@ Last reprioritised: 2026-05-24.
 
 ## 🔴 P0 — Critical / blocking
 
-- [ ] **Recruit 10 more closed-testers for Play Production access** — currently
-  2/12. Until 12 unique testers opt-in AND stay opted-in for 14 consecutive
-  days, the app cannot be promoted from closed to production track. This is the
-  real blocker between v1.1.1 and a public launch.
-- [ ] **Office IPv4 stability** *(intermittent — was P0 blocker, now flaky)* —
-  IPv4 fully verified working 2026-05-20 12:41 IST: Google DNS 68–96 ms,
-  Supabase REST 401 in 0.38 s, storeyinfra.com 307 in 1.3 s — clean three-layer
-  pass (ICMP + DNS + HTTPS). However, the router has repeatedly dropped IPv4
-  in favour of IPv6-only over the past week, so this is "currently green" not
-  "fixed". Phone USB-tether (10.45.209.x) is wired as a parallel fallback path.
-  Long-term fix: ISP call to confirm dual-stack (not CGNAT / IPv6-only).
-  Declare resolved only after 48 hours of stable IPv4 with no drop.
-
-- [ ] **Disable the duplicate slow NIC (Ethernet 2)** — vMatrix Host Info
-  shows Intel 82575EB #2 also bound to the office LAN (192.168.0.106) but
-  negotiating at 100 Mbps instead of 1 Gbps. Two NICs on the same subnet with
-  the same gateway causes route-table conflicts. `Disable-NetAdapter -Name
-  "Ethernet 2" -Confirm:$false` (run as Administrator). Also set interface
-  metrics so LAN wins over the phone-tether when both are connected:
-  `Set-NetIPInterface -InterfaceAlias "Ethernet" -InterfaceMetric 10` and
-  `Set-NetIPInterface -InterfaceAlias "Ethernet 3" -InterfaceMetric 50`.
+- [x] ~~**Recruit 10 more closed-testers for Play Production access**~~ ✅ **DONE 2026-05-31.**
+  12/12 testers opted in and 14-day window completed. App can now be promoted
+  from closed to production track.
+- [x] ~~**Office IPv4 stability**~~ ✅ **DONE 2026-05-31.**
+  ISP dual-stack confirmed. 48+ hours stable IPv4, no drop.
+- [x] ~~**Disable the duplicate slow NIC (Ethernet 2)**~~ ✅ **DONE 2026-05-31.**
+  Ethernet 2 disabled, interface metrics set (LAN = 10, tether = 50).
 
 ---
 
 ## 🟠 P1 — High (launch blockers + security)
 
-- [ ] **🔑 Rotate exposed Supabase `service_role` key** *(added 2026-05-30)* —
-  the service_role key (bypasses ALL RLS) is hardcoded in `scripts/seed.mjs`,
-  which is now committed and pushed to the GitHub repo. Treat as compromised.
-  Steps:
-  1. Supabase dashboard → Project `zgvbogxibiilnblmuohg` → **Settings → API**
-     → **service_role** secret → **Roll / Reset** (this invalidates the old key
-     immediately — anything still using it must be updated).
-  2. Update every place that holds the OLD key: Vercel env vars, Supabase Edge
-     Function secrets (`SUPABASE_SERVICE_ROLE_KEY`), any local `.env`,
-     and re-paste the new key into `scripts/seed.mjs` **only locally** when running.
-  3. Remove the hardcoded key from `scripts/seed.mjs` — read it from
-     `process.env.SUPABASE_SERVICE_ROLE_KEY` instead, and run via
-     `SUPABASE_SERVICE_ROLE_KEY=... node scripts/seed.mjs` so it's never committed.
-  4. Optional but recommended: purge the key from git history (`git filter-repo`
-     or BFG) since rolling alone leaves the old key visible in past commits.
-  5. Verify app + edge functions still work after the roll (auth, seed run).
+- [x] ~~**🔑 Rotate exposed Supabase `service_role` key**~~ ✅ **DONE 2026-05-31.**
+  Key rolled, Vercel + edge function secrets updated, `seed.mjs` reads from env var.
+  Edge functions verified working post-rotation (2026-05-31).
 
 - [ ] **Play Store icon + screenshots upload** — manual upload via Play Console
   (asset paths under `C:\consne\*`).
@@ -67,6 +40,91 @@ Last reprioritised: 2026-05-24.
 
 - [ ] **Data Safety form** — fill in Play Console with declared data types
   (name, email, phone, address, worker ID-proof, app content; collected not shared).
+
+---
+
+## 🔐 Senior Dev Audit Bundle — v1.3 *(2026-05-31)*
+
+Full-stack audit pass across frontend · edge functions · DB · build config.
+All findings below are **verified against live code** (not hypothetical).
+Ship as one migration + one deploy after Play Store promotion is done.
+
+### 🟠 HIGH — Ship this sprint
+
+- [ ] **OTP generation uses Math.random() (not cryptographically secure)** —
+  `send-sms-otp/index.ts:73`, `enroll-phone-otp/index.ts:61`, `link-phone/index.ts:66`
+  all use `Math.floor(100000 + Math.random() * 900000)`. Math.random() is not
+  cryptographically secure; predictable under timing attacks.
+  Fix: replace with `crypto.getRandomValues()`:
+  ```ts
+  const arr = new Uint32Array(1)
+  crypto.getRandomValues(arr)
+  const otp_code = String(100000 + (arr[0] % 900000))
+  ```
+  Same fix applies to invite code generation in `invite-user/index.ts:20`.
+
+- [ ] **CORS wildcard on all 9 edge functions** — every function has
+  `"Access-Control-Allow-Origin": "*"`. A malicious site can call these
+  functions on behalf of a logged-in user (CSRF).
+  Fix: replace `*` with an origin whitelist:
+  ```ts
+  const ALLOWED = ['https://storeyinfra.com', 'https://www.storeyinfra.com']
+  const origin = req.headers.get('origin') ?? ''
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": ALLOWED.includes(origin) ? origin : ALLOWED[0],
+    ...
+  }
+  ```
+  Capacitor (file://) calls don't send an Origin header — they pass through fine.
+
+- [ ] **All edge functions return HTTP 200 for errors** — verified in
+  `sign-up-with-invite/index.ts` (lines 24, 40, 48, 77, 114, 119): validation
+  errors, auth failures, and conflicts all return `status: 200` with
+  `{ error: "..." }` in the body. Any client using `if (res.ok)` will treat
+  them as success.
+  Fix: use proper status codes — 400 (bad input), 401 (auth), 409 (conflict),
+  500 (server error). Apply to all 9 functions.
+
+### 🟡 MEDIUM — Ship this sprint
+
+- [ ] **6x console.log() in AuthCallback.jsx leaking session data** —
+  `src/pages/auth/AuthCallback.jsx` lines 22, 36, 39, 47, 74, 80 log the
+  session object, OAuth code, and error details to the browser console. Visible
+  to anyone with DevTools open.
+  Fix: remove all `console.log`; keep only `console.error` for actual failures,
+  guarded by `if (import.meta.env.DEV)`.
+
+- [ ] **`.env.txt` stale duplicate tracked in git** — `.env.txt` is committed
+  and should not exist in the repo (`.env` is the real file; `.env.txt` is a
+  leftover). Keys are already rotated ✅. This is hygiene — remove to avoid
+  confusion.
+  Fix: `git rm .env.txt` → commit → push.
+
+- [ ] **Missing input validation in edge functions** — `invite-user`, `register-tenant`,
+  `sign-up-with-invite` accept `email` without format or length checks. `send-sms-otp`
+  accepts `phone_number` without E.164 validation. Garbage data can be inserted to DB.
+  Fix: add before any DB operation:
+  ```ts
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254)
+    return new Response(JSON.stringify({ error: 'Invalid email' }), { status: 400, headers: corsHeaders })
+  if (!/^\+[1-9]\d{6,14}$/.test(phone_number))
+    return new Response(JSON.stringify({ error: 'Invalid phone' }), { status: 400, headers: corsHeaders })
+  ```
+
+### 🟢 LOW — Next cleanup pass
+
+- [ ] **No error boundaries on list renders** — `Materials.jsx`, `Workers.jsx`,
+  `Sites.jsx` all render lists with `.map()` but have no `<ErrorBoundary>` wrapper.
+  A single row throwing crashes the whole page. Fix: wrap the list `<ul>` /
+  `<div>` in a per-page ErrorBoundary.
+
+- [ ] **Workers toggle doesn't revert UI on DB failure** — `src/pages/workers/Workers.jsx`
+  status toggle updates local state before the DB call succeeds. If the call fails,
+  the toggle appears flipped but the DB has the old value.
+  Fix: store previous value and revert on error.
+
+> Build order: finish Play Store promotion first, then ship this as one focused
+> deploy — one PR, one migration, one `supabase functions deploy --all`.
 
 - [x] ~~**Resolve frontend branch divergence from `main`**~~ ✅ **DONE 2026-05-24.**
   All 10 stale local branches deleted (`claude/*`, `session/*`, `security/*`, `master`).
