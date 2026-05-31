@@ -1,9 +1,15 @@
 ﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
+const ALLOWED_ORIGINS = ["https://storeyinfra.com", "https://www.storeyinfra.com"]
+
+function makeCors(origin: string | null) {
+  const o = origin ?? ""
+  const reflect = ALLOWED_ORIGINS.includes(o) || o.endsWith(".vercel.app")
+  return {
+    "Access-Control-Allow-Origin": reflect ? o : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
+  }
 }
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!
@@ -15,14 +21,11 @@ const TWILIO_AUTH_TOKEN  = Deno.env.get("TWILIO_AUTH_TOKEN")!
 const TWILIO_PHONE       = Deno.env.get("TWILIO_PHONE")!
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders })
-  }
-  if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405, headers: corsHeaders })
-  }
+  const corsHeaders = makeCors(req.headers.get("origin"))
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
+  if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers: corsHeaders })
 
-  // â”€â”€ Authenticate the calling user from their JWT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â"€â"€ Authenticate the calling user from their JWT â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   const authHeader = req.headers.get("Authorization") ?? ""
   const jwt = authHeader.replace("Bearer ", "")
   if (!jwt) {
@@ -44,7 +47,7 @@ serve(async (req) => {
     const body = await req.json()
     const { action, phone_number, otp_code } = body
 
-    // â”€â”€ STEP 1: send OTP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ STEP 1: send OTP â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     if (action === "send") {
       if (!phone_number) {
         return new Response(
@@ -63,7 +66,9 @@ serve(async (req) => {
         )
       }
 
-      const otp = Math.floor(100000 + Math.random() * 900000).toString()
+      const buf = new Uint32Array(1)
+      crypto.getRandomValues(buf)
+      const otp = String(100000 + (buf[0] % 900000))
 
       const { error: insertErr } = await supabase
         .from("phone_verifications")
@@ -105,7 +110,7 @@ serve(async (req) => {
       )
     }
 
-    // â”€â”€ STEP 2: verify OTP and link phone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ STEP 2: verify OTP and link phone â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     if (action === "verify") {
       if (!phone_number || !otp_code) {
         return new Response(

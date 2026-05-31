@@ -1,9 +1,15 @@
 ﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
+const ALLOWED_ORIGINS = ["https://storeyinfra.com", "https://www.storeyinfra.com"]
+
+function makeCors(origin: string | null) {
+  const o = origin ?? ""
+  const reflect = ALLOWED_ORIGINS.includes(o) || o.endsWith(".vercel.app")
+  return {
+    "Access-Control-Allow-Origin": reflect ? o : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
+  }
 }
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!
@@ -13,6 +19,7 @@ const admin = createClient(supabaseUrl, serviceKey)
 const MAX_ATTEMPTS = 5
 
 serve(async (req) => {
+  const corsHeaders = makeCors(req.headers.get("origin"))
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers: corsHeaders })
 
@@ -32,7 +39,7 @@ serve(async (req) => {
     const { phone_number, otp_code } = await req.json()
     if (!phone_number || !otp_code) return json({ error: "Missing phone_number or otp_code" }, 400)
 
-    // Re-check enrollment guard (defense in depth â€” send-side already rejects mismatch).
+    // Re-check enrollment guard (defense in depth â€" send-side already rejects mismatch).
     const { data: profile } = await admin
       .from("profiles")
       .select("phone")

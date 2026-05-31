@@ -2,9 +2,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
+const ALLOWED_ORIGINS = ["https://storeyinfra.com", "https://www.storeyinfra.com"]
+
+function makeCors(origin: string | null) {
+  const o = origin ?? ""
+  const reflect = ALLOWED_ORIGINS.includes(o) || o.endsWith(".vercel.app")
+  return {
+    "Access-Control-Allow-Origin": reflect ? o : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
+  }
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -15,11 +21,9 @@ const ROLE_LABELS: Record<string, string> = {
 
 function generateCode(len = 8): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // no 0/O/I/1 ambiguity
-  let code = ""
-  for (let i = 0; i < len; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)]
-  }
-  return code
+  const arr = new Uint8Array(len)
+  crypto.getRandomValues(arr)
+  return Array.from(arr).map(b => chars[b % chars.length]).join("")
 }
 
 function inviteEmailHtml(code: string, roleLabel: string, siteUrl: string): string {
@@ -47,9 +51,8 @@ function inviteEmailHtml(code: string, roleLabel: string, siteUrl: string): stri
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders })
-  }
+  const corsHeaders = makeCors(req.headers.get("origin"))
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
 
   try {
     const authHeader = req.headers.get("Authorization")

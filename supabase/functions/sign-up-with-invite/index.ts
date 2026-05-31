@@ -1,9 +1,15 @@
 ﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
+const ALLOWED_ORIGINS = ["https://storeyinfra.com", "https://www.storeyinfra.com"]
+
+function makeCors(origin: string | null) {
+  const o = origin ?? ""
+  const reflect = ALLOWED_ORIGINS.includes(o) || o.endsWith(".vercel.app")
+  return {
+    "Access-Control-Allow-Origin": reflect ? o : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
+  }
 }
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!
@@ -11,21 +17,23 @@ const supabaseKey = (Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SER
 const supabase   = createClient(supabaseUrl, supabaseKey)
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders })
-  }
+  const corsHeaders = makeCors(req.headers.get("origin"))
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
+
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    })
 
   try {
     const { invite_code, email, password, full_name } = await req.json()
 
     if (!invite_code || !email || !password) {
-      return new Response(
-        JSON.stringify({ error: "invite_code, email and password are required" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
+      return json({ error: "invite_code, email and password are required" }, 400)
     }
 
-    // â”€â”€ 1. Look up the invite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- 1. Look up the invite
     const { data: invite, error: inviteErr } = await supabase
       .from("pending_invites")
       .select("*")
@@ -35,21 +43,15 @@ serve(async (req) => {
       .single()
 
     if (inviteErr || !invite) {
-      return new Response(
-        JSON.stringify({ error: "Invite code is invalid or has expired. Ask your contractor to resend." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
+      return json({ error: "Invite code is invalid or has expired. Ask your contractor to resend." }, 400)
     }
 
-    // â”€â”€ 2. Email must match what the contractor invited â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- 2. Email must match what the contractor invited
     if (invite.email.toLowerCase() !== email.toLowerCase().trim()) {
-      return new Response(
-        JSON.stringify({ error: "This invite code was sent to a different email address. Use the email your contractor invited." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
+      return json({ error: "This invite code was sent to a different email address. Use the email your contractor invited." }, 403)
     }
 
-    // â”€â”€ 3. Create the auth user â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- 3. Create the auth user
     const { data: authData, error: createErr } = await supabase.auth.admin.createUser({
       email: email.toLowerCase().trim(),
       password,
@@ -66,20 +68,17 @@ serve(async (req) => {
 
     if (createErr) {
       if (createErr.message.toLowerCase().includes("already")) {
-        // User already exists â€” look up by email via auth.users (SECURITY DEFINER RPC)
+        // User already exists -- look up by email via auth.users (SECURITY DEFINER RPC)
         // profiles table has no 'email' column, so we use a dedicated helper function.
         const { data: existingId } = await supabase
           .rpc("get_auth_user_id_by_email", { p_email: email.toLowerCase().trim() })
         userId = existingId ?? undefined
       } else {
-        return new Response(
-          JSON.stringify({ error: createErr.message }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        )
+        return json({ error: createErr.message }, 400)
       }
     }
 
-    // â”€â”€ 4. Set profile role + tenant (trigger may have already done this) â”€â”€â”€â”€
+    // -- 4. Set profile role + tenant (trigger may have already done this)
     if (userId) {
       await supabase
         .from("profiles")
@@ -90,7 +89,7 @@ serve(async (req) => {
         })
         .eq("id", userId)
 
-      // â”€â”€ 5. Create site assignment if a site was specified â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // -- 5. Create site assignment if a site was specified
       if (invite.site_id) {
         await supabase
           .from("site_assignments")
@@ -103,20 +102,14 @@ serve(async (req) => {
       }
     }
 
-    // â”€â”€ 6. Mark invite as accepted â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- 6. Mark invite as accepted
     await supabase
       .from("pending_invites")
       .update({ accepted_at: new Date().toISOString() })
       .eq("id", invite.id)
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    )
+    return json({ success: true })
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: err.message }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    )
+    return json({ error: (err as Error).message }, 500)
   }
 })

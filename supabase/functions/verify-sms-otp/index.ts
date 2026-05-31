@@ -1,9 +1,15 @@
 ﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
+const ALLOWED_ORIGINS = ["https://storeyinfra.com", "https://www.storeyinfra.com"]
+
+function makeCors(origin: string | null) {
+  const o = origin ?? ""
+  const reflect = ALLOWED_ORIGINS.includes(o) || o.endsWith(".vercel.app")
+  return {
+    "Access-Control-Allow-Origin": reflect ? o : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
+  }
 }
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!
@@ -13,13 +19,9 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 const MAX_ATTEMPTS = 5
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders })
-  }
-
-  if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405, headers: corsHeaders })
-  }
+  const corsHeaders = makeCors(req.headers.get("origin"))
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
+  if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers: corsHeaders })
 
   try {
     const { email, phone_number, otp_code, platform } = await req.json()
@@ -106,7 +108,7 @@ serve(async (req) => {
       )
     }
 
-    // Mark OTP as verified â€” DO NOT overwrite profile.phone (closed takeover vector).
+    // Mark OTP as verified â€" DO NOT overwrite profile.phone (closed takeover vector).
     await supabase
       .from("phone_verifications")
       .update({ verified_at: new Date().toISOString() })
@@ -126,9 +128,9 @@ serve(async (req) => {
 
     const hashedToken = magicError ? null : magicData?.properties?.hashed_token ?? null
 
-    // Response includes BOTH `token_hash` (preferred â€” for verifyOtp) AND
+    // Response includes BOTH `token_hash` (preferred â€" for verifyOtp) AND
     // `hashed_token` alias for forward-compat with older callers.
-    // We intentionally DO NOT return `magic_link` (the full action URL) â€”
+    // We intentionally DO NOT return `magic_link` (the full action URL) â€"
     // that would leak a usable session credential in the response body.
     return new Response(
       JSON.stringify({
