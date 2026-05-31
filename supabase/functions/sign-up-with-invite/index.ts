@@ -16,6 +16,9 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!
 const supabaseKey = (Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"))!
 const supabase   = createClient(supabaseUrl, supabaseKey)
 
+const isEmail = (s: unknown) =>
+  typeof s === "string" && s.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+
 serve(async (req) => {
   const corsHeaders = makeCors(req.headers.get("origin"))
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
@@ -31,6 +34,12 @@ serve(async (req) => {
 
     if (!invite_code || !email || !password) {
       return json({ error: "invite_code, email and password are required" }, 400)
+    }
+    if (!isEmail(email)) {
+      return json({ error: "Please enter a valid email address" }, 400)
+    }
+    if (typeof password !== "string" || password.length < 6) {
+      return json({ error: "Password must be at least 6 characters" }, 400)
     }
 
     // -- 1. Look up the invite

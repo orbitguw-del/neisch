@@ -19,6 +19,9 @@ const ROLE_LABELS: Record<string, string> = {
   store_keeper: "Store Keeper",
 }
 
+const isEmail = (s: unknown) =>
+  typeof s === "string" && s.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+
 function generateCode(len = 8): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // no 0/O/I/1 ambiguity
   const arr = new Uint8Array(len)
@@ -61,6 +64,12 @@ serve(async (req) => {
     const { email, role, site_id, tenant_id } = await req.json()
     if (!email || !role || !site_id || !tenant_id) {
       throw new Error("email, role, site_id and tenant_id are all required")
+    }
+    if (!isEmail(email)) {
+      throw new Error("Please enter a valid email address")
+    }
+    if (!ROLE_LABELS[role]) {
+      throw new Error("Invalid role — must be site_manager, supervisor, or store_keeper")
     }
 
     // Verify the caller is a contractor on this tenant

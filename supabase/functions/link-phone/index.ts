@@ -20,6 +20,9 @@ const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID")!
 const TWILIO_AUTH_TOKEN  = Deno.env.get("TWILIO_AUTH_TOKEN")!
 const TWILIO_PHONE       = Deno.env.get("TWILIO_PHONE")!
 
+const isE164 = (s: unknown) =>
+  typeof s === "string" && /^\+\d{8,15}$/.test(s)
+
 serve(async (req) => {
   const corsHeaders = makeCors(req.headers.get("origin"))
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
@@ -49,9 +52,9 @@ serve(async (req) => {
 
     // â"€â"€ STEP 1: send OTP â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     if (action === "send") {
-      if (!phone_number) {
+      if (!isE164(phone_number)) {
         return new Response(
-          JSON.stringify({ error: "Missing phone_number" }),
+          JSON.stringify({ error: "Provide phone in E.164 format, e.g. +919876543210" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         )
       }
@@ -112,9 +115,9 @@ serve(async (req) => {
 
     // â"€â"€ STEP 2: verify OTP and link phone â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     if (action === "verify") {
-      if (!phone_number || !otp_code) {
+      if (!isE164(phone_number) || !/^\d{6}$/.test(String(otp_code))) {
         return new Response(
-          JSON.stringify({ error: "Missing phone_number or otp_code" }),
+          JSON.stringify({ error: "Invalid phone number or code" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         )
       }

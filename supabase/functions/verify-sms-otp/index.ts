@@ -18,6 +18,11 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
 const MAX_ATTEMPTS = 5
 
+const isEmail = (s: unknown) =>
+  typeof s === "string" && s.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+const isE164 = (s: unknown) =>
+  typeof s === "string" && /^\+\d{8,15}$/.test(s)
+
 serve(async (req) => {
   const corsHeaders = makeCors(req.headers.get("origin"))
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
@@ -30,6 +35,12 @@ serve(async (req) => {
     if (!email || !phone_number || !otp_code) {
       return new Response(
         JSON.stringify({ error: "Missing email, phone_number, or otp_code" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
+    }
+    if (!isEmail(email) || !isE164(phone_number) || !/^\d{6}$/.test(String(otp_code))) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email, phone number, or code" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }

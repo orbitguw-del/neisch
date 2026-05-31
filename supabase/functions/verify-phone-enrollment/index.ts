@@ -38,6 +38,9 @@ serve(async (req) => {
 
     const { phone_number, otp_code } = await req.json()
     if (!phone_number || !otp_code) return json({ error: "Missing phone_number or otp_code" }, 400)
+    if (!/^\+\d{8,15}$/.test(phone_number) || !/^\d{6}$/.test(String(otp_code))) {
+      return json({ error: "Invalid phone number or code" }, 400)
+    }
 
     // Re-check enrollment guard (defense in depth â€" send-side already rejects mismatch).
     const { data: profile } = await admin

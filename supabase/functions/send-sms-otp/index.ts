@@ -20,6 +20,11 @@ const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID")!
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN")!
 const TWILIO_PHONE = Deno.env.get("TWILIO_PHONE")!
 
+const isEmail = (s: unknown) =>
+  typeof s === "string" && s.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+const isE164 = (s: unknown) =>
+  typeof s === "string" && /^\+\d{8,15}$/.test(s)
+
 serve(async (req) => {
   const corsHeaders = makeCors(req.headers.get("origin"))
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
@@ -31,6 +36,12 @@ serve(async (req) => {
     if (!email || !phone_number) {
       return new Response(
         JSON.stringify({ error: "Missing email or phone_number" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
+    }
+    if (!isEmail(email) || !isE164(phone_number)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email or phone number" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
