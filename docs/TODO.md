@@ -51,65 +51,31 @@ Ship as one migration + one deploy after Play Store promotion is done.
 
 ### 🟠 HIGH — Ship this sprint
 
-- [ ] **OTP generation uses Math.random() (not cryptographically secure)** —
-  `send-sms-otp/index.ts:73`, `enroll-phone-otp/index.ts:61`, `link-phone/index.ts:66`
-  all use `Math.floor(100000 + Math.random() * 900000)`. Math.random() is not
-  cryptographically secure; predictable under timing attacks.
-  Fix: replace with `crypto.getRandomValues()`:
-  ```ts
-  const arr = new Uint32Array(1)
-  crypto.getRandomValues(arr)
-  const otp_code = String(100000 + (arr[0] % 900000))
-  ```
-  Same fix applies to invite code generation in `invite-user/index.ts:20`.
+- [x] ~~**OTP generation uses Math.random()**~~ ✅ **DONE 2026-05-31.**
+  Replaced with `crypto.getRandomValues()` in send-sms-otp, enroll-phone-otp,
+  link-phone, and invite code in invite-user. Commit `46fc9e95`.
 
-- [ ] **CORS wildcard on all 9 edge functions** — every function has
-  `"Access-Control-Allow-Origin": "*"`. A malicious site can call these
-  functions on behalf of a logged-in user (CSRF).
-  Fix: replace `*` with an origin whitelist:
-  ```ts
-  const ALLOWED = ['https://storeyinfra.com', 'https://www.storeyinfra.com']
-  const origin = req.headers.get('origin') ?? ''
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": ALLOWED.includes(origin) ? origin : ALLOWED[0],
-    ...
-  }
-  ```
-  Capacitor (file://) calls don't send an Origin header — they pass through fine.
+- [x] ~~**CORS wildcard on all 9 edge functions**~~ ✅ **DONE 2026-05-31.**
+  Replaced `*` with origin whitelist (storeyinfra.com + *.vercel.app).
+  Capacitor/no-origin passes through. Commit `46fc9e95`.
 
-- [ ] **All edge functions return HTTP 200 for errors** — verified in
-  `sign-up-with-invite/index.ts` (lines 24, 40, 48, 77, 114, 119): validation
-  errors, auth failures, and conflicts all return `status: 200` with
-  `{ error: "..." }` in the body. Any client using `if (res.ok)` will treat
-  them as success.
-  Fix: use proper status codes — 400 (bad input), 401 (auth), 409 (conflict),
-  500 (server error). Apply to all 9 functions.
+- [x] ~~**All edge functions return HTTP 200 for errors**~~ ✅ **DONE 2026-05-31.**
+  sign-up-with-invite now returns 400/403/500 correctly. All other functions
+  already had correct status codes. Commit `46fc9e95`.
 
 ### 🟡 MEDIUM — Ship this sprint
 
-- [ ] **6x console.log() in AuthCallback.jsx leaking session data** —
-  `src/pages/auth/AuthCallback.jsx` lines 22, 36, 39, 47, 74, 80 log the
-  session object, OAuth code, and error details to the browser console. Visible
-  to anyone with DevTools open.
-  Fix: remove all `console.log`; keep only `console.error` for actual failures,
-  guarded by `if (import.meta.env.DEV)`.
+- [x] ~~**6x console.log() in AuthCallback.jsx leaking session data**~~ ✅ **DONE 2026-05-31.**
+  Routed through a dev-only `dlog()` helper guarded by `import.meta.env.DEV` —
+  silent in prod builds, available in dev. Commit `8f14b832`.
 
-- [ ] **`.env.txt` stale duplicate tracked in git** — `.env.txt` is committed
-  and should not exist in the repo (`.env` is the real file; `.env.txt` is a
-  leftover). Keys are already rotated ✅. This is hygiene — remove to avoid
-  confusion.
-  Fix: `git rm .env.txt` → commit → push.
+- [x] ~~**`.env.txt` stale duplicate tracked in git**~~ ✅ **DONE 2026-05-31.**
+  Removed via `git rm .env.txt`, committed and pushed.
 
-- [ ] **Missing input validation in edge functions** — `invite-user`, `register-tenant`,
-  `sign-up-with-invite` accept `email` without format or length checks. `send-sms-otp`
-  accepts `phone_number` without E.164 validation. Garbage data can be inserted to DB.
-  Fix: add before any DB operation:
-  ```ts
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254)
-    return new Response(JSON.stringify({ error: 'Invalid email' }), { status: 400, headers: corsHeaders })
-  if (!/^\+[1-9]\d{6,14}$/.test(phone_number))
-    return new Response(JSON.stringify({ error: 'Invalid phone' }), { status: 400, headers: corsHeaders })
-  ```
+- [x] ~~**Missing input validation in edge functions**~~ ✅ **DONE 2026-05-31.**
+  Added 400-on-bad-input across 7 functions: email format, E.164 phone, 6-digit
+  OTP, min password length, role whitelist, company-name length. Verified
+  deployed — bad input → 400, valid input still passes. Commit `80c760b3`.
 
 ### 🟢 LOW — Next cleanup pass
 
