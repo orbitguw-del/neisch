@@ -59,13 +59,16 @@ Last reprioritised: 2026-05-31.
 | **Standard** | ₹999 | ₹2499 | +₹799 | Multi-user (all roles), full recording, basic reports |
 | **Pro / full suite** | ₹1999 | ₹4999 | +₹799 | + budgeting, cost-centres, **sub-contractor module + Work Order PDF** |
 
-**Billing: ANNUAL, "pay for 10 months" (2 months free).** Prices above are the
-monthly list rate; annual = monthly × 10 (12 months' service for the price of 10).
-Annual figures: Standard 1-site ₹9,990 · Standard 3-site ₹24,990 · Pro 1-site
-₹19,990 · Pro 3-site ₹49,990 · extra site ₹7,990 each. The "pay 10, use 12"
-framing is deliberately Tally-friendly (reframes recurring fee as a discount).
-*To confirm:* is monthly billing also offered, or is it annual-only? (Annual-only
-simplifies the build.)
+**Billing: BOTH monthly and annual — monthly is the on-ramp, annual is the
+conversion.** Funnel: **Free** (acquire) → **Monthly** (low-commitment try, no
+big upfront — beats the Tally one-time objection) → **Annual** (convert once
+hooked; "pay for 10 months, use 12" = 2 months free as the lever; also fixes
+cash flow with a year prepaid). Prices above are the monthly rate; annual =
+monthly × 10. Annual figures: Standard 1-site ₹9,990 · Standard 3-site ₹24,990
+· Pro 1-site ₹19,990 · Pro 3-site ₹49,990 · extra site ₹7,990 each.
+Conversion mechanics for build time: a gentle in-app nudge after N active months
+("you've used Storey 4 months — go annual, get 2 months free"). Switching cost
+(their data + team already in the system) makes annual the natural choice.
 
 - "Multi-user at different capacity" = the existing role hierarchy (site_manager
   / supervisor / store_keeper). Free = contractor solo; paid unlocks team.
@@ -76,9 +79,9 @@ simplifies the build.)
   big marginal discount, fine if a deliberate scale play).
 
 **Open questions (owner dismissed the clarifier — resolve before building):**
-- [x] **Billing period — RESOLVED 2026-06-01: annual, pay-for-10-months** (2
-  months free; monthly list × 10 = annual price). Confirm if monthly billing is
-  also offered or annual-only.
+- [x] **Billing period — RESOLVED 2026-06-01: BOTH monthly + annual.** Monthly =
+  on-ramp/trial; annual = conversion (pay 10 months, use 12 = 2 free). Contractor
+  starts monthly, converts to annual when happy.
 - [ ] Exactly what Free excludes — recording only, or recording + basic reports?
 - [ ] Does the ₹799 add-on site inherit the plan's tier (Pro extra = Pro features)?
   Assume **yes** until told otherwise. Should the add-on scale with tier instead
