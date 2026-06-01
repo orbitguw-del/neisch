@@ -49,6 +49,40 @@ Pricing sits well in the SMB value band — cheaper than Powerplay/Onsite, and t
 **per-site model is the standout advantage**. The risks are not price points but
 positioning/feature gaps: free-tier depth vs Yojo, and GST billing (now slated v2).
 
+## Monetization thesis — marketplace harnessing the unorganised market *(owner, 2026-06-01)*
+
+Storey's longer-term monetization is **not subscription-only** — the bigger play
+is a **marketplace that organises the unorganised NE-India construction supply
+market** (materials, vendors, sub-contractors, labour). Revenue: commission /
+lead-gen / take-rate on transactions, not just SaaS fees.
+
+**Why it's defensible:**
+- Storey captures the **demand-side data as a byproduct of the SaaS** — what
+  materials each contractor consumes, which vendors/sub-contractors/labour they
+  use. Most marketplaces must buy that data; Storey gets it free from daily use.
+- The supply side (NE material suppliers, vendors, labour) is genuinely informal
+  and fragmented — ripe to organise.
+- **Already in the architecture:** the Vendor Module **Phase 2** in `CLAUDE.md`
+  (superadmin-approved, *shared* vendor directory, "approved vendors visible to
+  all contractors, not tenant-scoped") IS the marketplace seed. Marketplace =
+  that directory + transactions on top.
+
+**How it reframes the free tier:** with a marketplace endgame, free contractors
+are **marketplace liquidity (demand-side density)**, not a revenue leak — so a
+*generous* free tier becomes a strategic acquisition investment, monetized via
+transactions rather than subscription. Make the free-tier-depth decision with
+this thesis explicit.
+
+**Sequencing (non-negotiable):**
+- Marketplace is **two-sided** — cold-start problem; needs contractor + vendor
+  density in the same geography before any transaction happens.
+- **SaaS is the wedge that builds the demand side first.** Cannot build the
+  marketplace before contractor density exists.
+- **NE geographic concentration = the moat.** Own NE contractors densely before
+  national players (Udaan-type) care about the region.
+- **Day-365+ / v2–v3 play — NOT in the 90-day plan.** The 90-day SaaS milestones
+  (paying contractors) are the prerequisite. Belongs in `ROADMAP-365.md` horizon.
+
 ## Sources
 - Powerplay pricing — https://www.techjockey.com/detail/powerplay
 - Onsite ERP pricing — https://onsiteteams.com/onsite-pricing/
