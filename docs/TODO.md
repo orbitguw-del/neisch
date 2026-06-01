@@ -55,7 +55,7 @@ Last reprioritised: 2026-05-31.
 
 | Plan | 1 site | 3 sites | Each site beyond 3 | What you get |
 |---|---|---|---|---|
-| **Free** | ₹0 (1 user) | — | — | **Recording only** — no budgeting, no cost-centres, **no material transfer** (manual stock entry; transfer is a between-sites flow and Free is single-site anyway) |
+| **Free** | ₹0 (1 user) | — | — | **Recording only** — no budgeting, no cost-centres, **no material workflows** (no goods-receipt-from-vendor inward register, no material transfer). Manual stock entry only. |
 | **Standard** | ₹999 | ₹2499 | +₹799 | Multi-user (all roles), full recording, basic reports |
 | **Pro / full suite** | ₹1999 | ₹4999 | +₹799 | + budgeting, cost-centres, **sub-contractor module + Work Order PDF** |
 
@@ -83,8 +83,9 @@ Conversion mechanics for build time: a gentle in-app nudge after N active months
   on-ramp/trial; annual = conversion (pay 10 months, use 12 = 2 free). Contractor
   starts monthly, converts to annual when happy.
 - [ ] Exactly what Free excludes — known so far: **no budgeting, no cost-centres,
-  no material transfer** (manual stock entry only). Still to pin down: does Free
-  get basic reports? attendance confirmation flow? sub-contractor (no — that's Pro)?
+  no goods-receipt-from-vendor, no material transfer** (manual stock entry only —
+  the structured material workflows are paid). Still to pin down: does Free get
+  basic reports? attendance confirmation flow? (sub-contractor is Pro-only.)
 - [ ] Does the ₹799 add-on site inherit the plan's tier (Pro extra = Pro features)?
   Assume **yes** until told otherwise. Should the add-on scale with tier instead
   of flat ₹799 (e.g. +₹799 Standard / +₹1299 Pro)?
