@@ -79,15 +79,15 @@ Ship as one migration + one deploy after Play Store promotion is done.
 
 ### 🟢 LOW — Next cleanup pass
 
-- [ ] **No error boundaries on list renders** — `Materials.jsx`, `Workers.jsx`,
-  `Sites.jsx` all render lists with `.map()` but have no `<ErrorBoundary>` wrapper.
-  A single row throwing crashes the whole page. Fix: wrap the list `<ul>` /
-  `<div>` in a per-page ErrorBoundary.
+- [x] ~~**No error boundaries on list renders**~~ ✅ **DONE 2026-06-01.**
+  ErrorBoundary gained an optional inline `fallback`; Workers/Materials/Sites
+  lists now wrapped so a bad row shows a "Try again" card, not a blank page.
+  Commit `0dff9fd7`.
 
-- [ ] **Workers toggle doesn't revert UI on DB failure** — `src/pages/workers/Workers.jsx`
-  status toggle updates local state before the DB call succeeds. If the call fails,
-  the toggle appears flipped but the DB has the old value.
-  Fix: store previous value and revert on error.
+- [x] ~~**Workers toggle doesn't revert UI on DB failure**~~ ✅ **DONE 2026-06-01.**
+  Corrected the diagnosis: `updateWorker` commits to local state only AFTER the
+  DB write succeeds, so there was never a stale-UI mismatch — the real bug was a
+  silently-swallowed failure. Now surfaced as a dismissible banner. Commit `0dff9fd7`.
 
 > Build order: finish Play Store promotion first, then ship this as one focused
 > deploy — one PR, one migration, one `supabase functions deploy --all`.
