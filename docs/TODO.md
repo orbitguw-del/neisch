@@ -118,6 +118,22 @@ Ship as one migration + one deploy after Play Store promotion is done.
 > When you build the next APK: bump versionCode + versionName, list the fixes
 > in release notes, mark them resolved here.
 
+### Bundled into v1.2.2 (versionCode 24) — built 2026-06-01 ✅
+
+v1.3 senior-dev audit bundle (frontend portion) + SMS country-code removal.
+AAB at `android\app\build\outputs\bundle\release\app-release.aab` (3.9 MB, signed).
+- [x] SMS OTP — drop country-code entry, default +91 (10-digit input + prefix box)
+- [x] Error boundaries on Workers / Materials / Sites lists (inline fallback)
+- [x] Worker status-toggle failures surfaced (was silently swallowed)
+- [x] AuthCallback debug logs gated behind `import.meta.env.DEV`
+- (edge-function security fixes — OTP entropy, CORS, validation, status codes —
+  are server-side, already live, no APK needed)
+
+**v1.2.2 ready to upload:**
+- `app-release.aab` (3.9 MB, versionCode 24) → Play Console closed track
+
+---
+
 ### Bundled into v1.2.1 (versionCode 23) — built 2026-05-24 ✅
 
 All tester bug fixes (Tm Kazip rounds 1 & 2) + full UI audit (critical + medium
