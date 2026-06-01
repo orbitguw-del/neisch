@@ -385,13 +385,13 @@ fixed on web · APK status)*
 
 ## 🟡 P2 — Medium (legal / business)
 
-- [ ] **Register a legal entity — "Storey Solutions Private Limited"** (Pvt Ltd)
+- [ ] **Register a legal entity — "Storey Labs Private Limited"** (Pvt Ltd)
   via a CA — operating as an individual means unlimited personal liability. Move
   services under it once formed. **Becomes P1 the moment fundraising /
   advisor-equity is on the table** — you cannot issue equity, sign SAFEs / CCDs,
   or grant advisor shares from an unregistered business.
   *(Name + structure set 2026-06-01.)*
-  - **Name:** Storey Solutions Private Limited. Verify availability on MCA
+  - **Name:** Storey Labs Private Limited. Verify availability on MCA
     (SPICe+/RUN) + check IP-India for any clashing "Storey Infra" trademark.
     Legal name ≠ brand ("Storey" / storeyinfra.com) — that's fine.
   - **Cap table (proposed, pending CA):** founder ~99% / son ~1% (son must be
