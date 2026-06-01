@@ -43,6 +43,47 @@ Last reprioritised: 2026-05-31.
 
 ---
 
+## 💳 Pricing & payment tiers *(NEW feature — set 2026-06-01, NOT built)*
+
+> Owner's tier structure. **Gated:** pricing is *validated* in roadmap Phase 3
+> (Day 61–90, "5 paying contractors"); the **payment/billing system build is
+> v1.x**, NOT in the 90-day plan — do not build now. Recording the spec only.
+> Payment provider for India is almost certainly **Razorpay** (UPI + cards +
+> netbanking); confirm at build time.
+
+**Tiers as stated by owner:**
+
+| Tier | Price | Sites | Users | Features |
+|---|---|---|---|---|
+| **Free** | ₹0 | 1 | 1 (single user) | **Recording only** — no budgeting, no cost-centres |
+| **Solo site** | ₹999 | 1 | Multi-user (all roles, different capacities) | (full features — to confirm) |
+| **Multi site** | ₹2499 | 3 | Multi-user | (full features — to confirm) |
+
+The "multi-user at different capacity" maps cleanly to the existing role
+hierarchy (site_manager / supervisor / store_keeper) — paid tiers unlock adding
+team members; free tier is the contractor working solo.
+
+**Open questions (owner dismissed the clarifier — resolve before building):**
+- [ ] Billing period — per month / per year / one-time? (roadmap implies
+  ₹/site/month; assume **monthly** until confirmed)
+- [ ] Exactly what Free excludes — recording only? or recording + basic reports?
+  (owner said "no budgeting"; need the full gated-feature list)
+- [ ] Do ₹999 and ₹2499 differ ONLY by site count (1 vs 3), or does the higher
+  tier add features (Work Order PDF, data export/backup, etc.)?
+- [ ] What happens beyond 3 sites — a 4th tier / custom / enterprise?
+- [ ] Annual discount? Free-trial-then-pay path? Grace period on downgrade?
+
+**Build notes (for when it's time):**
+- Plan enforcement already has a foundation: `tenants` has a plan column + a
+  plan-lock migration (`20260519020000`). Tier limits (site count, user count,
+  feature flags) should be enforced in RLS / app guards keyed off the tenant plan.
+- Free→paid upgrade and paid→free downgrade need a defined data-handling rule
+  (e.g. downgrade to free with >1 site: read-only lock on extra sites, not delete).
+- Ties to legal: paid tiers change the liability picture (see Owner directive #2
+  — free/pilot ₹0-liability clause vs paying-customer terms).
+
+---
+
 ## 🏛️ Owner strategic directives *(set 2026-06-01)*
 
 > Eight directives from Karun. **Execution rule (his #3): nothing matters
