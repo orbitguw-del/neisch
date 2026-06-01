@@ -385,11 +385,26 @@ fixed on web · APK status)*
 
 ## 🟡 P2 — Medium (legal / business)
 
-- [ ] **Register a legal entity** (Pvt Ltd / LLP) via a CA — operating as an
-  individual means unlimited personal liability. Move services under it once
-  formed. **Becomes P1 the moment fundraising / advisor-equity is on the
-  table** — you cannot issue equity, sign SAFEs / CCDs, or grant advisor shares
-  from an unregistered business.
+- [ ] **Register a legal entity — "Storey Infra Tech Private Limited"** (Pvt Ltd)
+  via a CA — operating as an individual means unlimited personal liability. Move
+  services under it once formed. **Becomes P1 the moment fundraising /
+  advisor-equity is on the table** — you cannot issue equity, sign SAFEs / CCDs,
+  or grant advisor shares from an unregistered business.
+  *(Name + structure set 2026-06-01.)*
+  - **Name:** Storey Infra Tech Private Limited. Verify availability on MCA
+    (SPICe+/RUN) + check IP-India for any clashing "Storey Infra" trademark.
+    Legal name ≠ brand ("Storey" / storeyinfra.com) — that's fine.
+  - **Cap table (proposed, pending CA):** founder ~99% / son ~1% (son must be
+    adult + PAN) to meet the 2-shareholder minimum. Decide son-as-2nd-director
+    vs shareholder-only (director carries statutory liability).
+  - **⚠️ Founder has personal debt** → structure for clean separation; **no new
+    personal guarantees, no personal borrowing to fund the company, route all
+    revenue (clinic ₹30k, Storey) to the company not personal accounts.** The
+    son-shareholding allocation must be a clean founding allocation, not
+    asset-shielding — **CA + insolvency-aware lawyer to vet intent/timing.**
+  - **Downstream once name is final:** swap "Storey Infra Pvt Ltd" → "Storey
+    Infra Tech Private Limited" in Privacy draft, ToS draft, lawyer brief, clinic SOW.
+  - Keep the **"Storey" trademark** filing separate (company name ≠ trademark).
 
 - [ ] **Consolidate accounts to one company email** — split across
   `orbitguw@gmail.com` and `karunroongta@gmail.com`. Create
