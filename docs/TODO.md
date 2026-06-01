@@ -43,6 +43,88 @@ Last reprioritised: 2026-05-31.
 
 ---
 
+## 🏛️ Owner strategic directives *(set 2026-06-01)*
+
+> Eight directives from Karun. **Execution rule (his #3): nothing matters
+> except the 90-day checklist — follow `docs/ROADMAP-90.md` exactly, don't
+> build beyond it.** So these are RECORDED + classified here; only the ones
+> already inside the 90-day plan get built now. The infra/feature items
+> (DBs, environments, KYC, offboarding) are gated to the milestone noted on
+> each. This block is the canonical reference for all eight.
+
+**1. Company in a limited-liability entity, NOT personal name.** *(already
+P2 "Register a legal entity" + roadmap Day-30 file / Day-90 certificate.)*
+Reinforced: launch under the Pvt Ltd / LLP for security, branding, legal &
+financial protection. Operating personally = unlimited personal liability.
+Status: in the 90-day plan (CA quote Fri May 30 → file Day 30 → cert Day 90).
+
+**2 + 7. Legal / Terms of Service — VALIDATE WITH A REAL LAWYER.** *(extends
+P2 "Terms of Service".)* The PDFs on disk are boilerplate — not sufficient.
+Two clauses are **critical** and must be lawyer-drafted before more pilots use it:
+- **Liability waiver for non-paying pilot users** — explicitly state Storey is
+  NOT responsible for any business loss, construction delay, or damage arising
+  from use, *especially* for free/trial contractors evaluating the product.
+  Without this, the software can be blamed for site delays and you could be
+  bound to pay.
+- **Data-privacy indemnity (#7)** — explicitly state the DB holds the
+  contractor's inventory / HR / financial data, the contractor consents to
+  this, and Storey is not liable for that data being held.
+- ⚠️ Claude must NOT present any drafted clause as legally validated — a
+  qualified Indian lawyer signs off. Gate: before onboarding any contractor
+  who isn't Arun; hard-required before charging (Day 90).
+
+**3. Execution discipline — follow the 90-day checklist exactly.** Meta-rule,
+not a build item. Don't be pulled beyond `ROADMAP-90.md`. (This is why 4/5/6/8
+below are recorded, not built now.)
+
+**4. Three databases — test · quality · production.** *(NEW infra — v1.x,
+gate: when real paying contractors are on prod, ~Day 90+.)*
+- **Test DB** — junk/demo data only. NEVER given to a live customer.
+- **Quality DB** *(optional, suggested)* — refreshed from prod every 6 months;
+  lets a change that passed test be re-tried against real-shaped data before prod.
+- **Production DB** — live customer data, audited, sacrosanct. Only real
+  contractors with valid govt permits + GST IDs (ties to #6).
+- ⚠️ **Near-term risk to flag now:** today there is effectively one Supabase
+  project; dev/test activity and would-be-real data share it. Minimum viable
+  step before real paying data lands = a **separate Supabase project for prod**,
+  distinct from the dev/test project. Full 3-tier split can come later.
+
+**5. Three code environments — development · quality · production.** *(NEW
+infra — v1.x, pairs with #4.)* Dev env → Test DB (in-dev work, fix-and-retest
+here). Quality env → Quality DB (only changes that passed dev testing).
+Production env → Production DB (golden code + live data). Today: `main` →
+Vercel prod auto-deploy, single Supabase. Gate same as #4.
+
+**6. Builder/contractor KYC at sign-up.** *(NEW onboarding hardening — v1.x,
+gate: before production/charging.)* A contractor account must capture + store
+**govt-issued proof of incorporation + GST ID** — Gmail alone is insufficient
+to prove they're a legally registered builder. Feeds #4's rule that prod data =
+only verified contractors. Schema: KYC fields + document upload on the
+tenant/contractor record, with a verified/pending status.
+
+**8. User offboarding + Storey ID ↔ login mapping.** *(NEW security — v1.x;
+best-practice design below, interim hardening can land sooner.)* When a
+supervisor/contractor leaves (e.g. joins a competitor), their Gmail must NOT
+still return either tenant's data. **Confirmed gap:** today `my_role()` /
+tenant resolution read straight from `profiles` (one tenant per profile) and
+there is **no status/is_active flag** — no clean deactivation path exists.
+Design (see session 2026-06-01 / project memory):
+- Mint a stable **Storey ID** per person; map it to login methods (Gmail/phone).
+  Storey ID — not the Gmail — is what's granted access to a tenant.
+- Move tenant access to a **`memberships`** row `(user_id, tenant_id,
+  storey_user_id, role, status[active|suspended|offboarded], joined_at,
+  offboarded_at, offboarded_by)`. RLS keys off *active* membership only. Same
+  person at a new company = new membership; sessions are scoped to one tenant
+  (Slack-workspace model) so two tenants' data never co-mingle.
+- **Offboarding workflow** (contractor/site_manager action): set status →
+  offboarded, clear `site_assignments`, **revoke refresh tokens / force
+  sign-out** via an admin edge function, write an audit row.
+- **Interim low-cost hardening (can ship before the full memberships refactor):**
+  add `profiles.status`; make `my_role()`/`my_tenant_id()` return NULL when not
+  active (instantly cuts all data); add the offboarding action + token revoke.
+
+---
+
 ## 🔐 Senior Dev Audit Bundle — v1.3 *(2026-05-31)*
 
 Full-stack audit pass across frontend · edge functions · DB · build config.
