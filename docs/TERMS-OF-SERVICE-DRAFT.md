@@ -248,14 +248,67 @@ required for some features (live reports, transfers between sites,
 team coordination). We are not responsible for issues arising from
 your internet connectivity.
 
+### 8.7 Construction and operational outcomes
+> ⚠️ **LAWYER REVIEW REQUIRED — draft language, not yet validated.**
+
+Storey is a digital record-keeping and coordination tool. **It does not
+build, supervise, manage, schedule, or control any construction project,
+site, worker, vendor, or material.** All construction work, decisions,
+supervision, and outcomes remain solely and entirely your responsibility.
+
+To the maximum extent permitted by law, Storey and its owners,
+directors, employees, and contractors are **not responsible or liable**
+for, and you will not hold us liable for, any of the following, whether
+arising directly or indirectly from your use of (or inability to use)
+Storey:
+
+- construction delays, stoppages, or schedule overruns;
+- cost or budget overruns, financial loss, or lost profits;
+- structural defects, workmanship issues, or quality failures;
+- workplace accidents, injury, death, or occupational-safety incidents;
+- material shortages, wastage, theft, pilferage, or stock discrepancies;
+- labour, attendance, wage, or sub-contractor disputes;
+- regulatory, permit, GST, tax, statutory, or compliance failures;
+- inaccurate, incomplete, delayed, or lost data entered by you or your team;
+- any decision you, your team, or any third party makes in reliance on
+  information displayed in, calculated by, or exported from Storey.
+
+You acknowledge that Storey reflects only the data you and your team
+enter, that such data may be incomplete or incorrect, and that you are
+responsible for verifying anything material against the physical site
+and your own records before acting on it.
+
 ## 9. Limitation of liability
 
+> ⚠️ **LAWYER REVIEW REQUIRED — §9.0 below is new draft language.**
+
+### 9.0 Free, trial, and pilot users (no fee paid)
+If you are using Storey **without paying any fee** — including any free
+beta, trial, evaluation, pilot, or demonstration access — you
+acknowledge and agree that:
+
+- you are using Storey **voluntarily, at your own risk, solely to
+  evaluate** whether it suits your business;
+- Storey is provided to you **free of charge, "as is", with no
+  warranties and no service commitments** of any kind;
+- to the maximum extent permitted by law, **our total liability to you
+  is zero (₹0)**, and we are **not liable for any loss or damage of any
+  kind** — direct or indirect — arising from your use of or reliance on
+  Storey, including (without limitation) any construction delay,
+  business loss, lost profit, cost overrun, or data loss;
+- no free, trial, or pilot use creates any commitment, guarantee,
+  service-level obligation, or partnership between you and Storey.
+
+This clause applies in addition to §8.7 (construction and operational
+outcomes) and the limits in §9 below.
+
+### 9.1 General limits
 To the maximum extent permitted by Indian law:
 
 - **Cap on liability:** Our total aggregate liability for any claim
   arising from or related to your use of Storey is capped at the
-  fees you paid us in the 12 months preceding the claim. During the
-  free beta period, this cap is effectively ₹0, except where law
+  fees you paid us in the 12 months preceding the claim. For free,
+  trial, or pilot users this cap is **₹0** (see §9.0), except where law
   requires otherwise.
 - **No consequential damages:** We are not liable for indirect,
   incidental, special, consequential, or punitive damages — including

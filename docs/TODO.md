@@ -66,6 +66,13 @@ Two clauses are **critical** and must be lawyer-drafted before more pilots use i
   from use, *especially* for free/trial contractors evaluating the product.
   Without this, the software can be blamed for site delays and you could be
   bound to pay.
+  → **Draft written 2026-06-01** in `docs/TERMS-OF-SERVICE-DRAFT.md` §8.7
+  (construction & operational outcomes — delays, defects, safety, cost overruns,
+  data accuracy) + §9.0 (free/trial/pilot users: ₹0 liability, at-own-risk).
+  **Still TODO:** (a) lawyer validates both clauses; (b) only then port the
+  validated text into the live `src/pages/Terms.jsx`; (c) capture explicit
+  consent (the consent-stamp flow in register-tenant already records
+  terms_version — bump it when these land).
 - **Data-privacy indemnity (#7)** — explicitly state the DB holds the
   contractor's inventory / HR / financial data, the contractor consents to
   this, and Storey is not liable for that data being held.
