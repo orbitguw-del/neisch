@@ -51,27 +51,34 @@ Last reprioritised: 2026-05-31.
 > Payment provider for India is almost certainly **Razorpay** (UPI + cards +
 > netbanking); confirm at build time.
 
-**Tiers as stated by owner:**
+**Tiers as stated by owner (2×2 on sites × feature-depth, + Free):**
 
-| Tier | Price | Sites | Users | Features |
+| Plan | 1 site | 3 sites | Each site beyond 3 | What you get |
 |---|---|---|---|---|
-| **Free** | ₹0 | 1 | 1 (single user) | **Recording only** — no budgeting, no cost-centres |
-| **Solo site** | ₹999 | 1 | Multi-user (all roles, different capacities) | (full features — to confirm) |
-| **Multi site** | ₹2499 | 3 | Multi-user | (full features — to confirm) |
+| **Free** | ₹0 (1 user) | — | — | **Recording only** — no budgeting, no cost-centres |
+| **Standard** | ₹999 | ₹2499 | +₹799 | Multi-user (all roles), full recording, basic reports |
+| **Pro / full suite** | ₹1999 | ₹4999 | +₹799 | + budgeting, cost-centres, **sub-contractor module + Work Order PDF** |
 
-The "multi-user at different capacity" maps cleanly to the existing role
-hierarchy (site_manager / supervisor / store_keeper) — paid tiers unlock adding
-team members; free tier is the contractor working solo.
+- "Multi-user at different capacity" = the existing role hierarchy (site_manager
+  / supervisor / store_keeper). Free = contractor solo; paid unlocks team.
+- **Pro = the v1.2 bundle features.** Clean GTM: Free/Standard ship now,
+  **Pro unlocks when v1.2 lands** ("upgrade to Pro" = the v1.2 launch moment).
+- Per-site economics: Standard 3-site ≈ ₹833/site; Pro 3-site ≈ ₹1666/site;
+  add-on flat ₹799/site beyond 3 (note: on Pro this is <½ the in-bundle rate —
+  big marginal discount, fine if a deliberate scale play).
 
 **Open questions (owner dismissed the clarifier — resolve before building):**
-- [ ] Billing period — per month / per year / one-time? (roadmap implies
-  ₹/site/month; assume **monthly** until confirmed)
-- [ ] Exactly what Free excludes — recording only? or recording + basic reports?
-  (owner said "no budgeting"; need the full gated-feature list)
-- [ ] Do ₹999 and ₹2499 differ ONLY by site count (1 vs 3), or does the higher
-  tier add features (Work Order PDF, data export/backup, etc.)?
-- [ ] What happens beyond 3 sites — a 4th tier / custom / enterprise?
-- [ ] Annual discount? Free-trial-then-pay path? Grace period on downgrade?
+- [ ] **Billing period — per month / per year? THE key decision** (everything
+  hangs off it; roadmap implies ₹/site/month → assume **monthly** until confirmed).
+- [ ] Exactly what Free excludes — recording only, or recording + basic reports?
+- [ ] Does the ₹799 add-on site inherit the plan's tier (Pro extra = Pro features)?
+  Assume **yes** until told otherwise. Should the add-on scale with tier instead
+  of flat ₹799 (e.g. +₹799 Standard / +₹1299 Pro)?
+- [ ] Does the **₹999 Standard "dead middle"** survive? Only ₹1k below Pro, but
+  Pro holds the real value — risk customers skip Standard (Free → Pro). Keep only
+  if "multi-user without budgeting" is a real heard need; else collapse to Free→Pro.
+- [ ] Annual discount? Free-trial-then-pay path? Grace period / read-only lock on
+  downgrade (don't delete extra-site data)?
 
 **Build notes (for when it's time):**
 - Plan enforcement already has a foundation: `tenants` has a plan column + a
