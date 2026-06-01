@@ -738,6 +738,25 @@ blocker, not just a liability concern.
 
 ## 🆕 New features — backlog (post-v1, tag before building)
 
+- [ ] **GST billing for customers** _(v2 — new feature; owner-approved 2026-06-01)_
+  — generate GST-compliant invoices / RA bills for the contractor to bill THEIR
+  client from inside Storey. **Rationale: accelerates contractor onboarding** —
+  competitors (Onsite Business+, SiteSetu Professional) bundle GST billing and
+  contractors want to bill clients from the app; offering it lowers the switch
+  barrier. Scope to decide before building: invoice/RA-bill templates, GST
+  number capture (ties to KYC directive #6), tax computation, numbering series,
+  PDF + share. NOT v1 — positioning until then is "Storey = site-ops, keep Tally
+  for accounts." See `docs/COMPETITORS.md` for the gap analysis. Pairs naturally
+  with the Pro tier (a billing-capable plan is an upsell lever).
+
+- [ ] **Free-tier depth vs Yojo — decision** _(pricing/GTM, not a build yet)_ —
+  Yojo's FREE plan (attendance, payroll, calculators, BOQ, DPR, multi-site,
+  Hindi) is more generous than Storey free (recording only, 1 site). As a funnel,
+  Storey free may be too thin to compete head-to-head. Decide: keep free as a
+  pure teaser (rely on per-site pricing + WO PDF moat to convert), or widen it
+  (e.g. allow basic reports / 1 extra user) to match Yojo as an acquisition tool.
+  See `docs/COMPETITORS.md`.
+
 - [ ] **Notifications** _(v1.x / v2 — new feature)_ — requested by viewers at the
   2026-05-18 presentation. Decide scope before building:
   • **In-app notification centre** — a bell + list (task assigned, transfer
