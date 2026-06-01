@@ -11,7 +11,7 @@ import PrintHeader from '@/components/print/PrintHeader'
 import PhotoThumb from '@/components/photo/PhotoThumb'
 import { downloadWorkbook, fmtINR } from '@/lib/exportXLS'
 import { shareOnWhatsApp } from '@/lib/whatsapp'
-import { formatINR, formatDate, cn } from '@/lib/utils'
+import { formatINR, formatINRCompact, formatDate, cn } from '@/lib/utils'
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
@@ -185,10 +185,10 @@ export default function SiteReportTab({ sites }) {
         <>
           {/* Top summary */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <StatCard label="Payroll"      value={formatINR(d.attendance.totalPay)} icon={Users} color="sage" />
-            <StatCard label="Material in"  value={formatINR(d.materials.totalReceivedCost)} icon={Package} color="brand" />
-            <StatCard label="Expenses"     value={formatINR(d.expenses?.approved ?? 0)} icon={Wallet} color="brand" />
-            <StatCard label="Total spend"  value={formatINR(d.totalSpend ?? 0)} icon={IndianRupee} color="red" />
+            <StatCard label="Payroll"      value={formatINRCompact(d.attendance.totalPay)} icon={Users} color="sage" />
+            <StatCard label="Material in"  value={formatINRCompact(d.materials.totalReceivedCost)} icon={Package} color="brand" />
+            <StatCard label="Expenses"     value={formatINRCompact(d.expenses?.approved ?? 0)} icon={Wallet} color="brand" />
+            <StatCard label="Total spend"  value={formatINRCompact(d.totalSpend ?? 0)} icon={IndianRupee} color="red" />
           </div>
 
           {/* ── Attendance summary ───────────────────────────────────────── */}

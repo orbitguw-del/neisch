@@ -20,8 +20,8 @@ export default function StatCard({ label, value, icon: Icon, trend, color = 'bra
         <Icon className="h-5 w-5" />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
-        <p className={cn('mt-0.5 text-2xl font-bold text-gray-900 tabular-nums', valueClass)}>{value}</p>
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">{label}</p>
+        <p className={cn('mt-0.5 text-2xl font-bold text-gray-900 tabular-nums truncate', valueClass)}>{value}</p>
         {trend && <p className="mt-0.5 text-xs text-gray-500">{trend}</p>}
       </div>
     </div>

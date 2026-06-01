@@ -15,6 +15,19 @@ export function formatINR(amount) {
   }).format(amount)
 }
 
+/** Compact Indian currency for tight spaces (stat cards, hero numbers):
+ *  ₹950 · ₹14k · ₹12.5L · ₹1.4Cr. Keeps big totals short so they fit the box.
+ *  Use formatINR() for tables / detail views that need the exact figure. */
+export function formatINRCompact(amount) {
+  const n = Number(amount) || 0
+  const a = Math.abs(n)
+  const sign = n < 0 ? '-' : ''
+  if (a >= 1e7) return `${sign}₹${+(a / 1e7).toFixed(1)}Cr`
+  if (a >= 1e5) return `${sign}₹${+(a / 1e5).toFixed(1)}L`
+  if (a >= 1e3) return `${sign}₹${+(a / 1e3).toFixed(1)}k`
+  return `${sign}₹${Math.round(a)}`
+}
+
 /** Format a date to DD MMM YYYY.
  *  Fix: date-only strings (YYYY-MM-DD) are parsed as UTC midnight by default,
  *  which causes a day-behind display in IST (+5:30). Appending T00:00 forces

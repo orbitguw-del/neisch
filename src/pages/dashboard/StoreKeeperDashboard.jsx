@@ -6,7 +6,7 @@ import useAuthStore from '@/stores/authStore'
 import useSiteStore from '@/stores/siteStore'
 import StatCard from '@/components/ui/StatCard'
 import PageHeader from '@/components/ui/PageHeader'
-import { formatINR } from '@/lib/utils'
+import { formatINR, formatINRCompact } from '@/lib/utils'
 
 export default function StoreKeeperDashboard() {
   const navigate  = useNavigate()
@@ -87,7 +87,7 @@ export default function StoreKeeperDashboard() {
         <StatCard label="Low Stock Alerts" value={lowStockItems.length} icon={AlertTriangle} color="red" />
         <StatCard
           label="Inventory Value"
-          value={totalValue > 0 ? formatINR(totalValue) : '—'}
+          value={totalValue > 0 ? formatINRCompact(totalValue) : '—'}
           icon={Warehouse}
           color="green"
         />

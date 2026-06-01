@@ -39,7 +39,7 @@ export default function HeroStatsCard({ label, stats = [], strip }) {
                 {Icon && (
                   <Icon className="h-4 w-4 text-sand-200 mb-1" aria-hidden="true" />
                 )}
-                <p className="text-3xl sm:text-4xl font-extrabold tabular-nums leading-none">
+                <p className="text-3xl sm:text-4xl font-extrabold tabular-nums leading-none truncate">
                   {s.value}
                 </p>
                 <p className="mt-1 text-xs text-sand-200 truncate">{s.sub}</p>

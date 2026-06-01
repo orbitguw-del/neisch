@@ -8,7 +8,7 @@ import PrintButton from '@/components/print/PrintButton'
 import PrintHeader from '@/components/print/PrintHeader'
 import { downloadSheet, fmtINR } from '@/lib/exportXLS'
 import { shareOnWhatsApp } from '@/lib/whatsapp'
-import { formatINR, cn } from '@/lib/utils'
+import { formatINR, formatINRCompact, cn } from '@/lib/utils'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -168,7 +168,7 @@ export default function AttendanceReportTab({ sites }) {
           <StatCard label="Workers"        value={attendanceData.rows.length}              icon={Users}        color="brand" />
           <StatCard label="Pay days"       value={attendanceData.totals.payDays.toFixed(1)} icon={CalendarDays} color="sage" />
           <StatCard label="Days in period" value={attendanceData.dates.length}             icon={CalendarDays} color="brand" />
-          <StatCard label="Total payroll"  value={formatINR(attendanceData.totals.totalPay)} icon={IndianRupee} color="red" />
+          <StatCard label="Total payroll"  value={formatINRCompact(attendanceData.totals.totalPay)} icon={IndianRupee} color="red" />
         </div>
       )}
 

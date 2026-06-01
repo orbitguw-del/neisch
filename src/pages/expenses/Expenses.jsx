@@ -11,7 +11,7 @@ import Modal from '@/components/ui/Modal'
 import PhotoCapture from '@/components/photo/PhotoCapture'
 import ApprovalBadge from '@/components/ApprovalBadge'
 import { uploadPhoto } from '@/lib/photos'
-import { formatINR, formatDate, cn } from '@/lib/utils'
+import { formatINR, formatINRCompact, formatDate, cn } from '@/lib/utils'
 
 const CATEGORIES = [
   'Fuel',
@@ -233,8 +233,8 @@ export default function Expenses() {
 
       {/* Summary */}
       <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard label="Approved spend" value={formatINR(totals.approved)} icon={CheckCircle2} color="green" />
-        <StatCard label="Pending approval" value={formatINR(totals.pending)} icon={Clock} color="sage" />
+        <StatCard label="Approved spend" value={formatINRCompact(totals.approved)} icon={CheckCircle2} color="green" />
+        <StatCard label="Pending approval" value={formatINRCompact(totals.pending)} icon={Clock} color="sage" />
         <StatCard label="Total entries" value={totals.count} icon={Wallet} color="brand" />
       </div>
 

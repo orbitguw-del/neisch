@@ -8,7 +8,7 @@ import PrintButton from '@/components/print/PrintButton'
 import PrintHeader from '@/components/print/PrintHeader'
 import StatCard from '@/components/ui/StatCard'
 import ShareReportButton from '@/components/ui/ShareReportButton'
-import { formatINR, cn } from '@/lib/utils'
+import { formatINR, formatINRCompact, cn } from '@/lib/utils'
 
 const WORK_LABEL = Object.fromEntries(WORK_TYPES.map(({ value, label }) => [value, label]))
 
@@ -156,7 +156,7 @@ export default function StockReportTab({ sites }) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard label="Total materials" value={totalItems}             icon={Package} color="brand" />
         <StatCard label="Zero stock"      value={lowStock}               icon={Package} color="red"   />
-        <StatCard label="Stock value"     value={formatINR(totalStockValue)} icon={Package} color="sage" />
+        <StatCard label="Stock value"     value={formatINRCompact(totalStockValue)} icon={Package} color="sage" />
         <StatCard label="Sites covered"   value={bySite.length}          icon={Package} color="brand" />
       </div>
 

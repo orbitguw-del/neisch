@@ -26,7 +26,7 @@ import TasksReportTab from './TasksReportTab'
 import InvitesReportTab from './InvitesReportTab'
 import { downloadSheet, fmtINR } from '@/lib/exportXLS'
 import { shareOnWhatsApp } from '@/lib/whatsapp'
-import { formatINR, formatDate, cn } from '@/lib/utils'
+import { formatINR, formatINRCompact, formatDate, cn } from '@/lib/utils'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -71,7 +71,7 @@ function OverviewTab({ sites }) {
         <StatCard label="Total Sites"  value={sites.length}             icon={HardHat}  color="brand" />
         <StatCard label="Active"       value={byStatus.active ?? 0}    icon={BarChart3} color="green" />
         <StatCard label="Completed"    value={byStatus.completed ?? 0} icon={BarChart3} color="sage"  />
-        <StatCard label="Total Budget" value={formatINR(totalBudget)}  icon={Package}  color="red"   />
+        <StatCard label="Total Budget" value={formatINRCompact(totalBudget)}  icon={Package}  color="red"   />
       </div>
 
       <div className="card overflow-hidden">
@@ -207,7 +207,7 @@ function MonthlyTab({ tenantId, sites }) {
           />
           <StatCard
             label="Total spend"
-            value={formatINR(monthlyData.totalCost)}
+            value={formatINRCompact(monthlyData.totalCost)}
             icon={TrendingUp}
             color="red"
           />
@@ -516,8 +516,8 @@ function BudgetTab({ tenantId, sites }) {
                   label="of budget spent"
                 />
               </div>
-              <StatCard label="Total budget"  value={formatINR(projectBudgetData.totalBudgetAmt)}  icon={Target}     color="brand" />
-              <StatCard label="Total spent"   value={formatINR(projectBudgetData.totalActualCost)} icon={TrendingUp} color={projectBudgetData.costVariance >= 0 ? 'green' : 'red'} />
+              <StatCard label="Total budget"  value={formatINRCompact(projectBudgetData.totalBudgetAmt)}  icon={Target}     color="brand" />
+              <StatCard label="Total spent"   value={formatINRCompact(projectBudgetData.totalActualCost)} icon={TrendingUp} color={projectBudgetData.costVariance >= 0 ? 'green' : 'red'} />
               <div className={cn(
                 'card px-5 py-4',
                 projectBudgetData.costVariance >= 0 ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50',
