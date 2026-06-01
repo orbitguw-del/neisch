@@ -13,6 +13,7 @@ import Modal from '@/components/ui/Modal'
 import StatCard from '@/components/ui/StatCard'
 import PhotoCapture from '@/components/photo/PhotoCapture'
 import PhotoThumb from '@/components/photo/PhotoThumb'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import { uploadPhoto } from '@/lib/photos'
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -352,6 +353,7 @@ export default function Workers() {
   const [modalOpen, setModalOpen]       = useState(false)
   const [saving, setSaving]             = useState(false)
   const [saveError, setSaveError]       = useState(null)
+  const [toggleError, setToggleError]   = useState(null)
 
   useEffect(() => {
     if (tenantId) {
@@ -410,12 +412,16 @@ export default function Workers() {
   }
 
   const handleToggleStatus = async (worker) => {
+    // updateWorker only commits to local state after the DB write succeeds, so
+    // the row never shows a stale value. But a failure was previously swallowed
+    // silently — surface it so the user knows the change didn't take.
+    setToggleError(null)
     try {
       await updateWorker(worker.id, {
         status: worker.status === 'active' ? 'inactive' : 'active',
       })
     } catch (err) {
-      console.error('Status toggle failed:', err.message)
+      setToggleError(`Couldn't update ${worker.name}: ${err.message}`)
     }
   }
 
@@ -491,6 +497,12 @@ export default function Workers() {
       {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
+      {toggleError && (
+        <div className="mb-4 flex items-start justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <span>{toggleError}</span>
+          <button onClick={() => setToggleError(null)} className="font-medium text-red-600 hover:text-red-800 shrink-0">Dismiss</button>
+        </div>
+      )}
 
       {loading ? (
         <p className="text-sm text-gray-500 py-8 text-center">Loading workers…</p>
@@ -506,6 +518,12 @@ export default function Workers() {
             : null}
         />
       ) : (
+        <ErrorBoundary fallback={(err, reset) => (
+          <div className="card p-6 text-center text-sm text-red-700">
+            <p className="mb-3">Couldn't display the worker list: {err?.message ?? 'unexpected error'}</p>
+            <button onClick={reset} className="btn-secondary">Try again</button>
+          </div>
+        )}>
         <div className="card overflow-hidden">
           <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100">
@@ -535,6 +553,7 @@ export default function Workers() {
             {filtered.length} worker{filtered.length !== 1 ? 's' : ''} shown
           </div>
         </div>
+        </ErrorBoundary>
       )}
 
       <Modal open={modalOpen} onClose={() => { setModalOpen(false); setSaveError(null) }} title="Onboard New Worker">

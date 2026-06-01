@@ -10,6 +10,7 @@ import PageHeader from '@/components/ui/PageHeader'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import MaterialPresetPicker from '@/components/materials/MaterialPresetPicker'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import { WORK_TYPES, WORK_TYPE_COLORS } from '@/lib/materialPresets'
 import { formatINR } from '@/lib/utils'
 
@@ -376,6 +377,12 @@ export default function Materials() {
           action={<button onClick={() => setModalOpen(true)} className="btn-primary"><Plus className="h-4 w-4" /> Add material</button>}
         />
       ) : (
+        <ErrorBoundary fallback={(err, reset) => (
+          <div className="card p-6 text-center text-sm text-red-700">
+            <p className="mb-3">Couldn't display the materials list: {err?.message ?? 'unexpected error'}</p>
+            <button onClick={reset} className="btn-secondary">Try again</button>
+          </div>
+        )}>
         <div className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-100">
@@ -421,6 +428,7 @@ export default function Materials() {
             </table>
           </div>
         </div>
+        </ErrorBoundary>
       )}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Material">

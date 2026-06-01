@@ -16,6 +16,15 @@ export default class ErrorBoundary extends Component {
 
   render() {
     if (this.state.error) {
+      // Inline fallback (e.g. wrapping a single list) — render the lighter UI
+      // instead of taking over the whole screen. `fallback` may be a node or a
+      // (error, reset) => node function.
+      if (this.props.fallback !== undefined) {
+        const reset = () => this.setState({ error: null })
+        return typeof this.props.fallback === 'function'
+          ? this.props.fallback(this.state.error, reset)
+          : this.props.fallback
+      }
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
           <div className="w-full max-w-sm text-center">

@@ -6,6 +6,7 @@ import useSiteStore from '@/stores/siteStore'
 import PageHeader from '@/components/ui/PageHeader'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import { formatDate, formatINR } from '@/lib/utils'
 
 const CAN_CREATE_SITES = ['superadmin', 'contractor']
@@ -194,6 +195,12 @@ export default function Sites() {
           }
         />
       ) : (
+        <ErrorBoundary fallback={(err, reset) => (
+          <div className="card p-6 text-center text-sm text-red-700">
+            <p className="mb-3">Couldn't display the sites list: {err?.message ?? 'unexpected error'}</p>
+            <button onClick={reset} className="btn-secondary">Try again</button>
+          </div>
+        )}>
         <div className="space-y-6">
           {warehouses.length > 0 && (
             <div>
@@ -220,6 +227,7 @@ export default function Sites() {
             </div>
           )}
         </div>
+        </ErrorBoundary>
       )}
 
       <Modal open={modalOpen} onClose={() => { setModalOpen(false); setSaveError('') }} title="New Site">
