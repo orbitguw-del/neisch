@@ -43,13 +43,16 @@ Last reprioritised: 2026-05-31.
 
 ---
 
-## 💳 Pricing & payment tiers *(NEW feature — set 2026-06-01, NOT built)*
+## 💳 Pricing & payment tiers *(NEW feature — set 2026-06-01; NOW IN 90-day plan)*
 
-> Owner's tier structure. **Gated:** pricing is *validated* in roadmap Phase 3
-> (Day 61–90, "5 paying contractors"); the **payment/billing system build is
-> v1.x**, NOT in the 90-day plan — do not build now. Recording the spec only.
-> Payment provider for India is almost certainly **Razorpay** (UPI + cards +
-> netbanking); confirm at build time.
+> **Moved into `docs/ROADMAP-90.md` on owner instruction (2026-06-01).**
+> - **Pricing model: DECIDED** (below).
+> - **Feature gating: Phase 2 (Day 31–60), item 9** — build the tier gate on the
+>   `tenants` plan column as the Pro/v1.2 features are built (low marginal cost).
+> - **Payment collection: Phase 3 (Day 61–90), LEAN** — first 5 contractors via
+>   manual UPI/bank + manual plan-flag flip. **Razorpay self-serve is a
+>   fast-follow AFTER 5 manual payments validate the price — not a Day-90 blocker.**
+> This avoids over-building billing before the price is proven.
 
 **Tiers as stated by owner (2×2 on sites × feature-depth, + Free):**
 

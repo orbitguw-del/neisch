@@ -86,8 +86,14 @@ Build the bundle in this order — each piece depends on the previous:
 | 6 | **Task / sub-contractor aware allocation** — `task_id` + `subcontractor_id` columns on `material_allocations` | 0.5 d | Three-radio dropdown live in Inventory page |
 | 7 | **Flag-and-correct workflow** — flag columns on allocation, BEFORE UPDATE trigger | 0.5 d | Supervisor can flag; site_manager approves; ledger preserved |
 | 8 | **"Your data, your Drive" backup** — daily export to contractor's Google Drive | 3 d | OAuth connect once, nightly backup lands automatically |
+| 9 | **Plan enforcement / feature gating** — gate features by tier on the `tenants` plan column (Free = recording only, no goods-receipt/transfer/budgeting/sub-contractor; Standard = multi-user; Pro = full suite). Build the gate AS you build items 1–8 — low marginal cost. | 1.5 d | A Free tenant can't open budgeting / sub-contractor / receipt / transfer; a Pro tenant can. Site + user count limits enforced. |
 
-**Calendar buffer:** 4 weeks (28 days) for ~11 days of focused work. The buffer absorbs: testers reporting bugs · phone calls with Arun · IPv4 dropouts · admin time.
+> **Pricing is DECIDED** (see `docs/TODO.md` "Pricing & payment tiers"): Free /
+> Standard (₹999 1-site, ₹2499 3-site) / Pro full-suite (₹1999 1-site, ₹4999
+> 3-site) + ₹799/extra-site; billing both monthly (on-ramp) and annual (convert,
+> 2 months free). Pro = the v1.2 bundle — so it unlocks exactly when this phase ships.
+
+**Calendar buffer:** 4 weeks (28 days) for ~12.5 days of focused work. The buffer absorbs: testers reporting bugs · phone calls with Arun · IPv4 dropouts · admin time.
 
 **Weekly cadence during v1.2 build:**
 - **Monday:** Plan the week's items. Commit to ≤3 features for the week.
@@ -109,7 +115,9 @@ Build the bundle in this order — each piece depends on the previous:
 | **Product** | Top-asked v1.3 feature identified from real usage | One feature emerges that 3+ pilots ask for. Tag for build, do NOT start. |
 | **Business** | **Pvt Ltd certificate in hand** | Incorporated. Bank account in company name. |
 | **Business** | First Work Order PDF signed by a real sub-contractor | The feature drives a real commercial document |
+| **Business** | **Payment collection live (LEAN)** — first 5 contractors via manual UPI/bank transfer + manually flip their `tenants` plan flag. Do NOT build full self-serve Razorpay to get the first 5. | First contractor paid; their plan flag flipped; paid features unlocked for them |
 | **Business** | First invoice raised — even ₹500 | Real money received. Founder cashflow starts. |
+| **Business** | Razorpay self-serve checkout — *only after* 5 manual payments validate the price | Fast-follow, not a Day-90 blocker. Monthly + annual (pay-10-use-12) plans wired to the plan flag. |
 | **Advisor** | First proper call with Avinash | 60-min call done. 3 contractor intros requested. |
 | **Advisor** | First proper call with Upmanyu | Architecture review of materials ledger done |
 | **Advisor** | Apply to Assam Startup / Nest-i + NEDFi seed schemes | Application submitted (non-dilutive ₹2-50L) |
