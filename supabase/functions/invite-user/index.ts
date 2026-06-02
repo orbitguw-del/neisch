@@ -101,30 +101,32 @@ serve(async (req) => {
     const siteUrl    = Deno.env.get("SITE_URL") ?? "https://storeyinfra.com"
     const cleanEmail = email.trim().toLowerCase()
 
-    // Create pending_invite record with a unique code
+    // Check proactively for an existing unaccepted invite — so the old code
+    // (already shared via WhatsApp) is updated in place, not silently replaced.
     let invite_code = generateCode()
-    const { error: insertErr } = await supabaseAdmin
+    const { data: existing } = await supabaseAdmin
       .from("pending_invites")
-      .insert({ tenant_id, email: cleanEmail, role, site_id, invite_code })
+      .select("id")
+      .eq("tenant_id", tenant_id)
+      .eq("email", cleanEmail)
+      .is("accepted_at", null)
+      .single()
 
-    if (insertErr) {
-      if (insertErr.message.includes("unique") || insertErr.code === "23505") {
-        // Duplicate email for this tenant - refresh the existing invite instead
-        invite_code = generateCode()
-        await supabaseAdmin
-          .from("pending_invites")
-          .update({
-            role,
-            site_id,
-            invite_code,
-            accepted_at: null,
-            expires_at:  new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          })
-          .eq("tenant_id", tenant_id)
-          .eq("email", cleanEmail)
-      } else {
-        throw new Error(insertErr.message)
-      }
+    if (existing) {
+      await supabaseAdmin
+        .from("pending_invites")
+        .update({
+          role,
+          site_id,
+          invite_code,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .eq("id", existing.id)
+    } else {
+      const { error: insertErr } = await supabaseAdmin
+        .from("pending_invites")
+        .insert({ tenant_id, email: cleanEmail, role, site_id, invite_code })
+      if (insertErr) throw new Error(insertErr.message)
     }
 
     // Send the invite email via Resend.

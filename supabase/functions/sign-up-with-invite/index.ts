@@ -1,4 +1,4 @@
-﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const ALLOWED_ORIGINS = ["https://storeyinfra.com", "https://www.storeyinfra.com"]
@@ -30,16 +30,38 @@ serve(async (req) => {
     })
 
   try {
-    const { invite_code, email, password, full_name } = await req.json()
+    const body = await req.json()
+    const { invite_code, email, password, full_name, validate_only } = body
 
-    if (!invite_code || !email || !password) {
+    if (!invite_code) {
+      return json({ error: "invite_code is required" }, 400)
+    }
+
+    // -- Validate-only mode: just check the code and return the invite email
+    if (validate_only) {
+      const { data: invite } = await supabase
+        .from("pending_invites")
+        .select("email, role")
+        .eq("invite_code", invite_code.trim().toUpperCase())
+        .is("accepted_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .single()
+
+      if (!invite) {
+        return json({ error: "Invite code is invalid or has expired. Ask your contractor to resend." }, 400)
+      }
+      return json({ email: invite.email, role: invite.role })
+    }
+
+    // -- Full sign-up mode
+    if (!email || !password) {
       return json({ error: "invite_code, email and password are required" }, 400)
     }
     if (!isEmail(email)) {
       return json({ error: "Please enter a valid email address" }, 400)
     }
-    if (typeof password !== "string" || password.length < 6) {
-      return json({ error: "Password must be at least 6 characters" }, 400)
+    if (typeof password !== "string" || password.length < 8) {
+      return json({ error: "Password must be at least 8 characters" }, 400)
     }
 
     // -- 1. Look up the invite
@@ -77,11 +99,12 @@ serve(async (req) => {
 
     if (createErr) {
       if (createErr.message.toLowerCase().includes("already")) {
-        // User already exists -- look up by email via auth.users (SECURITY DEFINER RPC)
-        // profiles table has no 'email' column, so we use a dedicated helper function.
         const { data: existingId } = await supabase
           .rpc("get_auth_user_id_by_email", { p_email: email.toLowerCase().trim() })
         userId = existingId ?? undefined
+        if (!userId) {
+          return json({ error: "An account with this email already exists. Please sign in directly with your email and password." }, 400)
+        }
       } else {
         return json({ error: createErr.message }, 400)
       }
