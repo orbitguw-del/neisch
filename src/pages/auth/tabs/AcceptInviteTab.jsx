@@ -25,20 +25,19 @@ export default function AcceptInviteTab() {
   const validateCode = async (code) => {
     setStep('validating')
     setError('')
-    const { data, error: fnErr } = await supabase.functions.invoke('sign-up-with-invite', {
-      body: { invite_code: code.trim().toUpperCase(), validate_only: true },
-    })
-    if (fnErr) {
+    const { data: email, error: rpcErr } = await supabase
+      .rpc('get_invite_email', { p_invite_code: code.trim().toUpperCase() })
+    if (rpcErr) {
       setError('Network error — check your connection and try again.')
       setStep('code')
       return
     }
-    if (data?.error) {
-      setError(data.error)
+    if (!email) {
+      setError('Invite code is invalid or has expired. Ask your contractor to resend.')
       setStep('code')
       return
     }
-    setInviteEmail(data.email)
+    setInviteEmail(email)
     setStep('signup')
   }
 
