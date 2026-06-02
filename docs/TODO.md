@@ -606,6 +606,21 @@ Issues:
   budget OVERVIEW screen, material-qty budgeting (item 1), or a site-total
   budget — cost-centre ₹ budgets themselves already exist.)*
 
+- [ ] **(1e) Budget MODEL — site budget = Σ cost centres + a "rest of site"
+  general bucket** *(owner clarified 2026-06-02)* — the agreed budgeting shape:
+  • A **site's total budget rolls up from its cost centres** (Σ of each centre's
+    budget), so the site total is always the sum of its parts.
+  • Plus an implicit/default **"general / rest of site" cost centre** that absorbs
+    spend (material + labour + expenses) NOT tagged to a specific centre — so the
+    site total is complete and nothing is unaccounted.
+  • A contractor can create a **specific cost centre** to track one part of the
+    site closely; everything else lands in the general bucket.
+  • **Both material AND labour** (and expenses) allocate to cost centres (see 1b/1d)
+    → each centre's budget-vs-actual reflects the FULL cost, not just materials.
+  Build with items (1)/(1b)/(1d) + the sub-contractor cost-centre work in the
+  **v1.2 window**. Material-quantity budgeting (item 1) feeds the material side;
+  labour allocation (1d) feeds the labour side; this item is the roll-up model.
+
 - [ ] **(1b) Task-aware + sub-contractor-aware material allocation**
   *(2026-05-20 — clarified by Arun's three-context framing)* — the
   `material_allocations` table already exists from migration
@@ -785,6 +800,18 @@ blocker, not just a liability concern.
   pure teaser (rely on per-site pricing + WO PDF moat to convert), or widen it
   (e.g. allow basic reports / 1 extra user) to match Yojo as an acquisition tool.
   See `docs/COMPETITORS.md`.
+
+- [ ] **Daily log — multiple photos per log, per site-part, with captions**
+  _(enhancement — owner flagged 2026-06-02)_ — today a daily log allows only
+  **one** photo. Contractors want to upload **several photos in one log**, each
+  showing a different part of the site, with a short detail/caption per photo
+  (e.g. "1st floor slab — rebar tied", "boundary wall — 3rd course"). Plan:
+  daily-log photos become a one-to-many (a `daily_log_photos` table or a JSON
+  array of {photo_path, caption, optional cost_centre_id}); upload UI supports
+  multiple captures; viewer shows a gallery with captions. Reuses the existing
+  photo pipeline (`src/lib/photos.js`). Modest effort; tag for the v1.2 / v1.x
+  window — NOT pre-production. Optionally tie each photo to a cost centre / site
+  part for richer reporting later.
 
 - [ ] **Notifications** _(v1.x / v2 — new feature)_ — requested by viewers at the
   2026-05-18 presentation. Decide scope before building:
