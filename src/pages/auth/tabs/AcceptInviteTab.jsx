@@ -56,12 +56,19 @@ export default function AcceptInviteTab() {
     setError('')
 
     // Use raw fetch so we always get the JSON body (even on 4xx errors)
-    const data = await callInvite({
-      email:        email.trim(),
-      password,
-      full_name:    fullName.trim() || undefined,
-      invite_code:  inviteCode.trim(),
-    })
+    let data
+    try {
+      data = await callInvite({
+        email:        email.trim(),
+        password,
+        full_name:    fullName.trim() || undefined,
+        invite_code:  inviteCode.trim(),
+      })
+    } catch {
+      setError('Network error — check your connection and try again')
+      setLoading(false)
+      return
+    }
 
     if (data.error) {
       setError(data.error)
