@@ -592,6 +592,20 @@ Issues:
   view. New "Budget vs Actual" report screen. Closes the cash-leak surface
   every contractor cares about.
 
+- [ ] **(1d) Budget actuals must include LABOUR (+ expenses)** *(owner flagged
+  2026-06-02 — real gap)* — TODAY `cost_centre_budget_v` computes `actual_cost`
+  from **confirmed material receipts ONLY** (see migration `20260530000001`
+  line 25). Labour, expenses, and sub-contractor are NOT counted — so a cost
+  centre's "spent" is half-blind (labour is often 30–50% of a site's cost).
+  Fix (same hub pattern): add `cost_centre_id` to the labour source
+  (attendance/wages) + expenses, then extend the view so
+  `actual_cost = materials + labour + expenses (+ sub-contractor when it ships)`.
+  View shape unchanged → Reports UI keeps working. Build with item (1) / the
+  sub-contractor cost-centre work in the **v1.2 window**.
+  *(Also clarify with owner whether "no budgeting for cost centre" means a
+  budget OVERVIEW screen, material-qty budgeting (item 1), or a site-total
+  budget — cost-centre ₹ budgets themselves already exist.)*
+
 - [ ] **(1b) Task-aware + sub-contractor-aware material allocation**
   *(2026-05-20 — clarified by Arun's three-context framing)* — the
   `material_allocations` table already exists from migration
