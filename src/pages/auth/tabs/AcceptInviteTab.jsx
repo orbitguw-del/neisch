@@ -28,8 +28,13 @@ export default function AcceptInviteTab() {
     const { data, error: fnErr } = await supabase.functions.invoke('sign-up-with-invite', {
       body: { invite_code: code.trim().toUpperCase(), validate_only: true },
     })
-    if (fnErr || data?.error) {
-      setError(data?.error || 'Invalid or expired invite code. Ask your contractor to resend.')
+    if (fnErr) {
+      setError('Network error — check your connection and try again.')
+      setStep('code')
+      return
+    }
+    if (data?.error) {
+      setError(data.error)
       setStep('code')
       return
     }
