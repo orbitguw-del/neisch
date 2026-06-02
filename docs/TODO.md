@@ -621,6 +621,12 @@ Issues:
   **v1.2 window**. Material-quantity budgeting (item 1) feeds the material side;
   labour allocation (1d) feeds the labour side; this item is the roll-up model.
 
+  > **📋 FULL SPEC: `docs/SPEC-BUDGETING-MODULE.md`** *(owner-approved 2026-06-02)* —
+  > items (1)/(1b)/(1d)/(1e) are consolidated into ONE unified Budgeting &
+  > Cost-Centre module that replaces the three fragmented systems (`budget_lines`,
+  > `materials.budget_qty`, `cost_centres`). Build the budgeting backbone FIRST,
+  > before sub-contractor. Decisions D1–D5 locked in the spec.
+
 - [ ] **(1b) Task-aware + sub-contractor-aware material allocation**
   *(2026-05-20 — clarified by Arun's three-context framing)* — the
   `material_allocations` table already exists from migration
