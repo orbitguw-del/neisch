@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   Phone, CheckCircle, Pencil, User, Building2,
-  Mail, Shield, LogOut, Users, HardHat, Copy, Check,
+  Mail, Shield, LogOut, Users, HardHat, Copy, Check, UserCog,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
@@ -274,6 +274,55 @@ function CompanySection({ profile }) {
   )
 }
 
+// ── Team Permissions Section (contractor only) ───────────────────────────────
+function TeamPermissionsSection({ profile }) {
+  const [smCanReceipts, setSmCanReceipts] = useState(
+    profile?.tenant?.sm_can_create_receipts !== false
+  )
+  const [saving, setSaving] = useState(false)
+  const { fetchProfile, user } = useAuthStore()
+
+  const toggle = async () => {
+    const next = !smCanReceipts
+    setSaving(true)
+    const { error } = await supabase
+      .from('tenants')
+      .update({ sm_can_create_receipts: next })
+      .eq('id', profile.tenant_id)
+    if (!error) {
+      setSmCanReceipts(next)
+      await fetchProfile(user.id)
+    }
+    setSaving(false)
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-gray-500">Control what your Site Managers are allowed to do.</p>
+      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+        <div>
+          <p className="text-sm font-medium text-gray-900">Site Manager can add material receipts</p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {smCanReceipts ? 'Allowed — site manager can record incoming materials' : 'Blocked — only contractor and store keeper can add receipts'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={toggle}
+          disabled={saving}
+          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
+            smCanReceipts ? 'bg-brand-600' : 'bg-gray-300'
+          }`}
+        >
+          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+            smCanReceipts ? 'translate-x-6' : 'translate-x-1'
+          }`} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Settings Page ────────────────────────────────────────────────────────
 export default function Settings() {
   const { profile, fetchProfile, user, signOut } = useAuthStore()
@@ -374,6 +423,13 @@ export default function Settings() {
       {isContractor && (
         <Section icon={Building2} title="Company">
           <CompanySection profile={profile} />
+        </Section>
+      )}
+
+      {/* ── Team Permissions (contractor only) ── */}
+      {isContractor && (
+        <Section icon={UserCog} title="Team Permissions">
+          <TeamPermissionsSection profile={profile} />
         </Section>
       )}
 

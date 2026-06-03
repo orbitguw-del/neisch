@@ -137,7 +137,7 @@ const useAuthStore = create((set, get) => ({
         if (profile?.tenant_id) {
           const { data: tenant, error: tenantError } = await supabase
             .from('tenants')
-            .select('name, plan')
+            .select('name, plan, sm_can_create_receipts')
             .eq('id', profile.tenant_id)
             .single()
           if (tenantError) {
