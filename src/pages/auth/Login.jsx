@@ -109,7 +109,7 @@ export default function Login() {
 
         <div className="mb-7 flex flex-col items-center gap-3 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 shadow-lg backdrop-blur-sm ring-1 ring-white/20">
-            <StoreyIcon size={32} className="text-white" />
+            <StoreyIcon size={32} showText={false} className="text-white" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Georgia, ui-serif, serif' }}>

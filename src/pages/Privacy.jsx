@@ -19,7 +19,7 @@ export default function Privacy() {
       <div className="mx-auto max-w-2xl px-4 py-10">
 
         <div className="mb-8 flex items-center gap-3">
-          <StoreyIcon size={32} />
+          <StoreyIcon size={32} showText={false} />
           <div>
             <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Georgia, ui-serif, serif' }}>
               Privacy Policy

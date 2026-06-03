@@ -30,7 +30,7 @@ export default function StoreyIcon({ size = 32, className = '', showText = true 
       <rect x="13" y="13" width="6" height="14" rx="1" fill="white" />
       <rect x="21" y="7"  width="6" height="20" rx="1" fill="white" />
 
-      {/* "STOREY" label beneath the square */}
+      {/* "STOREY" label beneath the square — constrained to viewBox width */}
       {showText && (
         <text
           x="16"
@@ -38,9 +38,11 @@ export default function StoreyIcon({ size = 32, className = '', showText = true 
           textAnchor="middle"
           fill="#B85042"
           fontFamily="Georgia, 'Times New Roman', ui-serif, serif"
-          fontSize="7.5"
+          fontSize="7"
           fontWeight="bold"
-          letterSpacing="2"
+          letterSpacing="1"
+          textLength="28"
+          lengthAdjust="spacing"
         >
           STOREY
         </text>
