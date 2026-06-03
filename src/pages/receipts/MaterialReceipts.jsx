@@ -563,7 +563,7 @@ export default function MaterialReceipts() {
   const tenantId = profile?.tenant_id
   const role     = profile?.role
 
-  const canCreate  = ['superadmin', 'contractor', 'store_keeper'].includes(role)
+  const canCreate  = ['superadmin', 'contractor', 'site_manager', 'store_keeper'].includes(role)
   const canConfirm = ['superadmin', 'contractor', 'site_manager'].includes(role)
 
   useEffect(() => {
