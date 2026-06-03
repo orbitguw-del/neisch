@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Plus, HardHat, Phone, ChevronDown, X, Camera, Users } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Plus, HardHat, Phone, X, Camera, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { capturePhoto, uploadPhoto, getPhotoUrl } from '@/lib/photos'
 import useAuthStore from '@/stores/authStore'
+
+const MAX_PHOTOS = 20
 
 const PRESET_TYPES = [
   'Civil Work', 'Electrical', 'Plumbing', 'Painting',
@@ -11,22 +13,22 @@ const PRESET_TYPES = [
 ]
 
 const TYPE_COLORS = {
-  'Civil Work':       'bg-amber-50 text-amber-700 border-amber-200',
-  'Electrical':       'bg-yellow-50 text-yellow-700 border-yellow-200',
-  'Plumbing':         'bg-blue-50 text-blue-700 border-blue-200',
-  'Painting':         'bg-pink-50 text-pink-700 border-pink-200',
-  'Waterproofing':    'bg-cyan-50 text-cyan-700 border-cyan-200',
-  'Fabrication':      'bg-zinc-50 text-zinc-700 border-zinc-200',
-  'Carpentry':        'bg-orange-50 text-orange-700 border-orange-200',
-  'Tiling / Flooring':'bg-stone-50 text-stone-700 border-stone-200',
-  'Masonry':          'bg-red-50 text-red-700 border-red-200',
-  'Glazing':          'bg-sky-50 text-sky-700 border-sky-200',
-  'HVAC':             'bg-teal-50 text-teal-700 border-teal-200',
+  'Civil Work':        'bg-amber-50 text-amber-700 border-amber-200',
+  'Electrical':        'bg-yellow-50 text-yellow-700 border-yellow-200',
+  'Plumbing':          'bg-blue-50 text-blue-700 border-blue-200',
+  'Painting':          'bg-pink-50 text-pink-700 border-pink-200',
+  'Waterproofing':     'bg-cyan-50 text-cyan-700 border-cyan-200',
+  'Fabrication':       'bg-zinc-50 text-zinc-700 border-zinc-200',
+  'Carpentry':         'bg-orange-50 text-orange-700 border-orange-200',
+  'Tiling / Flooring': 'bg-stone-50 text-stone-700 border-stone-200',
+  'Masonry':           'bg-red-50 text-red-700 border-red-200',
+  'Glazing':           'bg-sky-50 text-sky-700 border-sky-200',
+  'HVAC':              'bg-teal-50 text-teal-700 border-teal-200',
 }
 const typeColor = (t) => TYPE_COLORS[t] ?? 'bg-gray-50 text-gray-700 border-gray-200'
 
-// ── Add Sub-contractor Modal ──────────────────────────────────────────────────
-function AddSubcontractorModal({ tenantId, onClose, onAdded }) {
+// ── Add Sub-contractor Modal ───────────────────────────────────────────────────
+function AddSubcontractorModal({ tenantId, profileId, onClose, onAdded }) {
   const [name,       setName]       = useState('')
   const [phone,      setPhone]      = useState('')
   const [typeSelect, setTypeSelect] = useState('')
@@ -42,7 +44,7 @@ function AddSubcontractorModal({ tenantId, onClose, onAdded }) {
     setLoading(true); setError('')
     const { data, error: err } = await supabase
       .from('subcontractors')
-      .insert({ tenant_id: tenantId, name: name.trim(), phone: phone.trim() || null, type })
+      .insert({ tenant_id: tenantId, name: name.trim(), phone: phone.trim() || null, type, created_by: profileId })
       .select().single()
     setLoading(false)
     if (err) { setError(err.message); return }
@@ -65,7 +67,8 @@ function AddSubcontractorModal({ tenantId, onClose, onAdded }) {
           </div>
           <div>
             <label className="label">Mobile number</label>
-            <input className="input" type="tel" inputMode="numeric" placeholder="98765 43210" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ''))} maxLength={10} />
+            <input className="input" type="tel" inputMode="numeric" placeholder="98765 43210"
+              value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ''))} maxLength={10} />
           </div>
           <div>
             <label className="label">Type of work *</label>
@@ -89,7 +92,7 @@ function AddSubcontractorModal({ tenantId, onClose, onAdded }) {
   )
 }
 
-// ── Log Labour Modal ──────────────────────────────────────────────────────────
+// ── Log Labour Modal ───────────────────────────────────────────────────────────
 function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, onLogged }) {
   const [siteId,    setSiteId]    = useState(sites[0]?.id ?? '')
   const [date,      setDate]      = useState(new Date().toISOString().slice(0, 10))
@@ -99,14 +102,27 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
   const [loading,   setLoading]   = useState(false)
   const [error,     setError]     = useState('')
 
+  // Revoke all object URLs on modal unmount to avoid memory leaks
+  const photosRef = useRef(photos)
+  photosRef.current = photos
+  useEffect(() => {
+    return () => { photosRef.current.forEach(p => URL.revokeObjectURL(p.url)) }
+  }, [])
+
   const addPhoto = async () => {
+    if (photos.length >= MAX_PHOTOS) return
     const blob = await capturePhoto()
     if (!blob) return
     const url = URL.createObjectURL(blob)
     setPhotos(p => [...p, { blob, url }])
   }
 
-  const removePhoto = (i) => setPhotos(p => p.filter((_, idx) => idx !== i))
+  const removePhoto = (i) => {
+    setPhotos(p => {
+      URL.revokeObjectURL(p[i].url)
+      return p.filter((_, idx) => idx !== i)
+    })
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -114,8 +130,6 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
     const count = parseInt(headcount, 10)
     if (!count || count < 1) { setError('Enter headcount'); return }
     setLoading(true); setError('')
-
-    const site = sites.find(s => s.id === siteId)
 
     // Upsert the log (same sub + site + date → update headcount)
     const { data: log, error: logErr } = await supabase
@@ -133,10 +147,21 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
 
     if (logErr) { setError(logErr.message); setLoading(false); return }
 
-    // Upload photos
-    for (const p of photos) {
-      const path = await uploadPhoto({ blob: p.blob, tenantId, siteId, entity: 'subcontractor-labour' })
-      await supabase.from('subcontractor_labour_photos').insert({ log_id: log.id, photo_path: path })
+    // Replace photos on re-log: remove old, insert new
+    if (photos.length > 0) {
+      await supabase.from('subcontractor_labour_photos').delete().eq('log_id', log.id)
+      try {
+        for (const p of photos) {
+          const path = await uploadPhoto({ blob: p.blob, tenantId, siteId, entity: 'subcontractor-labour' })
+          await supabase.from('subcontractor_labour_photos').insert({ log_id: log.id, photo_path: path })
+        }
+      } catch {
+        setError('Log saved but some photos failed to upload. Try adding them again.')
+        setLoading(false)
+        onLogged()
+        onClose()
+        return
+      }
     }
 
     setLoading(false)
@@ -157,7 +182,10 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
           <div>
             <label className="label">Site *</label>
             <select className="input" value={siteId} onChange={e => setSiteId(e.target.value)} required>
-              {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              {sites.length === 0
+                ? <option value="">No sites assigned</option>
+                : sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)
+              }
             </select>
           </div>
           <div>
@@ -166,8 +194,8 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
           </div>
           <div>
             <label className="label">Number of labourers present *</label>
-            <input className="input text-2xl font-bold text-center" type="number" inputMode="numeric" min={1} max={999}
-              placeholder="0" value={headcount} onChange={e => setHeadcount(e.target.value)} required />
+            <input className="input text-2xl font-bold text-center" type="number" inputMode="numeric"
+              min={1} max={999} placeholder="0" value={headcount} onChange={e => setHeadcount(e.target.value)} required />
           </div>
           <div>
             <label className="label">Notes (optional)</label>
@@ -176,7 +204,10 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
 
           {/* Photos */}
           <div>
-            <label className="label">Labour photos (optional)</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="label mb-0">Labour photos (optional)</label>
+              <span className="text-xs text-gray-400">{photos.length}/{MAX_PHOTOS}</span>
+            </div>
             <div className="grid grid-cols-3 gap-2 mb-2">
               {photos.map((p, i) => (
                 <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200">
@@ -187,16 +218,18 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
                   </button>
                 </div>
               ))}
-              <button type="button" onClick={addPhoto}
-                className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-brand-300 hover:text-brand-500 transition-colors">
-                <Camera className="h-5 w-5" />
-                <span className="text-xs">Add</span>
-              </button>
+              {photos.length < MAX_PHOTOS && (
+                <button type="button" onClick={addPhoto}
+                  className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-brand-300 hover:text-brand-500 transition-colors">
+                  <Camera className="h-5 w-5" />
+                  <span className="text-xs">Add</span>
+                </button>
+              )}
             </div>
             <p className="text-xs text-gray-400">Add one photo per labourer as proof of attendance</p>
           </div>
 
-          <button type="submit" disabled={loading} className="btn-primary w-full">
+          <button type="submit" disabled={loading || sites.length === 0} className="btn-primary w-full">
             {loading ? 'Saving…' : 'Save Log'}
           </button>
         </form>
@@ -205,11 +238,12 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
   )
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// ── Main Page ──────────────────────────────────────────────────────────────────
 export default function Subcontractors() {
   const { profile } = useAuthStore()
-  const tenantId  = profile?.tenant_id
-  const role      = profile?.role
+  const tenantId     = profile?.tenant_id
+  const role         = profile?.role
+  const profileId    = profile?.id
   const isContractor = ['contractor', 'superadmin'].includes(role)
 
   const [subcontractors, setSubcontractors] = useState([])
@@ -217,15 +251,15 @@ export default function Subcontractors() {
   const [logs,           setLogs]           = useState([])
   const [loading,        setLoading]        = useState(true)
   const [showAddModal,   setShowAddModal]   = useState(false)
-  const [logTarget,      setLogTarget]      = useState(null) // subcontractor to log for
+  const [logTarget,      setLogTarget]      = useState(null)
 
   const load = useCallback(async () => {
     if (!tenantId) return
     setLoading(true)
 
-    const [{ data: scs }, { data: si }, { data: lg }] = await Promise.all([
+    // Fetch sub-contractors + logs (shared query)
+    const [{ data: scs }, { data: lg }] = await Promise.all([
       supabase.from('subcontractors').select('*').eq('tenant_id', tenantId).order('name'),
-      supabase.from('sites').select('id, name').eq('tenant_id', tenantId).order('name'),
       supabase.from('subcontractor_daily_logs')
         .select('*, subcontractors(name, type), sites(name), subcontractor_labour_photos(id, photo_path)')
         .eq('tenant_id', tenantId)
@@ -234,11 +268,31 @@ export default function Subcontractors() {
         .limit(50),
     ])
 
+    // Sites: contractor sees all tenant sites; others see only assigned sites
+    let sitesData = []
+    if (isContractor) {
+      const { data } = await supabase.from('sites').select('id, name').eq('tenant_id', tenantId).order('name')
+      sitesData = data ?? []
+    } else {
+      const { data } = await supabase
+        .from('site_assignments')
+        .select('sites(id, name)')
+        .eq('profile_id', profileId)
+      sitesData = (data ?? []).map(a => a.sites).filter(Boolean)
+      sitesData.sort((a, b) => a.name.localeCompare(b.name))
+    }
+
+    // Scope logs to assigned sites for non-contractors
+    const assignedIds = new Set(sitesData.map(s => s.id))
+    const scopedLogs = isContractor
+      ? (lg ?? [])
+      : (lg ?? []).filter(l => assignedIds.has(l.site_id))
+
     setSubcontractors(scs ?? [])
-    setSites(si ?? [])
-    setLogs(lg ?? [])
+    setSites(sitesData)
+    setLogs(scopedLogs)
     setLoading(false)
-  }, [tenantId])
+  }, [tenantId, profileId, isContractor])
 
   useEffect(() => { load() }, [load])
 
@@ -280,7 +334,6 @@ export default function Subcontractors() {
         <div className="space-y-3">
           {subcontractors.map(sc => (
             <div key={sc.id} className="card p-4 flex items-center gap-4">
-              {/* Type colour stripe */}
               <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-lg font-bold ${typeColor(sc.type)}`}>
                 {sc.name.charAt(0).toUpperCase()}
               </div>
@@ -314,9 +367,7 @@ export default function Subcontractors() {
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">Recent Labour Logs</h2>
           <div className="space-y-3">
-            {logs.map(log => (
-              <LogCard key={log.id} log={log} />
-            ))}
+            {logs.map(log => <LogCard key={log.id} log={log} />)}
           </div>
         </div>
       )}
@@ -325,6 +376,7 @@ export default function Subcontractors() {
       {showAddModal && (
         <AddSubcontractorModal
           tenantId={tenantId}
+          profileId={profileId}
           onClose={() => setShowAddModal(false)}
           onAdded={sc => setSubcontractors(p => [sc, ...p])}
         />
@@ -334,7 +386,7 @@ export default function Subcontractors() {
           subcontractor={logTarget}
           sites={sites}
           tenantId={tenantId}
-          profileId={profile?.id}
+          profileId={profileId}
           onClose={() => setLogTarget(null)}
           onLogged={load}
         />
@@ -343,7 +395,7 @@ export default function Subcontractors() {
   )
 }
 
-// ── Log Card ──────────────────────────────────────────────────────────────────
+// ── Log Card ───────────────────────────────────────────────────────────────────
 function LogCard({ log }) {
   const [photoUrls, setPhotoUrls] = useState([])
 
@@ -359,7 +411,9 @@ function LogCard({ log }) {
         <div>
           <p className="font-semibold text-gray-900">{log.subcontractors?.name}</p>
           <p className="text-xs text-gray-500 mt-0.5">
-            {log.sites?.name} · {new Date(log.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+            {log.sites?.name} · {new Date(log.date + 'T00:00:00').toLocaleDateString('en-IN', {
+              day: 'numeric', month: 'short', year: 'numeric',
+            })}
           </p>
           {log.notes && <p className="text-xs text-gray-500 mt-1 italic">"{log.notes}"</p>}
         </div>
