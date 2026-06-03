@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, HardHat, Phone, X, Camera, Users } from 'lucide-react'
+import { Plus, HardHat, Phone, X, Camera, Users, MapPin, ChevronDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { capturePhoto, uploadPhoto, getPhotoUrl } from '@/lib/photos'
 import useAuthStore from '@/stores/authStore'
@@ -92,17 +92,98 @@ function AddSubcontractorModal({ tenantId, profileId, onClose, onAdded }) {
   )
 }
 
+// ── Assign to Site Modal ───────────────────────────────────────────────────────
+function AssignSiteModal({ subcontractor, allSites, assignedSiteIds, tenantId, onClose, onChanged }) {
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState('')
+
+  const toggle = async (site) => {
+    setLoading(true); setError('')
+    const isAssigned = assignedSiteIds.has(site.id)
+    if (isAssigned) {
+      const { error: err } = await supabase
+        .from('subcontractor_site_assignments')
+        .delete()
+        .eq('subcontractor_id', subcontractor.id)
+        .eq('site_id', site.id)
+      if (err) { setError(err.message); setLoading(false); return }
+    } else {
+      const { error: err } = await supabase
+        .from('subcontractor_site_assignments')
+        .insert({ tenant_id: tenantId, site_id: site.id, subcontractor_id: subcontractor.id })
+      if (err) { setError(err.message); setLoading(false); return }
+    }
+    setLoading(false)
+    onChanged()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl p-6">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-base font-bold text-gray-900">Assign to Sites</h2>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+        </div>
+        <p className="text-sm text-brand-600 font-medium mb-5">{subcontractor.name}</p>
+        {error && <p className="mb-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {allSites.length === 0 ? (
+          <p className="text-sm text-gray-500 text-center py-4">No sites found. Add a site first.</p>
+        ) : (
+          <div className="space-y-2">
+            {allSites.map(site => {
+              const assigned = assignedSiteIds.has(site.id)
+              return (
+                <button
+                  key={site.id}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => toggle(site)}
+                  className={`w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
+                    assigned
+                      ? 'border-brand-300 bg-brand-50'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
+                    assigned ? 'border-brand-600 bg-brand-600' : 'border-gray-300'
+                  }`}>
+                    {assigned && <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>}
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-sm font-medium truncate ${assigned ? 'text-brand-900' : 'text-gray-900'}`}>{site.name}</p>
+                  </div>
+                  {assigned && <span className="ml-auto text-xs font-semibold text-brand-600">Assigned</span>}
+                </button>
+              )
+            })}
+          </div>
+        )}
+        <button onClick={onClose} className="btn-secondary w-full mt-4">Done</button>
+      </div>
+    </div>
+  )
+}
+
 // ── Log Labour Modal ───────────────────────────────────────────────────────────
-function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, onLogged }) {
+function LogLabourModal({ sites, siteAssignments, tenantId, profileId, onClose, onLogged }) {
+  // siteAssignments: Map<siteId, subcontractor[]>
   const [siteId,    setSiteId]    = useState(sites[0]?.id ?? '')
+  const [scId,      setScId]      = useState('')
   const [date,      setDate]      = useState(new Date().toISOString().slice(0, 10))
   const [headcount, setHeadcount] = useState('')
   const [notes,     setNotes]     = useState('')
-  const [photos,    setPhotos]    = useState([])   // { blob, url }
+  const [photos,    setPhotos]    = useState([])
   const [loading,   setLoading]   = useState(false)
   const [error,     setError]     = useState('')
 
-  // Revoke all object URLs on modal unmount to avoid memory leaks
+  // Sub-contractors assigned to the selected site
+  const scsForSite = siteAssignments.get(siteId) ?? []
+
+  // Reset sub-contractor selection when site changes
+  useEffect(() => { setScId(scsForSite[0]?.id ?? '') }, [siteId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const photosRef = useRef(photos)
   photosRef.current = photos
   useEffect(() => {
@@ -113,31 +194,27 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
     if (photos.length >= MAX_PHOTOS) return
     const blob = await capturePhoto()
     if (!blob) return
-    const url = URL.createObjectURL(blob)
-    setPhotos(p => [...p, { blob, url }])
+    setPhotos(p => [...p, { blob, url: URL.createObjectURL(blob) }])
   }
 
   const removePhoto = (i) => {
-    setPhotos(p => {
-      URL.revokeObjectURL(p[i].url)
-      return p.filter((_, idx) => idx !== i)
-    })
+    setPhotos(p => { URL.revokeObjectURL(p[i].url); return p.filter((_, idx) => idx !== i) })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!siteId) { setError('Select a site'); return }
+    if (!siteId)  { setError('Select a site'); return }
+    if (!scId)    { setError('Select a sub-contractor'); return }
     const count = parseInt(headcount, 10)
     if (!count || count < 1) { setError('Enter headcount'); return }
     setLoading(true); setError('')
 
-    // Upsert the log (same sub + site + date → update headcount)
     const { data: log, error: logErr } = await supabase
       .from('subcontractor_daily_logs')
       .upsert({
         tenant_id:        tenantId,
         site_id:          siteId,
-        subcontractor_id: subcontractor.id,
+        subcontractor_id: scId,
         date,
         headcount:        count,
         notes:            notes.trim() || null,
@@ -147,7 +224,6 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
 
     if (logErr) { setError(logErr.message); setLoading(false); return }
 
-    // Replace photos on re-log: remove old, insert new
     if (photos.length > 0) {
       await supabase.from('subcontractor_labour_photos').delete().eq('log_id', log.id)
       try {
@@ -158,25 +234,20 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
       } catch {
         setError('Log saved but some photos failed to upload. Try adding them again.')
         setLoading(false)
-        onLogged()
-        onClose()
-        return
+        onLogged(); onClose(); return
       }
     }
 
-    setLoading(false)
-    onLogged()
-    onClose()
+    setLoading(false); onLogged(); onClose()
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-bold text-gray-900">Log Labour</h2>
           <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"><X className="h-4 w-4" /></button>
         </div>
-        <p className="text-sm text-brand-600 font-medium mb-5">{subcontractor.name}</p>
         {error && <p className="mb-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -187,6 +258,18 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
                 : sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)
               }
             </select>
+          </div>
+          <div>
+            <label className="label">Sub-contractor *</label>
+            <select className="input" value={scId} onChange={e => setScId(e.target.value)} required>
+              {scsForSite.length === 0
+                ? <option value="">No sub-contractors assigned to this site</option>
+                : scsForSite.map(sc => <option key={sc.id} value={sc.id}>{sc.name}</option>)
+              }
+            </select>
+            {scsForSite.length === 0 && siteId && (
+              <p className="text-xs text-amber-600 mt-1">Assign sub-contractors to this site first using the Assign button.</p>
+            )}
           </div>
           <div>
             <label className="label">Date</label>
@@ -201,8 +284,6 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
             <label className="label">Notes (optional)</label>
             <input className="input" placeholder="e.g. Started foundation work" value={notes} onChange={e => setNotes(e.target.value)} />
           </div>
-
-          {/* Photos */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="label mb-0">Labour photos (optional)</label>
@@ -228,8 +309,7 @@ function LogLabourModal({ subcontractor, sites, tenantId, profileId, onClose, on
             </div>
             <p className="text-xs text-gray-400">Add one photo per labourer as proof of attendance</p>
           </div>
-
-          <button type="submit" disabled={loading || sites.length === 0} className="btn-primary w-full">
+          <button type="submit" disabled={loading || sites.length === 0 || scsForSite.length === 0} className="btn-primary w-full">
             {loading ? 'Saving…' : 'Save Log'}
           </button>
         </form>
@@ -247,49 +327,77 @@ export default function Subcontractors() {
   const isContractor = ['contractor', 'superadmin'].includes(role)
 
   const [subcontractors, setSubcontractors] = useState([])
-  const [sites,          setSites]          = useState([])
+  const [allSites,       setAllSites]       = useState([])   // contractor sees all sites
+  const [mySites,        setMySites]        = useState([])   // sites for current user
+  const [assignments,    setAssignments]    = useState([])   // subcontractor_site_assignments rows
   const [logs,           setLogs]           = useState([])
   const [loading,        setLoading]        = useState(true)
   const [showAddModal,   setShowAddModal]   = useState(false)
-  const [logTarget,      setLogTarget]      = useState(null)
+  const [showLogModal,   setShowLogModal]   = useState(false)
+  const [assignTarget,   setAssignTarget]   = useState(null) // sc being assigned to sites
+
+  // assignedSiteIds per sub-contractor
+  const assignedSiteIdsBySc = useCallback((scId) => {
+    return new Set(assignments.filter(a => a.subcontractor_id === scId).map(a => a.site_id))
+  }, [assignments])
+
+  // siteAssignments: Map<siteId, subcontractor[]> — for the log modal
+  const siteAssignments = useCallback(() => {
+    const map = new Map()
+    for (const a of assignments) {
+      if (!map.has(a.site_id)) map.set(a.site_id, [])
+      const sc = subcontractors.find(s => s.id === a.subcontractor_id)
+      if (sc) map.get(a.site_id).push(sc)
+    }
+    return map
+  }, [assignments, subcontractors])
 
   const load = useCallback(async () => {
     if (!tenantId) return
     setLoading(true)
 
-    // Fetch sub-contractors + logs (shared query)
-    const [{ data: scs }, { data: lg }] = await Promise.all([
+    const queries = [
       supabase.from('subcontractors').select('*').eq('tenant_id', tenantId).order('name'),
+      supabase.from('subcontractor_site_assignments').select('*').eq('tenant_id', tenantId),
       supabase.from('subcontractor_daily_logs')
         .select('*, subcontractors(name, type), sites(name), subcontractor_labour_photos(id, photo_path)')
         .eq('tenant_id', tenantId)
         .order('date', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(50),
-    ])
+    ]
 
-    // Sites: contractor sees all tenant sites; others see only assigned sites
-    let sitesData = []
+    const [{ data: scs }, { data: asgn }, { data: lg }] = await Promise.all(queries)
+
+    // Sites: contractors see all; others see only assigned
+    let allSitesData = []
+    let mySitesData  = []
     if (isContractor) {
       const { data } = await supabase.from('sites').select('id, name').eq('tenant_id', tenantId).order('name')
-      sitesData = data ?? []
+      allSitesData = data ?? []
+      mySitesData  = allSitesData
     } else {
       const { data } = await supabase
         .from('site_assignments')
         .select('sites(id, name)')
         .eq('profile_id', profileId)
-      sitesData = (data ?? []).map(a => a.sites).filter(Boolean)
-      sitesData.sort((a, b) => a.name.localeCompare(b.name))
+      mySitesData  = (data ?? []).map(a => a.sites).filter(Boolean)
+      mySitesData.sort((a, b) => a.name.localeCompare(b.name))
+      allSitesData = mySitesData
     }
 
-    // Scope logs to assigned sites for non-contractors
-    const assignedIds = new Set(sitesData.map(s => s.id))
+    const asgnData = asgn ?? []
+
+    // Scope logs to user's sites for non-contractors
+    const mySiteIds = new Set(mySitesData.map(s => s.id))
     const scopedLogs = isContractor
       ? (lg ?? [])
-      : (lg ?? []).filter(l => assignedIds.has(l.site_id))
+      : (lg ?? []).filter(l => mySiteIds.has(l.site_id))
 
     setSubcontractors(scs ?? [])
-    setSites(sitesData)
+    setAllSites(allSitesData)
+    setMySites(mySitesData)
+    setAssignments(asgnData)
     setLogs(scopedLogs)
     setLoading(false)
   }, [tenantId, profileId, isContractor])
@@ -311,12 +419,21 @@ export default function Subcontractors() {
           <h1 className="text-xl font-bold text-gray-900">Sub-contractors</h1>
           <p className="text-sm text-gray-500">Manage sub-contractors and log daily labour</p>
         </div>
-        {isContractor && (
-          <button onClick={() => setShowAddModal(true)} className="btn-primary flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Add
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowLogModal(true)}
+            className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-100 transition-colors"
+          >
+            <Users className="h-4 w-4" />
+            Log Labour
           </button>
-        )}
+          {isContractor && (
+            <button onClick={() => setShowAddModal(true)} className="btn-primary flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Add
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Directory */}
@@ -327,38 +444,59 @@ export default function Subcontractors() {
           </div>
           <p className="font-semibold text-gray-900">No sub-contractors yet</p>
           {isContractor && (
-            <p className="text-sm text-gray-500">Add your first sub-contractor to start logging daily labour.</p>
+            <p className="text-sm text-gray-500">Add your first sub-contractor, then assign them to sites.</p>
           )}
         </div>
       ) : (
         <div className="space-y-3">
-          {subcontractors.map(sc => (
-            <div key={sc.id} className="card p-4 flex items-center gap-4">
-              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-lg font-bold ${typeColor(sc.type)}`}>
-                {sc.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 truncate">{sc.name}</p>
-                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${typeColor(sc.type)}`}>
-                    {sc.type}
-                  </span>
-                  {sc.phone && (
-                    <span className="flex items-center gap-1 text-xs text-gray-500">
-                      <Phone className="h-3 w-3" />{sc.phone}
-                    </span>
+          {subcontractors.map(sc => {
+            const scSiteIds = assignedSiteIdsBySc(sc.id)
+            const scSites   = allSites.filter(s => scSiteIds.has(s.id))
+            return (
+              <div key={sc.id} className="card p-4 space-y-3">
+                <div className="flex items-center gap-4">
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-lg font-bold ${typeColor(sc.type)}`}>
+                    {sc.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 truncate">{sc.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${typeColor(sc.type)}`}>
+                        {sc.type}
+                      </span>
+                      {sc.phone && (
+                        <span className="flex items-center gap-1 text-xs text-gray-500">
+                          <Phone className="h-3 w-3" />{sc.phone}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {isContractor && (
+                    <button
+                      onClick={() => setAssignTarget(sc)}
+                      className="shrink-0 flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 hover:border-brand-300 hover:text-brand-700 transition-colors"
+                    >
+                      <MapPin className="h-3.5 w-3.5" />
+                      Assign
+                    </button>
                   )}
                 </div>
+
+                {/* Assigned sites chips */}
+                {scSites.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 pl-[60px]">
+                    {scSites.map(s => (
+                      <span key={s.id} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600">
+                        <MapPin className="h-2.5 w-2.5" />{s.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : isContractor ? (
+                  <p className="pl-[60px] text-xs text-amber-600">Not assigned to any site yet</p>
+                ) : null}
               </div>
-              <button
-                onClick={() => setLogTarget(sc)}
-                className="shrink-0 flex items-center gap-1.5 rounded-xl bg-brand-50 border border-brand-200 px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-100 transition-colors"
-              >
-                <Users className="h-3.5 w-3.5" />
-                Log
-              </button>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
@@ -378,16 +516,26 @@ export default function Subcontractors() {
           tenantId={tenantId}
           profileId={profileId}
           onClose={() => setShowAddModal(false)}
-          onAdded={sc => setSubcontractors(p => [sc, ...p])}
+          onAdded={sc => { setSubcontractors(p => [...p, sc].sort((a, b) => a.name.localeCompare(b.name))) }}
         />
       )}
-      {logTarget && (
+      {assignTarget && (
+        <AssignSiteModal
+          subcontractor={assignTarget}
+          allSites={allSites}
+          assignedSiteIds={assignedSiteIdsBySc(assignTarget.id)}
+          tenantId={tenantId}
+          onClose={() => setAssignTarget(null)}
+          onChanged={load}
+        />
+      )}
+      {showLogModal && (
         <LogLabourModal
-          subcontractor={logTarget}
-          sites={sites}
+          sites={mySites}
+          siteAssignments={siteAssignments()}
           tenantId={tenantId}
           profileId={profileId}
-          onClose={() => setLogTarget(null)}
+          onClose={() => setShowLogModal(false)}
           onLogged={load}
         />
       )}
