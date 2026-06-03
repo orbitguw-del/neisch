@@ -273,6 +273,24 @@ Ship as one migration + one deploy after Play Store promotion is done.
 > When you build the next APK: bump versionCode + versionName, list the fixes
 > in release notes, mark them resolved here.
 
+### Bundled into v1.2.3 (versionCode 25) — built 2026-06-03 ✅
+
+Sub-contractor module (Phase 1 — directory + daily labour) + daily log multi-photo + invite hardening + logo fix.
+AAB at `android\app\build\outputs\bundle\release\app-release.aab`.
+
+- [x] **Sub-contractor directory** — contractor adds sub-contractors (name, phone, type with 12 presets + custom "Other")
+- [x] **Sub-contractor site assignments** — many-to-many: one sub-contractor across multiple sites, multiple sub-contractors per site. Contractor assigns via checklist. Supervisor logs only see assigned sub-contractors.
+- [x] **Daily labour headcount log** — supervisor logs headcount per sub-contractor per site per day, with up to 20 photos (each captioned, timestamped). Upsert-safe — re-logging same day updates in place.
+- [x] **Sub-contractor presence in daily log** — each daily log card now shows labour counts from all sub-contractors on that site+date inline.
+- [x] **Daily log multi-photo** — replaced single `photo_path` with `daily_log_photos` table; up to 20 photos per log, each with optional caption. Backwards-compatible — old single-photo logs still display.
+- [x] **Invite flow hardened** — email locked from server (SECURITY DEFINER RPC prevents typos like `gmail.con`); switched to `supabase.functions.invoke`; CORS fixed for Android; better post-creation UX.
+- [x] **StoreyIcon logo clip fixed** — "TORE'" clipping resolved; `textLength` constrains label to viewBox; `showText={false}` at small sizes where label is redundant.
+
+**v1.2.3 ready to upload:**
+- `app-release.aab` → Play Console closed track
+
+---
+
 ### Bundled into v1.2.2 (versionCode 24) — built 2026-06-01 ✅
 
 v1.3 senior-dev audit bundle (frontend portion) + SMS country-code removal.
@@ -660,7 +678,12 @@ Issues:
   but high-value, closes the #1 fraud surface in NE-India construction
   (supervisor over-allocating to hide leakage).
 
-- [ ] **(2) Sub-contractor onboarding — Path A (entity-only)** — sub-contractors
+- [ ] **(2) Sub-contractor onboarding — Path A (entity-only) — PHASE 1 SHIPPED 2026-06-03**
+  > **Phase 1 (directory + daily labour) is live.** Sub-contractor directory (name, phone, type),
+  > site assignments (many-to-many), daily labour headcount + photos, sub-contractor presence
+  > on daily log cards. Scope below is Phase 2 (payments, work orders, variations) — still open.
+
+- [ ] **(2) Sub-contractor onboarding — Path A (entity-only) — Phase 2 remaining** — sub-contractors
   are tracked as entities, NOT as login users. **Onboarding restricted to
   contractor + site_manager** (commercial roles). Supervisor sees them at
   their sites (RLS) and can allocate material to them, but cannot create
@@ -807,17 +830,10 @@ blocker, not just a liability concern.
   (e.g. allow basic reports / 1 extra user) to match Yojo as an acquisition tool.
   See `docs/COMPETITORS.md`.
 
-- [ ] **Daily log — multiple photos per log, per site-part, with captions**
-  _(enhancement — owner flagged 2026-06-02)_ — today a daily log allows only
-  **one** photo. Contractors want to upload **several photos in one log**, each
-  showing a different part of the site, with a short detail/caption per photo
-  (e.g. "1st floor slab — rebar tied", "boundary wall — 3rd course"). Plan:
-  daily-log photos become a one-to-many (a `daily_log_photos` table or a JSON
-  array of {photo_path, caption, optional cost_centre_id}); upload UI supports
-  multiple captures; viewer shows a gallery with captions. Reuses the existing
-  photo pipeline (`src/lib/photos.js`). Modest effort; tag for the v1.2 / v1.x
-  window — NOT pre-production. Optionally tie each photo to a cost centre / site
-  part for richer reporting later.
+- [x] ~~**Daily log — multiple photos per log, per site-part, with captions**~~
+  ✅ **DONE 2026-06-03.** `daily_log_photos` table shipped; up to 20 photos per
+  log, each with caption. Gallery display on log cards. Backwards-compatible.
+  Committed in v1.2.3. Cost-centre photo tagging still open (see item 1e).
 
 - [ ] **Notifications** _(v1.x / v2 — new feature)_ — requested by viewers at the
   2026-05-18 presentation. Decide scope before building:
