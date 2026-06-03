@@ -19,7 +19,10 @@ const useDailyLogStore = create((set) => ({
   fetchLogs: async (siteId) => {
     set({ loading: true, error: null })
     const { data, error } = await supabase
-      .from('daily_logs').select('*').eq('site_id', siteId).order('log_date', { ascending: false })
+      .from('daily_logs')
+      .select('*, daily_log_photos(id, photo_path, caption)')
+      .eq('site_id', siteId)
+      .order('log_date', { ascending: false })
     if (error) { set({ loading: false, error: error.message }); return }
     const enriched = await attachCreators(data ?? [])
     set({ logs: enriched, loading: false, error: null })
