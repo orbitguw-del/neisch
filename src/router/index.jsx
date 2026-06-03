@@ -29,6 +29,7 @@ import MaterialTransfers from '@/pages/transfers/MaterialTransfers'
 import EquipmentAssets from '@/pages/equipment/EquipmentAssets'
 import MaterialLedger from '@/pages/inventory/MaterialLedger'
 import Tasks from '@/pages/tasks/Tasks'
+import Subcontractors from '@/pages/subcontractors/Subcontractors'
 
 const SUPERADMIN       = ['superadmin']
 const CONTRACTOR_UP    = ['superadmin', 'contractor']
@@ -196,6 +197,16 @@ const router = createHashRouter([
         element: (
           <RoleGuard roles={SUPERVISOR_UP}>
             <Tasks />
+          </RoleGuard>
+        ),
+      },
+
+      // ── Sub-contractors (directory: contractor; labour log: supervisor+) ────
+      {
+        path: '/subcontractors',
+        element: (
+          <RoleGuard roles={SUPERVISOR_UP}>
+            <Subcontractors />
           </RoleGuard>
         ),
       },

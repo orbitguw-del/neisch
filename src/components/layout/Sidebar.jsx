@@ -15,6 +15,7 @@ import {
   CalendarCheck,
   Wallet,
   ListTodo,
+  HardDriveDownload,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import useAuthStore from '@/stores/authStore'
@@ -37,6 +38,7 @@ const NAV_BY_ROLE = {
     { label: 'Receipts',   to: '/receipts',   icon: ClipboardCheck },
     { label: 'Transfers',  to: '/transfers',  icon: ArrowRightLeft },
     { label: 'Equipment',  to: '/equipment',  icon: Wrench },
+    { label: 'Sub-contractors', to: '/subcontractors', icon: HardDriveDownload },
     { label: 'Expenses',   to: '/expenses',   icon: Wallet },
     { label: 'Reports',    to: '/reports',    icon: BarChart3 },
     { label: 'Team',       to: '/team',       icon: UserCog },
@@ -53,6 +55,7 @@ const NAV_BY_ROLE = {
     { label: 'Transfers',  to: '/transfers',  icon: ArrowRightLeft },
     { label: 'Equipment',  to: '/equipment',  icon: Wrench },
     { label: 'Expenses',   to: '/expenses',   icon: Wallet },
+    { label: 'Sub-contractors', to: '/subcontractors', icon: HardDriveDownload },
     { label: 'Daily Logs', to: '/logs',       icon: ClipboardList },
     { label: 'Settings',   to: '/settings',   icon: Settings },
   ],
@@ -66,6 +69,7 @@ const NAV_BY_ROLE = {
     { label: 'Transfers',  to: '/transfers',  icon: ArrowRightLeft },
     { label: 'Equipment',  to: '/equipment',  icon: Wrench },
     { label: 'Expenses',   to: '/expenses',   icon: Wallet },
+    { label: 'Sub-contractors', to: '/subcontractors', icon: HardDriveDownload },
     { label: 'Daily Logs', to: '/logs',       icon: ClipboardList },
     { label: 'Settings',   to: '/settings',   icon: Settings },
   ],
