@@ -4,7 +4,7 @@ const ALLOWED_ORIGINS = ["https://storeyinfra.com", "https://www.storeyinfra.com
 
 function makeCors(origin: string | null) {
   const o = origin ?? ""
-  const reflect = ALLOWED_ORIGINS.includes(o) || o.endsWith(".vercel.app")
+  const reflect = ALLOWED_ORIGINS.includes(o) || o.endsWith(".vercel.app") || o === "http://localhost" || o === "capacitor://localhost"
   return {
     "Access-Control-Allow-Origin": reflect ? o : ALLOWED_ORIGINS[0],
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-platform",
