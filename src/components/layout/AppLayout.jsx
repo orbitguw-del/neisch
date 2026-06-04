@@ -7,6 +7,7 @@ import OfflineBanner from '@/components/OfflineBanner'
 import ConsentPrompt from '@/components/ConsentPrompt'
 import HelpButton from '@/components/ui/HelpButton'
 import useAuthStore from '@/stores/authStore'
+import InstallBanner from '@/components/InstallBanner'
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -45,6 +46,7 @@ export default function AppLayout() {
         )}
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 sm:px-6">
           <Outlet />
+          <InstallBanner />
         </main>
       </div>
 
