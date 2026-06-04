@@ -1,8 +1,9 @@
-import { Bell, ChevronDown, LogOut, Menu, User } from 'lucide-react'
+import { ChevronDown, LogOut, Menu, User } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '@/stores/authStore'
 import { initials } from '@/lib/utils'
+import NotificationBell from '@/components/NotificationBell'
 
 const ROLE_LABELS = {
   superadmin:   'Super Admin',
@@ -47,14 +48,7 @@ export default function Header({ onMenuClick }) {
       <div className="hidden lg:block" />
 
       <div className="flex items-center gap-3">
-        {/* Notifications — coming soon */}
-        <button
-          className="relative flex h-11 w-11 items-center justify-center rounded-lg text-gray-400 cursor-default opacity-50"
-          title="Notifications — coming soon"
-          disabled
-        >
-          <Bell className="h-5 w-5" />
-        </button>
+        <NotificationBell />
 
         {/* User menu */}
         <div className="relative">
