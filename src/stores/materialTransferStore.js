@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { createNotification } from '@/stores/notificationStore'
 
 // 4-stage lifecycle: initiated → prepared → approved → received (+ rejected).
 //   initiate       — Store Keeper / Site Manager raises the request
@@ -110,6 +111,7 @@ const useMaterialTransferStore = create((set) => ({
   /** Stage 3 — Store Keeper / Site Manager signs off the dispatch. */
   approveTransfer: async (transferId, profileId) => {
     const now = new Date().toISOString()
+    const transfer = useMaterialTransferStore.getState().transfers.find(t => t.id === transferId)
     const { error } = await supabase.from('material_transfers')
       .update({ status: 'approved', approved_by: profileId, approved_at: now })
       .eq('id', transferId)
@@ -117,6 +119,18 @@ const useMaterialTransferStore = create((set) => ({
     useMaterialTransferStore.getState().patchLocal(transferId, {
       status: 'approved', approved_by: profileId, approved_at: now,
     })
+    // Notify the supervisor who prepared the dispatch — fire-and-forget
+    if (transfer?.prepared_by && transfer.prepared_by !== profileId) {
+      createNotification({
+        tenantId:   transfer.tenant_id,
+        userId:     transfer.prepared_by,
+        title:      'Transfer approved — ready to dispatch 🔄',
+        body:       `${transfer.material?.name ?? 'Material'} from ${transfer.from_site?.name ?? ''} to ${transfer.to_site?.name ?? ''} approved`,
+        type:       'transfer_pending',
+        entityId:   transferId,
+        entityType: 'transfer',
+      }).catch(() => {})
+    }
   },
 
   /** Stage 4 — receiving site accepts. Stock arrives at the to-site. */
@@ -177,6 +191,18 @@ const useMaterialTransferStore = create((set) => ({
     useMaterialTransferStore.getState().patchLocal(transferId, {
       status: 'received', received_by: profileId, received_at: now, quantity_received: qtyReceived,
     })
+    // Notify the initiator — fire-and-forget
+    if (transfer.initiated_by && transfer.initiated_by !== profileId) {
+      createNotification({
+        tenantId:   transfer.tenant_id,
+        userId:     transfer.initiated_by,
+        title:      'Transfer received ✅',
+        body:       `${qtyReceived} ${fromMat.unit} of ${fromMat.name} received at ${transfer.to_site_id}`,
+        type:       'transfer_pending',
+        entityId:   transferId,
+        entityType: 'transfer',
+      }).catch(() => {})
+    }
   },
 
   rejectTransfer: async (transferId, profileId, reason = '') => {

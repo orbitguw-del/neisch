@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { createNotification } from '@/stores/notificationStore'
 import { isOnline, queueWrite, offlineId } from '@/lib/offlineWrite'
 
 async function attachCreators(logs) {
@@ -86,6 +87,18 @@ const useDailyLogStore = create((set) => ({
     if (error) throw error
     const [enriched] = await attachCreators([data])
     set((s) => ({ logs: s.logs.map((l) => (l.id === logId ? enriched : l)) }))
+    // Notify log creator — fire-and-forget
+    if (enriched.created_by && enriched.created_by !== profileId) {
+      createNotification({
+        tenantId:   enriched.tenant_id,
+        userId:     enriched.created_by,
+        title:      'Your daily log was confirmed ✅',
+        body:       `Log for ${enriched.log_date} has been approved`,
+        type:       'log_confirmed',
+        entityId:   logId,
+        entityType: 'daily_log',
+      }).catch(() => {})
+    }
     return enriched
   },
 

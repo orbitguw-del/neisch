@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { createNotification } from '@/stores/notificationStore'
 
 // FK embeds: two FKs point at profiles (assigned_to_profile, assigned_by),
 // so each embed names its FK column explicitly to disambiguate.
@@ -36,6 +37,18 @@ const useTaskStore = create((set, get) => ({
       .from('tasks').insert(payload).select(TASK_SELECT).single()
     if (error) throw error
     set((s) => ({ tasks: [data, ...s.tasks] }))
+    // Notify assignee — fire-and-forget, don't block UI
+    if (data.assigned_to_profile && data.assigned_to_profile !== payload.assigned_by) {
+      createNotification({
+        tenantId:   data.tenant_id,
+        userId:     data.assigned_to_profile,
+        title:      'New task assigned to you',
+        body:       `"${data.title}" on ${data.site?.name ?? 'your site'}${data.due_date ? ` — due ${data.due_date}` : ''}`,
+        type:       'task_assigned',
+        entityId:   data.id,
+        entityType: 'task',
+      }).catch(() => {})
+    }
     return data
   },
 
