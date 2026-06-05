@@ -440,6 +440,77 @@ fixed on web · APK status)*
 
 ---
 
+## 🚶 P0 — Local field marketing *(set 2026-06-05)*
+
+**Decision:** 50% of founder time → local field marketing. No more PDF/PPT
+production unless it directly supports a site visit.
+
+**The 14-day target (Day 0 = 2026-06-05, Day 14 = 2026-06-19):**
+
+- [ ] **6 site visits done** (one referral → one in-person demo at a working site)
+- [ ] **2–3 new tester sign-ups** from those visits
+- [ ] **1 paying customer** at founder pricing (₹500–1500/site/month — must be real money, no free pilots)
+- [ ] **Running objections log** captured after every visit (in `docs/FIELD-VISITS-LOG.md`)
+
+**Channel discipline:** local field only. No LinkedIn, no YouTube, no broadcasts
+this fortnight. One channel, executed seriously.
+
+### Week 1 — referral mining (Day 0–7)
+
+- [ ] WhatsApp each of the 12 testers individually (NOT a broadcast). Ask for
+      1–2 contractor referrals each. Target: **6 warm referrals from 12 testers
+      in 5 days**.
+- [ ] If fewer than 3 referrals come back → testers aren't getting enough value.
+      That's a product problem; pause field push and diagnose.
+- [ ] Of the 12, pre-bet on the 3 most likely to refer. Karun to name them in
+      next session.
+
+### Week 1–2 — site visits (Day 3–14)
+
+- [ ] Minimum **3 site visits per week**. Each visit must be at a working
+      construction site, not an office or cafe.
+- [ ] Use the 3-question diagnostic BEFORE pitching anything:
+      1. Aapke kitne sites abhi active hain?
+      2. Worker attendance kaise track karte ho — abhi?
+      3. Pichhle hafte kitna time excel/notebook pe gaya?
+- [ ] Qualified prospect = **3+ active sites AND 5+ hrs/week on Excel**. Anyone
+      else: friendly chat, ask for referral upward, leave.
+- [ ] Demo on **their** phone, not yours. Sign them up live, add 1 site, mark
+      1 worker present.
+
+### Physical channels to test in Guwahati
+
+- [ ] Mid-morning site rounds in Bhangagarh / Six Mile / Khanapara
+- [ ] Hardware + material supplier shops in Athgaon / Fancy Bazar
+- [ ] CREDAI Assam Guwahati branch — get a tester to introduce to the secretary
+- [ ] GIDC industrial estate site offices
+
+### Tools to build — ONLY after first 2 cold visits done
+
+Karun's decision: build tooling *after* using bare-hands version twice, so we
+know what actually hurts.
+
+- [ ] One-page A4 leave-behind (face + number + QR + 3 bullets). Printable.
+- [ ] Pre-loaded demo tenant seed (resets phone to realistic 1-site / 8-worker
+      / 3-day-attendance state in 30 seconds before each visit)
+- [ ] `docs/FIELD-VISITS-LOG.md` template (contractor, site, date, 3 diagnostic
+      answers, what they said, next action, follow-up date)
+
+### What NOT to make this fortnight
+
+- ❌ Another pitch deck
+- ❌ Another brochure / poster / PDF
+- ❌ Landing page redesign
+- ❌ Anything that doesn't get a contractor to download the APK
+
+### Day-14 review gate
+
+If at Day 14: **0 paid customers AND <3 new sign-ups AND >0 new PDFs created**
+→ the 50% was wasted. Recalibrate channel choice and try again. Do not extend
+without honest assessment.
+
+---
+
 ## 🤝 P1 — Pilot prospects *(new — 2026-05-20)*
 
 Track every contractor who's been pitched, in order of how close they are to
