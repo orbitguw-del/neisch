@@ -28,9 +28,43 @@ Last reprioritised: 2026-05-31.
 
 ## 🟠 P1 — High (launch blockers + security)
 
-- [x] ~~**🔑 Rotate exposed Supabase `service_role` key**~~ ✅ **DONE 2026-05-31.**
-  Key rolled, Vercel + edge function secrets updated, `seed.mjs` reads from env var.
-  Edge functions verified working post-rotation (2026-05-31).
+- [x] ~~**🔑 Rotate exposed Supabase `service_role` key**~~ ✅ **VERIFIED DEAD 2026-06-05T07:31 UTC.**
+  Audit history (corrects an earlier inaccurate "done 2026-05-31" claim):
+  - **May 30:** Vercel `VITE_SUPABASE_ANON_KEY` migrated to new publishable
+    key (`sb_publishable_zeHTe…`). Frontend on new key. **Legacy
+    service_role JWT was NOT killed at this point — only anon was
+    re-pointed in Vercel.**
+  - **2026-06-05 12:00 IST:** Live curl with the leaked JWT from the
+    public GitHub repo (`.claude/settings.local.json`, in repo since
+    initial commit Apr 4) returned HTTP 200 with a real profile row.
+    94-day exposure window confirmed.
+  - **2026-06-05 12:30 IST:** All 9 edge functions verified using
+    `SB_SECRET_KEY` (new `sb_secret_…`) via deployed keyprobe function.
+    `SUPABASE_SERVICE_ROLE_KEY` env var Supabase auto-injects to edge
+    functions was already auto-pointing to the new secret key.
+  - **2026-06-05 12:55 IST:** v1.2.4 AAB (versionCode 27) built with
+    new publishable key baked into the Android bundle. Legacy JWT
+    string NOT present in the bundle (grep verified).
+  - **2026-06-05 13:01 IST / 07:31 UTC:** Karun clicked
+    "Disable JWT-based API keys" in Supabase dashboard → API Keys →
+    Legacy tab.
+  - **2026-06-05 13:02 IST:** Re-tested leaked JWT → HTTP 401 with
+    Supabase message *"Legacy API keys are disabled. Disabled on
+    2026-06-05T07:31:19.361753+00:00"*. **Kill verified.**
+  - **2026-06-05 13:02 IST:** Smoke test `register-tenant` edge
+    function returned expected HTTP 400 ("Missing email…") — function
+    handler reached using new secret key. Backend integrity verified.
+  Pending follow-up:
+  - Upload v1.2.4 AAB to Play Console closed testing (release
+    `C:\Users\model\Desktop\storey-v1.2.4.aab`) so installed v1.2.3
+    APKs (built with legacy anon JWT) get updated within an hour.
+  - Remove the dead legacy JWT string from `.claude/settings.local.json`
+    as repo hygiene (no security value once disabled, but it's clutter).
+  - Forensics: review Supabase Postgres logs for any service_role
+    queries during the 94-day exposure window (Apr 4 → Jun 5) from
+    IPs that aren't yours, Vercel, or Supabase Edge runtime. If clean
+    → no incident. If hits found → open incident doc per
+    INCIDENT-RESPONSE.md runbook.
 
 - [ ] **Play Store icon + screenshots upload** — manual upload via Play Console
   (asset paths under `C:\consne\*`).
