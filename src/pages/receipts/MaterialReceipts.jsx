@@ -49,6 +49,8 @@ function ReceiptForm({ sites, onSubmit, loading }) {
     lr_date: '',
     challan_number: '',
     challan_date: '',
+    invoice_number: '',
+    invoice_date: '',
     vehicle_number: '',
     note: '',
     // warehouse-flow only
@@ -85,6 +87,7 @@ function ReceiptForm({ sites, onSubmit, loading }) {
           unit_cost:          form.unit_cost    || null,
           lr_date:            form.lr_date      || null,
           challan_date:       form.challan_date || null,
+          invoice_date:       form.invoice_date || null,
           _photo:             photo,
           _destinationSiteId: hasWarehouses && sendToSite ? destinationSiteId || null : null,
         })
@@ -171,6 +174,21 @@ function ReceiptForm({ sites, onSubmit, loading }) {
         </div>
       </div>
 
+      {/* Invoice (supplier tax invoice — separate from challan, needed for GST) */}
+      <div className="rounded-lg border border-gray-200 p-3 space-y-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tax Invoice</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="label">Invoice Number</label>
+            <input className="input" value={form.invoice_number} onChange={set('invoice_number')} placeholder="INV-2024-7890" />
+          </div>
+          <div>
+            <label className="label">Invoice Date</label>
+            <input className="input" type="date" value={form.invoice_date} onChange={set('invoice_date')} />
+          </div>
+        </div>
+      </div>
+
       {/* Vehicle + Note */}
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -248,6 +266,8 @@ function ReceiptDetail({ receipt }) {
     ['LR Date',        receipt.lr_date    ?? '—'],
     ['Challan No.',    receipt.challan_number ?? '—'],
     ['Challan Date',   receipt.challan_date   ?? '—'],
+    ['Invoice No.',    receipt.invoice_number ?? '—'],
+    ['Invoice Date',   receipt.invoice_date   ?? '—'],
     ['Vehicle',        receipt.vehicle_number ?? '—'],
     ['Note',           receipt.note ?? '—'],
     ['Created by',     receipt.created_by_profile?.full_name ?? '—'],
@@ -381,6 +401,12 @@ function ConfirmReceiptModal({ receipt, open, onClose, onSubmit, loading }) {
             <div className="flex gap-3">
               <span className="w-32 flex-shrink-0 text-xs text-gray-500">Challan No.</span>
               <span className="text-sm text-gray-900">{receipt.challan_number}</span>
+            </div>
+          )}
+          {receipt.invoice_number && (
+            <div className="flex gap-3">
+              <span className="w-32 flex-shrink-0 text-xs text-gray-500">Invoice No.</span>
+              <span className="text-sm text-gray-900">{receipt.invoice_number}</span>
             </div>
           )}
         </div>
@@ -729,7 +755,7 @@ export default function MaterialReceipts() {
                     </td>
                     <td className="px-3 py-3 text-xs text-gray-500 hidden lg:table-cell">{r.grn_number || '—'}</td>
                     <td className="px-3 py-3 text-xs text-gray-500 hidden lg:table-cell">
-                      {[r.lr_number, r.challan_number].filter(Boolean).join(' / ') || '—'}
+                      {[r.lr_number, r.challan_number, r.invoice_number].filter(Boolean).join(' / ') || '—'}
                     </td>
                     <td className="px-3 py-3">
                       <span className={`${STATUS_BADGE[r.status] ?? 'badge-gray'} flex items-center gap-1 w-fit capitalize`}>
