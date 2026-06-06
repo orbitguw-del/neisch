@@ -12,8 +12,8 @@
 
 # Privacy Policy
 
-**Effective date:** [INSERT after publishing]
-**Last updated:** [INSERT after publishing]
+**Effective date:** 5 June 2026
+**Last updated:** 5 June 2026
 
 ## 1. Who we are
 
@@ -28,7 +28,10 @@ updated to reflect the corporate entity.
 **For all privacy-related questions or requests:**
 - WhatsApp: +91 98640 66898
 - Email: help@storeyinfra.com
-- Postal: [Address — to be added when registered office is finalised]
+- Postal correspondence: Storey Infra, Guwahati, Assam, India.
+  Until our registered office is published, please use email
+  (help@storeyinfra.com) or WhatsApp (+91 98640 66898) — both are
+  monitored 7 days a week and are our primary channels of record.
 
 ## 2. What this Policy covers
 

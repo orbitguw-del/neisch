@@ -25,7 +25,7 @@ export default function Terms() {
               Terms of Service
             </h1>
             <p className="text-xs text-gray-500">
-              Storey — Storey Infra, Guwahati · Last updated 22 May 2026
+              Storey — Storey Infra, Guwahati · Effective 5 June 2026
             </p>
           </div>
         </div>
@@ -223,7 +223,7 @@ export default function Terms() {
               <strong>Email:</strong>{' '}
               <a href="mailto:help@storeyinfra.com" className="text-brand-600 hover:underline">help@storeyinfra.com</a><br />
               <strong>WhatsApp:</strong> +91 98640 66898<br />
-              <strong>Postal:</strong> [Address — to be added when registered office is finalised]
+              <strong>Postal:</strong> Storey Infra, Guwahati, Assam, India. Until our registered office is published, please use email or WhatsApp above — both are monitored 7 days a week and are our primary channels of record.
             </p>
           </Section>
 

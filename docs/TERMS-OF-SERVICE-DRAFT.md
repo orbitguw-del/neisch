@@ -12,8 +12,8 @@
 
 # Terms of Service
 
-**Effective date:** [INSERT after publishing]
-**Last updated:** [INSERT after publishing]
+**Effective date:** 5 June 2026
+**Last updated:** 5 June 2026
 
 ## 1. Acceptance of these terms
 
@@ -527,7 +527,11 @@ subject to:
 For any questions about these Terms:
 - **Email:** help@storeyinfra.com
 - **WhatsApp:** +91 98640 66898
-- **Postal:** [Address — to be added when registered office is finalised]
+- **Postal correspondence:** Storey Infra, Guwahati, Assam, India.
+  Until our private limited company is incorporated and a registered
+  office is published, please use email (help@storeyinfra.com) or
+  WhatsApp (+91 98640 66898) for all correspondence — both are
+  monitored 7 days a week and are our primary channels of record.
 
 > ℹ️ *During the beta period, support contact is routed through the
 > founder directly. Once the Pvt Ltd is incorporated and Storey scales,

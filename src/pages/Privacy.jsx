@@ -25,7 +25,7 @@ export default function Privacy() {
               Privacy Policy
             </h1>
             <p className="text-xs text-gray-500">
-              Storey — Construction Site Manager · Effective 16 May 2026
+              Storey — Construction Site Manager · Effective 5 June 2026
             </p>
           </div>
         </div>
