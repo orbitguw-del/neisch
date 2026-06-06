@@ -25,7 +25,14 @@ connect to one of them, defer it.
 
 ---
 
-## Phase 1A — Week 1 (May 21 → May 27): "Send the broadcast. Get to 12."
+> ⚠ **Phase 1 (A/B/C/D) is now historical. Day 0–15 ran ahead of plan** (12
+> testers by Day 10, production-track application submitted Day 2). For the
+> Day-15-forward calendar use **`docs/TIMELINE.md`** — it supersedes the four
+> Phase 1 week tables below. Phase 2 + Phase 3 sections further down remain
+> valid in spirit; their dates are off, TIMELINE.md is the source of truth on
+> sequencing through Day 90.
+
+## Phase 1A — Week 1 (May 21 → May 27): "Send the broadcast. Get to 12." *(historical)*
 
 | Day | Action | Done = |
 |---|---|---|
