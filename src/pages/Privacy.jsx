@@ -81,6 +81,29 @@ export default function Privacy() {
             </p>
           </Section>
 
+          <Section n="4.1" title="Beta-period reminder about the data you upload">
+            <div className="rounded-lg bg-amber-50 border border-amber-300 px-4 py-3 text-amber-900 text-xs space-y-2">
+              <p>
+                Storey is currently in <strong>free beta</strong>. The data-protection duties we
+                owe you under the DPDP Act 2023 and IT Act 2000 apply in full. However,
+                because the service is in active development and provided at no charge, we
+                strongly recommend that during beta you:
+              </p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li><strong>Do not upload data you cannot afford to lose</strong> without an independent backup of your own</li>
+                <li><strong>Do not rely on Storey as your sole or primary system of record</strong> for business-critical information</li>
+                <li><strong>Verify any output</strong> (reports, calculations, balances) against your own source documents before acting on it commercially</li>
+                <li><strong>Maintain your own copies</strong> of statutory records (tax invoices, worker IDs, payment ledgers) you are obliged to retain under Indian law</li>
+              </ul>
+              <p className="text-xs">
+                This is not a waiver of our duties — it is a sensible precaution while Storey
+                is still maturing. See Section 3 of our{' '}
+                <a href="#/terms" className="underline">Terms of Service</a> for the
+                corresponding allocation of risk during the free beta period.
+              </p>
+            </div>
+          </Section>
+
           <Section n="5" title="Service providers">
             <p>We share data only with infrastructure providers strictly necessary to run the App:</p>
             <ul className="list-disc pl-5 space-y-1">

@@ -53,17 +53,58 @@ the corporate name change once registration is complete.
 
 ## 3. Beta status
 
-**Storey is currently in beta.** This means:
+**⚠️ IMPORTANT — Storey is currently in BETA and provided FREE OF
+CHARGE.** By using Storey during beta you specifically acknowledge
+and accept that:
 
-- Features may change without notice
-- Service interruptions may occur
-- Bugs may exist that we haven't yet identified
-- We may modify or discontinue features as we improve the product
-- Data structures and pricing may evolve
+- Features may change, be modified, or be discontinued without notice
+- Service interruptions, outages, and degraded performance may occur
+- Bugs may exist that we haven't yet identified or fixed
+- Data structures, pricing, and access tiers may evolve
+- You are using Storey at **your own risk** with no warranty of any kind
+- You should **not rely on Storey as your sole or primary system of
+  record** for business-critical data during beta
+- You should **maintain independent backups** of any data you cannot
+  afford to lose (Section 5.5)
+- You should **not use Storey to make irreversible business decisions
+  without independent verification** of the underlying data
 
-By using Storey during beta, you acknowledge and accept these risks.
 We commit to communicate material changes openly and in advance where
-practical.
+practical, to act in good faith, and to honour the data-protection
+obligations set out in our Privacy Policy.
+
+## 3.1 Free beta — what we owe you and what you accept
+
+During the free beta period, the bargain between you and us is
+intentionally limited and reciprocal:
+
+**What we owe you (we do not disclaim these):**
+- The data-protection duties set out in the Digital Personal Data
+  Protection Act 2023 and the IT Act 2000 — including reasonable
+  security safeguards, breach notification, grievance redressal, and
+  the user rights in Section 8 of our Privacy Policy.
+- Good faith, honest communication about material changes, bugs, and
+  outages.
+- Liability for fraud, wilful misconduct, or gross negligence on our
+  part, to the extent it cannot be limited under Indian law.
+
+**What you accept by using the free beta:**
+- The service is provided "AS IS" and "AS AVAILABLE" with no warranty
+  of merchantability, fitness for purpose, or accuracy of data.
+- We do not owe you a particular uptime, feature set, or response time.
+- Beyond the non-waivable duties above, our monetary liability for any
+  claim arising from your beta use is capped at **₹0** (zero rupees) —
+  consistent with the absence of fees during this period.
+- You — not Storey — are responsible for verifying the accuracy of any
+  data you input or rely on, and for any business, financial, legal, or
+  operational decision you make based on Storey's output.
+- You will not use Storey for any purpose where the consequences of
+  service interruption or data loss exceed what you are willing to
+  absorb at zero refund.
+
+This balance is intentional: Storey takes on the duties law and decency
+require, and in exchange you take on the additional risk that comes
+with using free, in-development software for your business.
 
 ## 4. Your account
 

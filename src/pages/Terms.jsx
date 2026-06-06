@@ -57,13 +57,46 @@ export default function Terms() {
             </p>
           </Section>
 
-          <Section n="3" title="Beta status">
-            <p>
-              Features may change; service interruptions may occur; bugs may exist.
-              Storey is provided "AS IS" and "AS AVAILABLE" during beta. We do not
-              guarantee uninterrupted or error-free availability. Scheduled
-              maintenance, upgrades, or unforeseen outages may temporarily affect
-              access.
+          <Section n="3" title="Beta status — IMPORTANT">
+            <div className="rounded-lg bg-amber-50 border border-amber-300 px-4 py-3 text-amber-900 text-xs space-y-2">
+              <p>
+                <strong>Storey is currently in BETA and provided FREE OF CHARGE.</strong>
+                By using Storey during beta you specifically acknowledge that:
+              </p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Features may change or be discontinued without notice</li>
+                <li>Service interruptions, outages, and bugs may occur</li>
+                <li>You are using Storey <strong>at your own risk</strong> with no warranty of any kind</li>
+                <li>You should <strong>not</strong> rely on Storey as your sole system of record</li>
+                <li>You should <strong>maintain independent backups</strong> of critical data</li>
+                <li>You should <strong>not</strong> make irreversible business decisions based on Storey output without independent verification</li>
+              </ul>
+            </div>
+            <p className="mt-3">
+              We commit to communicate material changes openly, act in good faith,
+              and honour the data-protection obligations in our Privacy Policy.
+            </p>
+          </Section>
+
+          <Section n="3.1" title="Free beta — what we owe you and what you accept">
+            <p className="font-medium text-gray-900">What we owe you (not disclaimed):</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Data-protection duties under the DPDP Act 2023 and IT Act 2000 — reasonable security, breach notification, grievance redressal, and the user rights in our Privacy Policy.</li>
+              <li>Good faith and honest communication about material changes, bugs, and outages.</li>
+              <li>Liability for fraud, wilful misconduct, or gross negligence on our part, to the extent it cannot be limited under Indian law.</li>
+            </ul>
+            <p className="font-medium text-gray-900 mt-3">What you accept by using the free beta:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>The service is "AS IS" and "AS AVAILABLE" — no warranty of merchantability, fitness for purpose, or data accuracy.</li>
+              <li>We do not owe you a particular uptime, feature set, or response time.</li>
+              <li>Beyond the non-waivable duties above, our monetary liability is capped at <strong>₹0</strong> during the free beta — consistent with the absence of fees.</li>
+              <li><strong>You</strong> — not Storey — are responsible for verifying the accuracy of any data you input or rely on, and for any business, financial, legal, or operational decision you make based on Storey's output.</li>
+              <li>You will not use Storey for any purpose where the consequences of service interruption or data loss exceed what you are willing to absorb at zero refund.</li>
+            </ul>
+            <p className="mt-3 text-xs text-gray-500 italic">
+              This balance is intentional: Storey takes on the duties law and decency
+              require, and in exchange you take on the additional risk that comes with
+              using free, in-development software for your business.
             </p>
           </Section>
 

@@ -116,6 +116,28 @@ personal data based on:
   isolated by access rules and encryption)
 - Send marketing emails without your separate consent
 
+### 5.1 Beta-period reminder about the data you upload
+Storey is currently in free beta. The data-protection duties we owe
+you under the DPDP Act 2023 and IT Act 2000 apply in full — see
+Section 10 for what we do to protect your data. However, because the
+service is in active development and provided at no charge, we
+strongly recommend that during beta you:
+
+- **Do not upload data you cannot afford to lose** without an
+  independent backup of your own.
+- **Do not rely on Storey as your sole or primary system of record**
+  for business-critical information.
+- **Verify any output** (reports, calculations, balances) against
+  your own source documents before acting on it commercially.
+- **Maintain your own copies** of statutory records (tax invoices,
+  worker IDs, payment ledgers) that you would otherwise be obliged to
+  retain under Indian law.
+
+This is not a waiver of our duties — it is a sensible precaution while
+Storey is still maturing. See Section 3 of our [Terms of
+Service](./terms) for the corresponding allocation of risk during the
+free beta period.
+
 ## 6. Where your data is stored
 
 Your data is stored on **Supabase (Amazon AWS Mumbai region)** —
