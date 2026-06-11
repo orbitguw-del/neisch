@@ -437,18 +437,19 @@ fixed on web · APK status)*
 
 ## 🟡 P2 — Medium (legal / business)
 
-- [ ] **Register a legal entity — "Storey Labs Private Limited"** (Pvt Ltd)
-  via a CA — operating as an individual means unlimited personal liability. Move
-  services under it once formed. **Becomes P1 the moment fundraising /
-  advisor-equity is on the table** — you cannot issue equity, sign SAFEs / CCDs,
-  or grant advisor shares from an unregistered business.
-  *(Name + structure set 2026-06-01.)*
-  - **Name:** Storey Labs Private Limited. Verify availability on MCA
-    (SPICe+/RUN) + check IP-India for any clashing "Storey Infra" trademark.
-    Legal name ≠ brand ("Storey" / storeyinfra.com) — that's fine.
-  - **Cap table (proposed, pending CA):** founder ~99% / son ~1% (son must be
-    adult + PAN) to meet the 2-shareholder minimum. Decide son-as-2nd-director
-    vs shareholder-only (director carries statutory liability).
+- [🟢 IN PROGRESS] **Register a legal entity — "Storey Labs Private Limited"** (Pvt Ltd)
+  **Filed with MCA on 2026-06-05** via CA. Awaiting name approval (Day 1-3),
+  then SPICe+ Part B incorporation review (Day 7-15), then COI + PAN + TAN.
+  Live status tracked in `_reference/MCA-application-status.md`.
+  *(Name + structure set 2026-06-01; filed 2026-06-05 — 4 days ahead of
+  TIMELINE.md Day 16 plan.)*
+  - **Name (1st preference):** Storey Labs Private Limited
+  - **Name (2nd preference / fallback):** Storey Infra Private Limited
+  - **Directors:** Karun Roongta + father (decision made 2026-06-05 over
+    son-as-director option; rationale: adult evaluation capacity, cleaner
+    separation from personal debt exposure, lower fraudulent-transfer risk).
+  - **Cap table (proposed, pending CA confirmation):** founder ~99% / father
+    ~1% to meet the 2-shareholder minimum.
   - **⚠️ Founder has personal debt** → structure for clean separation; **no new
     personal guarantees, no personal borrowing to fund the company, route all
     revenue (clinic ₹30k, Storey) to the company not personal accounts.** The

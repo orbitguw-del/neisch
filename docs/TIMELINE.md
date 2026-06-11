@@ -51,6 +51,9 @@ REALITY (Day 15 — 2026-06-05):
 2026-06-05  Day 15  Service-role JWT killed in Supabase (94-day exposure closed).
                     v1.2.5 (versionCode 28): publishable migration + invoice field +
                     modal scroll fix. Repo cleanup. Field-marketing P0 written.
+                    ✅ Pvt Ltd "Storey Labs Private Limited" FILED with MCA
+                    (Karun + father as directors). Status tracked in
+                    _reference/MCA-application-status.md. 4 days ahead of plan.
 ```
 
 **Ledger:** 112 commits · 4 APK releases · 1 production-track application ·
@@ -65,7 +68,8 @@ REALITY (Day 15 — 2026-06-05):
 Day  Date         Action                                              Verify
 ───  ────────     ─────────────────────────────────────────────       ───────────
 16   Sat Jun 06   ✉ Re-engage Arun. WhatsApp: "Free 10 min?"          Reply or hard "no" logged in TODO
-16   Sat Jun 06   ☎ Call CA. Get Pvt Ltd quote.                       Quote saved in TODO
+16   Sat Jun 06   ☎ Call CA. Get Pvt Ltd quote.                       ✅ DONE Day 15 — filed 2026-06-05
+16   Sat Jun 06   📤 Upload v1.2.5 AAB to Closed testing               Release notes live in Play Console
 17   Sun Jun 07   📞 1-on-1 WhatsApp to all 12 testers asking for     ≥3 referrals back by Jun 11
                   1 referral each (NOT a broadcast)
 18   Mon Jun 08   📋 Monday 9 AM review — edit this file              File modified Jun 8
