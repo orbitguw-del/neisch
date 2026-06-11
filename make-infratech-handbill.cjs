@@ -30,6 +30,33 @@ function esc(s) {
   return String(s).replace(/[&<>]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c]))
 }
 
+// Storey bar-chart logo (matches storey-logo.svg) wrapped in a white badge so
+// it reads on a terracotta background. `s` = badge size in px at top-left (x,y).
+function logoBadge(x, y, s) {
+  const pad = s * 0.11
+  const ix = x + pad, iy = y + pad, isz = s - pad * 2       // inner terra square
+  const k = isz / 32, ox = ix, oy = iy                       // 32-unit → px scale
+  const bar = (bx, by, bw, bh) =>
+    `<rect x="${ox + bx*k}" y="${oy + by*k}" width="${bw*k}" height="${bh*k}" rx="${1.2*k}" fill="${WHITE}"/>`
+  return `
+    <rect x="${x}" y="${y}" width="${s}" height="${s}" rx="${s*0.2}" fill="${WHITE}" filter="url(#cardShadow)"/>
+    <rect x="${ix}" y="${iy}" width="${isz}" height="${isz}" rx="${isz*0.2}" fill="${TERRA}"/>
+    ${bar(5,18,6,9)}${bar(13,13,6,14)}${bar(21,7,6,20)}`
+}
+
+// Render the same badge to a standalone transparent PNG (for PPTX addImage).
+async function logoBadgePngDataUrl(size = 320) {
+  const pad = size * 0.11, isz = size - pad * 2, k = isz / 32
+  const bar = (bx, by, bw, bh) =>
+    `<rect x="${pad + bx*k}" y="${pad + by*k}" width="${bw*k}" height="${bh*k}" rx="${1.2*k}" fill="#FFFFFF"/>`
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
+    <rect width="${size}" height="${size}" rx="${size*0.2}" fill="#FFFFFF"/>
+    <rect x="${pad}" y="${pad}" width="${isz}" height="${isz}" rx="${isz*0.2}" fill="${TERRA}"/>
+    ${bar(5,18,6,9)}${bar(13,13,6,14)}${bar(21,7,6,20)}</svg>`
+  const buf = await sharp(Buffer.from(svg)).png().toBuffer()
+  return 'data:image/png;base64,' + buf.toString('base64')
+}
+
 async function buildJPG() {
   // QR code as SVG paths (crisp at any size). White modules on transparent.
   const qrSvg = await QR.toString(PLAY_URL, {
@@ -66,15 +93,15 @@ async function buildJPG() {
   <!-- Terracotta full-bleed background (dominant) -->
   <rect width="${W}" height="${H}" fill="url(#terraGrad)"/>
 
-  <!-- faint sage motif circles, top corners -->
-  ${sageDot(120, 150, 60)}
+  <!-- sage motif circles, top-right corner -->
   ${sageDot(1640, 110, 38)}
   ${sageDot(1690, 360, 22)}
 
-  <!-- ── Wordmark + event line ───────────────────────────────────── -->
-  <text x="${W/2}" y="210" font-family="Impact, Arial Black, sans-serif" font-size="150"
+  <!-- ── Logo badge + wordmark + event line ──────────────────────── -->
+  ${logoBadge(110, 80, 150)}
+  <text x="${W/2 + 70}" y="210" font-family="Impact, Arial Black, sans-serif" font-size="150"
         letter-spacing="14" fill="${WHITE}" text-anchor="middle">STOREY</text>
-  <text x="${W/2}" y="278" font-family="Calibri, Arial, sans-serif" font-size="44"
+  <text x="${W/2}" y="288" font-family="Calibri, Arial, sans-serif" font-size="44"
         letter-spacing="6" fill="${SAND}" text-anchor="middle">SITE OPERATIONS · BUILT IN GUWAHATI</text>
 
   <!-- thin sand divider (not under a title — a section break) -->
@@ -163,9 +190,11 @@ async function buildPPTX() {
 
   s.background = { color: 'B85042' }
 
-  // Wordmark
+  // Logo badge (top-left) + wordmark
+  const logoData = await logoBadgePngDataUrl(320)
+  s.addImage({ data: logoData, x: 0.35, y: 0.28, w: 0.62, h: 0.62 })
   s.addText('STOREY', {
-    x: 0, y: 0.25, w: 5.83, h: 0.7, align: 'center',
+    x: 0.5, y: 0.25, w: 5.83, h: 0.7, align: 'center',
     fontFace: 'Impact', fontSize: 50, color: 'FFFFFF', charSpacing: 6,
   })
   s.addText('SITE OPERATIONS · BUILT IN GUWAHATI', {
