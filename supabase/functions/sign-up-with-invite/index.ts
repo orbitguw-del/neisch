@@ -98,16 +98,18 @@ serve(async (req) => {
     let userId = authData?.user?.id
 
     if (createErr) {
+      // SECURITY: if the email already has an account, do NOT silently re-assign
+      // its profile (role + tenant_id) to this invite's tenant. The profile
+      // immutability trigger waves service-role callers through, so re-assigning
+      // here would let an invite *capture* an existing user — including a member
+      // of another tenant — into the inviter's tenant, with no authentication as
+      // that user (only their email needs to be known). Reject and route them to
+      // sign-in instead. Moving a user between tenants must be a deliberate,
+      // authenticated action, never an invite side-effect.
       if (createErr.message.toLowerCase().includes("already")) {
-        const { data: existingId } = await supabase
-          .rpc("get_auth_user_id_by_email", { p_email: email.toLowerCase().trim() })
-        userId = existingId ?? undefined
-        if (!userId) {
-          return json({ error: "An account with this email already exists. Please sign in directly with your email and password." }, 400)
-        }
-      } else {
-        return json({ error: createErr.message }, 400)
+        return json({ error: "An account with this email already exists. Please sign in directly with your email and password." }, 400)
       }
+      return json({ error: createErr.message }, 400)
     }
 
     // -- 4. Set profile role + tenant (trigger may have already done this)
