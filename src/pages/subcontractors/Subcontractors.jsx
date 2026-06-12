@@ -225,7 +225,8 @@ function LogLabourModal({ sites, siteAssignments, tenantId, profileId, onClose, 
     if (logErr) { setError(logErr.message); setLoading(false); return }
 
     if (photos.length > 0) {
-      await supabase.from('subcontractor_labour_photos').delete().eq('log_id', log.id)
+      // Append new photos — never delete existing ones. Re-logging the same
+      // site+sub+date (upsert) keeps prior proof-of-attendance photos intact.
       try {
         for (const p of photos) {
           const path = await uploadPhoto({ blob: p.blob, tenantId, siteId, entity: 'subcontractor-labour' })

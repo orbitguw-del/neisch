@@ -3,10 +3,12 @@
 // What this does:
 //   • KEEPS login data unchanged: the 5 auth users, their profiles, the tenant
 //     and the 3 sites are upserted (idempotent) — same IDs, same passwords.
-//   • POPULATES every module so all screens have data: workers, materials (with
-//     budgets), material transactions / receipts / transfers / allocations,
-//     budget_lines (8-month trend), equipment assets, site expenses, attendance
-//     (30 days), tasks + updates, and daily logs.
+//   • POPULATES every module so all screens have data: cost centres (per site,
+//     with material tagging), workers, materials (with budgets), material
+//     transactions / receipts / transfers / allocations, budget_lines (8-month
+//     trend), equipment assets, site expenses, attendance (30 days), tasks +
+//     updates, daily logs, and sub-contractors (directory + site assignments +
+//     daily labour headcount logs).
 //
 // Idempotency / safety:
 //   • Every row uses a FIXED deterministic UUID and is UPSERTED. Re-running
@@ -54,6 +56,8 @@ const pad = (n) => String(n).padStart(12, '0')
 const wId = (n) => `dddddddd-0000-0000-0000-${pad(n)}`   // workers
 const mId = (n) => `eeeeeeee-0000-0000-0000-${pad(n)}`   // materials
 const tId = (n) => `ffffffff-0000-0000-0000-${pad(n)}`   // tasks
+const ccId  = (n) => `cc000000-0000-0000-0000-${pad(n)}` // cost centres
+const subId = (n) => `5c000000-0000-0000-0000-${pad(n)}` // sub-contractors
 const _seq = {}
 const nid = (prefix) => { _seq[prefix] = (_seq[prefix] || 0) + 1; return `${prefix}-0000-0000-0000-${pad(_seq[prefix])}` }
 
@@ -147,6 +151,24 @@ async function run() {
   ], 'site_id,profile_id')
   console.log('   ✓ 5 profiles · tenant · 3 sites · 6 assignments')
 
+  // ── 2b. Cost centres (spend buckets within each site) ───────────────────────
+  // Each carries a top-down ₹ budget; materials get tagged to one (see MCC below).
+  console.log('2b. Upserting cost centres…')
+  const COST_CENTRES = [
+    [ccId(1), IDS.site1, 'Earthwork & Sub-base', 6500000, 0],
+    [ccId(2), IDS.site1, 'Bituminous Works',     7200000, 1],
+    [ccId(3), IDS.site1, 'Bridge & Drainage',    5400000, 2],
+    [ccId(4), IDS.site2, 'Substructure',         2600000, 0],
+    [ccId(5), IDS.site2, 'Superstructure',       3400000, 1],
+    [ccId(6), IDS.site2, 'Finishing',            1800000, 2],
+    [ccId(7), IDS.site3, 'Piling & Foundation',  9000000, 0],
+  ]
+  await up('cost_centres', COST_CENTRES.map((c) => ({
+    id: c[0], tenant_id: IDS.tenant, site_id: c[1], name: c[2],
+    budget_amount: c[3], sort_order: c[4], created_by: IDS.rajiv,
+  })))
+  console.log(`   ✓ ${COST_CENTRES.length} cost centres`)
+
   // ── 3. Workers (fixed IDs) ───────────────────────────────────────────────────
   console.log('3. Upserting workers…')
   const W = [
@@ -223,10 +245,16 @@ async function run() {
     [IDS.site3, 'Piling Casing Steel Tubes',          'nos',     12500, 18,    5,    'Kalinga Steel, Guwahati',          'consumable', 'fabrication',120,    12500, 0.38, 0.45, 1.03],
     [IDS.site3, 'RCC M30 Ready Mix (Piling)',         'cu m',    5600,  12,    10,   'Lafarge RMC, Byrnihat',            'consumable', 'civil',      600,    5600,  0.25, 0.35, 1.00],
   ]
+  // Cost-centre tag per material (index-aligned with M; null = Unassigned / equipment)
+  const MCC = [
+    ccId(1), ccId(3), ccId(1), ccId(1), ccId(2), ccId(3), ccId(3), ccId(1), null, ccId(1), ccId(2), // site1 (0-10)
+    ccId(4), ccId(5), ccId(5), ccId(4), ccId(5), ccId(6), ccId(4), null, ccId(6),                   // site2 (11-19)
+    ccId(7), ccId(7), null, ccId(7), ccId(7),                                                        // site3 (20-24)
+  ]
   const materials = M.map((m, i) => ({
     id: mId(i + 1), site_id: m[0], tenant_id: IDS.tenant, name: m[1], unit: m[2], unit_cost: m[3],
     quantity_available: m[4], quantity_minimum: m[5], supplier: m[6], category: m[7], work_type: m[8],
-    budget_qty: m[9], budget_rate: m[10], opening_stock_recorded: true,
+    budget_qty: m[9], budget_rate: m[10], cost_centre_id: MCC[i] ?? null, opening_stock_recorded: true,
   }))
 
   // ── one-time legacy reset (opt-in) ───────────────────────────────────────────
@@ -239,6 +267,8 @@ async function run() {
       'task_updates', 'tasks', 'equipment_maintenance', 'equipment_assignments', 'equipment_assets',
       'material_allocations', 'material_transactions', 'material_receipts', 'material_transfers',
       'budget_lines', 'attendance', 'site_expenses', 'daily_logs',
+      // newer modules (labour photos cascade-delete from their parent log)
+      'subcontractor_daily_logs', 'subcontractor_site_assignments', 'subcontractors', 'cost_centres',
     ]) {
       await rest(`${t}?tenant_id=eq.${IDS.tenant}`, null, 'DELETE')
     }
@@ -449,6 +479,56 @@ async function run() {
     work_done: l[3], issues: l[4], weather: l[5], created_by: l[6], approval_status: 'confirmed', confirmed_by: IDS.pranab,
   })))
   console.log(`   ✓ ${L.length} daily logs`)
+
+  // ── 12. Sub-contractors: directory + site assignments + daily labour logs ────
+  console.log('12. Upserting sub-contractors…')
+  const SUBS = [
+    [subId(1), 'Sharma Electrical Works',   'Electrical',    '9864011220'],
+    [subId(2), 'Borah Plumbing & Sanitary', 'Plumbing',      '9954033112'],
+    [subId(3), 'Das Waterproofing Co.',     'Waterproofing', '8638044556'],
+    [subId(4), 'Nongrum Civil Contractors', 'Masonry',       '9436120045'],
+    [subId(5), 'Imphal Fabrication Unit',   'Fabrication',   '7969021304'],
+  ]
+  await up('subcontractors', SUBS.map((s) => ({
+    id: s[0], tenant_id: IDS.tenant, name: s[1], type: s[2], phone: s[3], created_by: IDS.rajiv,
+  })))
+  console.log(`   ✓ ${SUBS.length} sub-contractors`)
+
+  // many-to-many sc ↔ site
+  const SCSA = [
+    [subId(1), IDS.site1], [subId(1), IDS.site2],
+    [subId(2), IDS.site2],
+    [subId(3), IDS.site2], [subId(3), IDS.site3],
+    [subId(4), IDS.site3],
+    [subId(5), IDS.site2],
+  ]
+  await up('subcontractor_site_assignments', SCSA.map((a) => ({
+    id: nid('5ca00000'), tenant_id: IDS.tenant, subcontractor_id: a[0], site_id: a[1],
+  })), 'site_id,subcontractor_id')
+  console.log(`   ✓ ${SCSA.length} sub-contractor site assignments`)
+
+  // daily labour headcount logs (unique per site+sc+date; counts[0] = today, [1] = yesterday…)
+  const scLogs = []
+  const SC_LOG_PLAN = [
+    [subId(1), IDS.site1, [6, 5, 7, 6]],
+    [subId(1), IDS.site2, [4, 4, 5]],
+    [subId(2), IDS.site2, [3, 3, 4, 2]],
+    [subId(3), IDS.site2, [5, 6]],
+    [subId(3), IDS.site3, [4, 5, 4]],
+    [subId(4), IDS.site3, [8, 7, 9, 8, 6]],
+    [subId(5), IDS.site2, [3, 4, 3]],
+  ]
+  SC_LOG_PLAN.forEach(([sc, site, counts]) => {
+    counts.forEach((hc, di) => {
+      scLogs.push({
+        id: nid('5cd00000'), tenant_id: IDS.tenant, site_id: site, subcontractor_id: sc,
+        date: daysAgo(di), headcount: hc,
+        notes: di === 0 ? 'On site today' : null, logged_by: IDS.merina,
+      })
+    })
+  })
+  await up('subcontractor_daily_logs', scLogs, 'site_id,subcontractor_id,date')
+  console.log(`   ✓ ${scLogs.length} sub-contractor daily logs`)
 
   console.log('\n✅ Demo data populated across ALL modules.')
   console.log('\nLogin accounts (unchanged):')

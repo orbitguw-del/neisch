@@ -28,6 +28,23 @@ Last reprioritised: 2026-05-31.
 
 ## 🟠 P1 — High (launch blockers + security)
 
+- [ ] **🔔 Notification forgery within a tenant** *(found 2026-06-12 module audit)* —
+  the `notif_tenant_insert` RLS policy on `notifications` only checks
+  `tenant_id = my_tenant_id()`; it does NOT constrain `user_id`. Any authenticated
+  tenant member can insert a notification to **any colleague** in the same tenant
+  with arbitrary title/body (fake "Transfer approved", phishing-style). Bounded to
+  one tenant — no cross-tenant leak or privilege escalation. **Fix (coordinated
+  deploy — migration + client together):** add a `SECURITY DEFINER create_notification()`
+  RPC that stamps the row server-side, switch the client `createNotification()` helper
+  (`src/stores/notificationStore.js`) to call it, then tighten/replace the broad INSERT
+  policy. Do NOT remove the INSERT policy before the client is on the RPC or in-app
+  notifications break. Migration NOT yet written — deferred off the live DB deliberately.
+
+- [x] ~~**🧹 Dead `service_role` JWT tracked in `.claude/settings.local.json`**~~ ✅
+  **FIXED 2026-06-12.** File untracked (`git rm --cached`) + added to `.gitignore`.
+  Key was already disabled 2026-06-05 so no rotation needed; this closes the
+  repo-hygiene tail (the disabled key still sits in git history — harmless).
+
 - [x] ~~**🔑 Rotate exposed Supabase `service_role` key**~~ ✅ **VERIFIED DEAD 2026-06-05T07:31 UTC.**
   Audit history (corrects an earlier inaccurate "done 2026-05-31" claim):
   - **May 30:** Vercel `VITE_SUPABASE_ANON_KEY` migrated to new publishable

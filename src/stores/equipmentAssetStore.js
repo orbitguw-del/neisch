@@ -107,6 +107,13 @@ const useEquipmentAssetStore = create((set) => ({
   /**
    * Called at GRN confirmation for equipment category materials.
    * Creates `count` asset rows, using provided serial numbers where available.
+   *
+   * KNOWN LIMITATION (low risk, large GRNs only): this loops next_asset_code +
+   * insert once per unit and is NOT transactional — if it fails partway, the
+   * already-created assets persist while the rest don't. A proper fix is a
+   * server-side batch RPC (atomic, single round-trip); deferred until a GRN with
+   * many equipment units is a real workflow. For typical 1–5 unit receipts the
+   * partial-failure window is negligible.
    */
   bulkCreateAssets: async ({ materialId, siteId, tenantId, grnReceiptId, count, serials, make, model, createdBy }) => {
     const created = []
@@ -251,13 +258,19 @@ const useEquipmentAssetStore = create((set) => ({
       notes:  reason || null,
     })
 
-    // Decrement material quantity_available by 1
-    const { data: mat } = await supabase.from('materials').select('quantity_available').eq('id', asset.material_id).single()
-    if (mat) {
-      await supabase.from('materials')
-        .update({ quantity_available: Math.max(0, (Number(mat.quantity_available) || 0) - 1) })
-        .eq('id', asset.material_id)
-    }
+    // Decrement material stock by 1 — atomic, row-locked RPC (was a read-modify-write race).
+    // 'wastage' removes one unit from stock and leaves a ledger trail of the retirement.
+    await supabase.rpc('record_material_transaction', {
+      p_material_id: asset.material_id,
+      p_site_id:     asset.site_id,
+      p_tenant_id:   asset.tenant_id,
+      p_txn_type:    'wastage',
+      p_quantity:    1,
+      p_note:        `Asset ${asset.asset_code} retired${reason ? ` — ${reason}` : ''}`,
+      p_created_by:  retiredBy ?? null,
+      p_ref_type:    'equipment_asset',
+      p_ref_id:      assetId,
+    })
   },
 }))
 

@@ -21,8 +21,9 @@ const useReportsStore = create((set, get) => ({
       .select('material_id, quantity, unit_cost, site_id, materials(name, unit), sites(name)')
       .eq('tenant_id', tenantId)
       .eq('status', 'received')
-      .gte('created_at', startTs)
-      .lt('created_at', endTs)
+      // count by when stock actually arrived, not when the row was created
+      .gte('received_at', startTs)
+      .lt('received_at', endTs)
 
     if (siteId) rQuery = rQuery.eq('site_id', siteId)
 
@@ -105,8 +106,9 @@ const useReportsStore = create((set, get) => ({
         .eq('tenant_id', tenantId)
         .eq('site_id', siteId)
         .eq('status', 'received')
-        .gte('created_at', startTs)
-        .lt('created_at', endTs),
+        // count by when stock actually arrived, not when the row was created
+        .gte('received_at', startTs)
+        .lt('received_at', endTs),
     ])
 
     // Map actual spend per material
@@ -419,7 +421,7 @@ const useReportsStore = create((set, get) => ({
       supabase.from('sites').select('name, location, status, budget').eq('id', siteId).single(),
       supabase
         .from('daily_logs')
-        .select('id, log_date, workers_present, weather, work_done, issues, created_by, photo_path')
+        .select('id, log_date, workers_present, weather, work_done, issues, created_by, photo_path, daily_log_photos(photo_path)')
         .eq('tenant_id', tenantId)
         .eq('site_id', siteId)
         .gte('log_date', startDate)
