@@ -103,15 +103,18 @@ const useNotificationStore = create((set, get) => ({
 
 export default useNotificationStore
 
-// Helper: create a notification row (called from other stores/pages)
+// Helper: create a notification row (called from other stores/pages).
+// Goes through the SECURITY DEFINER create_notification RPC, which stamps
+// tenant_id from the caller's auth context and verifies the target is in the
+// same tenant — so the client can't forge tenant or spoof arbitrary rows.
+// `tenantId` is accepted for call-site compatibility but no longer trusted/sent.
 export async function createNotification({ tenantId, userId, title, body, type, entityId, entityType }) {
-  await supabase.from('notifications').insert({
-    tenant_id:   tenantId,
-    user_id:     userId,
-    title,
-    body,
-    type,
-    entity_id:   entityId ?? null,
-    entity_type: entityType ?? null,
+  await supabase.rpc('create_notification', {
+    p_user_id:     userId,
+    p_title:       title,
+    p_body:        body ?? null,
+    p_type:        type ?? 'general',
+    p_entity_id:   entityId ?? null,
+    p_entity_type: entityType ?? null,
   })
 }
