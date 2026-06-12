@@ -130,6 +130,9 @@ export default function ContractorDashboard() {
   const [tasksDueCount, setTasksDueCount] = useState(null)
   const [spendToday,    setSpendToday]    = useState(null)
   const [lowStockCount, setLowStockCount] = useState(0)
+  // Distinguishes "still loading sites" from "genuinely has no sites" so a
+  // contractor with sites never flashes the empty "No sites yet" state on login.
+  const [sitesReady,    setSitesReady]    = useState(false)
 
   const tenantId  = profile?.tenant_id
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
@@ -140,7 +143,13 @@ export default function ContractorDashboard() {
   })
 
   useEffect(() => {
-    if (tenantId) fetchSites(tenantId)
+    if (!tenantId) return
+    let active = true
+    ;(async () => {
+      await fetchSites(tenantId)
+      if (active) setSitesReady(true)
+    })()
+    return () => { active = false }
   }, [tenantId, fetchSites])
 
   useEffect(() => {
@@ -237,11 +246,13 @@ export default function ContractorDashboard() {
           },
         ]}
         strip={
-          lowStockCount > 0
-            ? `⚠ ${lowStockCount} material${lowStockCount > 1 ? 's' : ''} below reorder level`
-            : sites.length === 0
-              ? 'No sites yet — start by adding your first site'
-              : '✓ All stock above reorder level'
+          !sitesReady
+            ? 'Loading your sites…'
+            : lowStockCount > 0
+              ? `⚠ ${lowStockCount} material${lowStockCount > 1 ? 's' : ''} below reorder level`
+              : sites.length === 0
+                ? 'No sites yet — start by adding your first site'
+                : '✓ All stock above reorder level'
         }
       />
 
@@ -310,7 +321,11 @@ export default function ContractorDashboard() {
           </button>
         </div>
 
-        {sites.length === 0 ? (
+        {!sitesReady ? (
+          <div className="flex items-center justify-center px-5 py-10">
+            <div className="h-6 w-6 rounded-full border-2 border-brand-200 border-t-brand-600 animate-spin" />
+          </div>
+        ) : sites.length === 0 ? (
           <div className="px-5 py-10 text-center">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-sand-300">
               <Building2 className="h-6 w-6 text-brand-600" />

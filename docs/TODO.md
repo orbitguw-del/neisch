@@ -432,13 +432,27 @@ fixed on web · APK status)*
   missing: resend and revoke buttons on the Team page (revoke DELETE policy is
   already in place from migration 009).
 
-- [ ] **Invite allows already-registered emails** — `invite-user` creates a
-  `pending_invite` for any email without checking if it's already a registered
-  user. Result: existing users (in another role/tenant) get invited as if new,
-  which is confusing and may break on accept. Fix: in `invite-user`, look up the
-  email in `auth.users` first — if it already exists, either reject with a clear
-  message ("this email already has a Storey account") or handle re-assignment
-  deliberately. Decide the intended behaviour before coding.
+- [🟠 SECURITY — PARTIAL FIX, PENDING DEPLOY] **Invite captured already-registered
+  emails into the inviter's tenant** *(escalated 2026-06-12 invite-module audit)* —
+  this was worse than "confusing": `sign-up-with-invite`, when the invited email
+  already had an account, looked up that user and **re-assigned their profile
+  (`role` + `tenant_id`) to the invite's tenant** — using the service-role key,
+  which the profile-immutability trigger waves straight through
+  (`20260515000000` line 18). No authentication as the target user; only their
+  email had to be known. Net effect: a contractor could pull any existing user —
+  including another tenant's member — into their tenant, breaking the victim's
+  access to their own data. **Fix applied** (branch `fix/dashboard-flash-invite-audit`):
+  `sign-up-with-invite` now **rejects** an already-registered email
+  ("account already exists — sign in directly") instead of re-assigning. New-user
+  invites are unchanged. **DEPLOY:** `npx supabase functions deploy sign-up-with-invite
+  --project-ref zgvbogxibiilnblmuohg`, then test a fresh invite end-to-end.
+  - Trade-off accepted: a rare partial-signup retry (auth user created but profile
+    update failed) now lands as an unassigned contractor → /create-company instead
+    of auto-completing. Acceptable vs the hijack risk.
+  - Follow-up (lower priority): `invite-user` could also reject already-registered
+    emails up front for a cleaner message before the code is even sent. The real
+    long-term answer is the membership model (Owner directive #8) — move a user
+    between tenants only via a deliberate, authenticated action.
 
 ---
 
