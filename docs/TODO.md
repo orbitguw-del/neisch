@@ -427,6 +427,25 @@ fixed on web · APK status)*
   `handle_new_user` or add a one-off insert.
 
 
+- [ ] **📱 Phone / WhatsApp invite — HIGH PRIORITY** *(owner, emphasised 2026-06-12)* —
+  the invite flow is email-only today (Resend email + 8-char code), but NE-India
+  supervisors / store keepers live on **WhatsApp, not email** — many don't check
+  or even have a working email. Move the invite to send the code via **SMS/WhatsApp
+  to a phone number** (email becomes optional/secondary). Scope to decide:
+  • `invite-user` accepts a `phone` (E.164) instead of / alongside email; send the
+    code via the existing SMS path (`send-sms-otp` infra / Twilio-or-equivalent) or
+    a WhatsApp template, with a tap-to-open `wa.me` deep link as the cheap first cut.
+  • `pending_invites` keyed/looked-up by phone (today `UNIQUE(tenant_id,email)` +
+    accept matches on email — needs a phone equivalent).
+  • Accept flow (`AcceptInviteTab` / `sign-up-with-invite`): the invitee signs up
+    with **phone OTP** (already built — `SMSOTPLogin` / `verify-sms-otp`) instead of
+    email+password, so a low-email supervisor never needs an inbox.
+  • Cheapest viable first step: keep code generation as-is, just let the contractor
+    **share the code via WhatsApp** (pre-filled `wa.me` link) — no new backend.
+  Tag: v1.x. Pairs with the visual-first / WhatsApp-first posture. Build after the
+  invite-capture deploy + a quick scope decision (full phone-OTP onboarding vs.
+  WhatsApp-share-the-code first cut).
+
 - [ ] **Invite resend / revoke actions** — the Reports → Invites tab now lists
   all pending invites (email, role, site, code, sent, expiry, status). Still
   missing: resend and revoke buttons on the Team page (revoke DELETE policy is
