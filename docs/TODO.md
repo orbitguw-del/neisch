@@ -995,16 +995,39 @@ blocker, not just a liability concern.
   log, each with caption. Gallery display on log cards. Backwards-compatible.
   Committed in v1.2.3. Cost-centre photo tagging still open (see item 1e).
 
-- [ ] **Notifications** _(v1.x / v2 — new feature)_ — requested by viewers at the
-  2026-05-18 presentation. Decide scope before building:
-  • **In-app notification centre** — a bell + list (task assigned, transfer
-    awaiting dispatch, item needs your confirmation). Lowest effort — the
-    underlying data already drives the dashboard widgets; this consolidates it.
-  • **Push notifications** — phone push via Capacitor + Firebase (FCM). Bigger:
-    FCM project, device tokens, permissions, an Android rebuild.
-  • **Email alerts** — via Resend (already wired) for key events.
-  Recommended start: in-app centre first (reuses existing data); push later.
-  Do NOT build until the 2026-05-18 build is verified (see P0).
+- [ ] **Notifications** _(v1.x — new feature)_ — requested by viewers at the
+  2026-05-18 presentation.
+  • ✅ **In-app notification centre** — bell + list — **SHIPPED 2026-06-03**
+    (`notificationStore.js`, realtime; `create_notification` RPC since 2026-06-12).
+  • ✅ **Web Push display side** — service worker `push` handler + manifest +
+    client subscribe — **built** (`public/sw.js`, `push_subscriptions`).
+  • **Email alerts** — via Resend (already wired) — not built, low priority.
+
+- [ ] **📲 Native phone push on the home screen — FCM** _(v1.x — DECIDED 2026-06-12)_
+  **Decision:** go with **native FCM**, NOT PWA web push — "nobody will install a
+  second app", and the Capacitor WebView ignores web push, so the only thing that
+  reaches a Play-Store-app user's home screen is FCM. **Cost: FREE** (FCM Spark
+  plan, no card). Current state: the whole *display + subscribe + in-app* side is
+  done (above); the gap is (a) the native FCM transport and (b) a **server sender**
+  — nothing currently POSTs a push when a `notifications` row is created.
+  **Build plan:**
+  - **Firebase console (owner, ~15 min, free):** create project → add Android app
+    with package `com.storeyinfra.app` → download `google-services.json`; Project
+    Settings → Service accounts → generate private key (server JSON).
+  - **Code (Claude):** wire `@capacitor/push-notifications`; register for push on
+    login + store the FCM token (extend `push_subscriptions` with `fcm_token` +
+    `platform`); `send-push` edge function → FCM HTTP v1 API, looks up the
+    recipient's tokens via service role, sends; trigger via a Supabase **DB webhook
+    on `notifications` INSERT** → `send-push` (every in-app notification also fires
+    a phone push). Service-account JSON stored as an edge-function **secret**, never
+    committed.
+  - **Ship:** drop in `google-services.json`, deploy `send-push`, **rebuild APK +
+    Play review** (testers get pushes only after this ships — review ~hours–1 day).
+  - **Lower-effort alternative considered:** **OneSignal** (free, sits on top of
+    FCM — no edge function / no service-account juggling, dashboard + ~10 lines of
+    client). Owner leaning to own the stack via straight FCM; revisit OneSignal if
+    the FCM build drags.
+  Blocked on: owner doing the Firebase-console steps + handing over the two files.
 
 > _Emergency work assignment — considered and dropped (2026-05-18). The Task
 > module's existing `priority` field (low / normal / high) already covers urgent
