@@ -123,22 +123,7 @@ const useMaterialReceiptStore = create((set, get) => ({
       .eq('id', receiptId)
     if (rErr) throw rErr
 
-    // Update material stock
-    const { data: mat, error: mErr } = await supabase
-      .from('materials')
-      .select('quantity_available')
-      .eq('id', receipt.material_id)
-      .single()
-    if (mErr) throw mErr
-
-    const newQty = (Number(mat.quantity_available) || 0) + qtyToAdd
-    const { error: uErr } = await supabase
-      .from('materials')
-      .update({ quantity_available: newQty, updated_at: now })
-      .eq('id', receipt.material_id)
-    if (uErr) throw uErr
-
-    // Log ledger entry
+    // Build ledger note
     const noteparts = [
       `${receipt.source_type === 'supplier' ? 'Supplier' : 'Warehouse'}: ${receipt.source_name}`,
       `GRN: ${grn}`,
@@ -148,18 +133,21 @@ const useMaterialReceiptStore = create((set, get) => ({
       hasDiscrepancy         ? `Note: ordered ${receipt.quantity}, received ${qtyToAdd}` : null,
     ].filter(Boolean).join(' | ')
 
-    await supabase.from('material_transactions').insert({
-      material_id:   receipt.material_id,
-      site_id:       receipt.site_id,
-      tenant_id:     receipt.tenant_id,
-      txn_type:      'receipt',
-      quantity:      qtyToAdd,
-      ref_type:      'receipt',
-      ref_id:        receiptId,
-      balance_after: newQty,
-      note:          noteparts,
-      created_by:    profileId,
+    // Stock IN — atomic, row-locked RPC. Updates quantity_available AND writes the
+    // ledger row in one locked statement, so concurrent receipts can't lose an update.
+    // (Replaces the earlier read-add-write + manual ledger insert, which raced.)
+    const { error: rpcErr } = await supabase.rpc('record_material_transaction', {
+      p_material_id: receipt.material_id,
+      p_site_id:     receipt.site_id,
+      p_tenant_id:   receipt.tenant_id,
+      p_txn_type:    'receipt',
+      p_quantity:    qtyToAdd,
+      p_note:        noteparts,
+      p_created_by:  profileId,
+      p_ref_type:    'receipt',
+      p_ref_id:      receiptId,
     })
+    if (rpcErr) throw rpcErr
 
     // If equipment category: create individual asset records
     const { data: materialRow } = await supabase

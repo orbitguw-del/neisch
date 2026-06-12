@@ -21,8 +21,10 @@ const useReportsStore = create((set, get) => ({
       .select('material_id, quantity, unit_cost, site_id, materials(name, unit), sites(name)')
       .eq('tenant_id', tenantId)
       .eq('status', 'received')
-      .gte('created_at', startTs)
-      .lt('created_at', endTs)
+      // Count by when stock actually arrived (received_at), but fall back to
+      // created_at for any legacy row whose received_at was never set — so no
+      // received receipt can silently drop out of the report.
+      .or(`and(received_at.gte.${startTs},received_at.lt.${endTs}),and(received_at.is.null,created_at.gte.${startTs},created_at.lt.${endTs})`)
 
     if (siteId) rQuery = rQuery.eq('site_id', siteId)
 
@@ -105,8 +107,8 @@ const useReportsStore = create((set, get) => ({
         .eq('tenant_id', tenantId)
         .eq('site_id', siteId)
         .eq('status', 'received')
-        .gte('created_at', startTs)
-        .lt('created_at', endTs),
+        // received_at with created_at fallback for legacy rows (see fetchMonthlyReport)
+        .or(`and(received_at.gte.${startTs},received_at.lt.${endTs}),and(received_at.is.null,created_at.gte.${startTs},created_at.lt.${endTs})`),
     ])
 
     // Map actual spend per material
@@ -419,7 +421,7 @@ const useReportsStore = create((set, get) => ({
       supabase.from('sites').select('name, location, status, budget').eq('id', siteId).single(),
       supabase
         .from('daily_logs')
-        .select('id, log_date, workers_present, weather, work_done, issues, created_by, photo_path')
+        .select('id, log_date, workers_present, weather, work_done, issues, created_by, photo_path, daily_log_photos(photo_path)')
         .eq('tenant_id', tenantId)
         .eq('site_id', siteId)
         .gte('log_date', startDate)

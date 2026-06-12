@@ -10,6 +10,8 @@ dist/
 CREDENTIALS-INVENTORY.md
 *.jks
 key.properties
+# Local Claude settings — can contain keys in one-off command allow-rules
+.claude/settings.local.json
 
 # Local-only
 _trash/

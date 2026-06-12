@@ -149,8 +149,10 @@ const useMaterialTransferStore = create((set) => ({
     const { data: fromMat, error: fErr } = await supabase
       .from('materials').select('*').eq('id', transfer.material_id).single()
     if (fErr) throw fErr
-    const { data: fromSite } = await supabase
-      .from('sites').select('name').eq('id', transfer.from_site_id).single()
+    const [{ data: fromSite }, { data: toSite }] = await Promise.all([
+      supabase.from('sites').select('name').eq('id', transfer.from_site_id).single(),
+      supabase.from('sites').select('name').eq('id', transfer.to_site_id).single(),
+    ])
 
     // Find or create the matching material on the receiving site
     const { data: toMatArr } = await supabase
@@ -197,7 +199,7 @@ const useMaterialTransferStore = create((set) => ({
         tenantId:   transfer.tenant_id,
         userId:     transfer.initiated_by,
         title:      'Transfer received ✅',
-        body:       `${qtyReceived} ${fromMat.unit} of ${fromMat.name} received at ${transfer.to_site_id}`,
+        body:       `${qtyReceived} ${fromMat.unit} of ${fromMat.name} received at ${toSite?.name ?? 'the destination site'}`,
         type:       'transfer_pending',
         entityId:   transferId,
         entityType: 'transfer',
