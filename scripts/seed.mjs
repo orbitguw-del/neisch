@@ -336,20 +336,38 @@ async function run() {
   await up('material_allocations', allocations)
   console.log(`   ✓ ${allocations.length} allocations`)
 
-  // ── 6. Material transfers (inter-site, plausible quantities) ─────────────────
+  // ── 6. Material transfers — 4-stage lifecycle (initiated → prepared → approved → received) ──
+  // Covers the FULL pipeline incl. MATERIAL IN TRANSIT:
+  //   prepared = dispatched from source (stock out), en route, awaiting approval
+  //   approved = signed off, still en route, awaiting receipt at destination
+  // (old 'pending'/'confirmed' statuses are rejected by the current check constraint).
   console.log('6. Upserting material transfers…')
   await up('material_transfers', [
-    { id: nid('e5000000'), material_id: mId(1),  from_site_id: IDS.site1, to_site_id: IDS.site2, tenant_id: IDS.tenant,
-      quantity: 120, lr_number: 'TR-1001', lr_date: daysAgo(20), vehicle_number: 'AS-03-K-7781',
-      status: 'confirmed', initiated_by: IDS.pranab, confirmed_by: IDS.pranab, confirmed_at: daysAgo(18), created_at: monthTs(MONTHS[LAST - 1], 22) },
-    { id: nid('e5000000'), material_id: mId(3),  from_site_id: IDS.site1, to_site_id: IDS.site3, tenant_id: IDS.tenant,
-      quantity: 30, lr_number: 'TR-1002', lr_date: daysAgo(9), vehicle_number: 'ML-05-C-2210',
-      status: 'pending', initiated_by: IDS.pranab, created_at: daysAgo(9) },
+    // ✅ received — completed move, stock landed at destination
     { id: nid('e5000000'), material_id: mId(12), from_site_id: IDS.site2, to_site_id: IDS.site1, tenant_id: IDS.tenant,
-      quantity: 80, lr_number: 'TR-1003', lr_date: daysAgo(30), vehicle_number: 'MN-01-A-9087',
-      status: 'confirmed', initiated_by: IDS.pranab, confirmed_by: IDS.pranab, confirmed_at: daysAgo(28), created_at: monthTs(MONTHS[LAST - 2], 15) },
+      quantity: 80, quantity_received: 80, lr_number: 'TR-1001', lr_date: daysAgo(30), challan_number: 'CH-1001', vehicle_number: 'MN-01-A-9087',
+      status: 'received', initiated_by: IDS.biplab, created_at: monthTs(MONTHS[LAST - 1], 15),
+      prepared_by: IDS.merina, prepared_at: daysAgo(29), approved_by: IDS.pranab, approved_at: daysAgo(29),
+      received_by: IDS.pranab, received_at: daysAgo(28) },
+    // 🚚 prepared — IN TRANSIT: dispatched from NH-37, stock out, awaiting approval
+    { id: nid('e5000000'), material_id: mId(1), from_site_id: IDS.site1, to_site_id: IDS.site2, tenant_id: IDS.tenant,
+      quantity: 120, lr_number: 'TR-1002', lr_date: daysAgo(2), challan_number: 'CH-1002', vehicle_number: 'AS-03-K-7781',
+      status: 'prepared', initiated_by: IDS.biplab, created_at: daysAgo(3),
+      prepared_by: IDS.merina, prepared_at: daysAgo(2) },
+    // 🚚 approved — IN TRANSIT: approved & en route to Laitumkhrah, awaiting receipt
+    { id: nid('e5000000'), material_id: mId(3), from_site_id: IDS.site1, to_site_id: IDS.site3, tenant_id: IDS.tenant,
+      quantity: 30, lr_number: 'TR-1003', lr_date: daysAgo(1), challan_number: 'CH-1003', vehicle_number: 'ML-05-C-2210',
+      status: 'approved', initiated_by: IDS.pranab, created_at: daysAgo(2),
+      prepared_by: IDS.merina, prepared_at: daysAgo(1), approved_by: IDS.pranab, approved_at: daysAgo(1) },
+    // 🆕 initiated — request raised, awaiting dispatch
+    { id: nid('e5000000'), material_id: mId(2), from_site_id: IDS.site1, to_site_id: IDS.site2, tenant_id: IDS.tenant,
+      quantity: 5, lr_number: 'TR-1004', status: 'initiated', initiated_by: IDS.biplab, created_at: daysAgo(0) },
+    // ❌ rejected — dispatch declined
+    { id: nid('e5000000'), material_id: mId(7), from_site_id: IDS.site1, to_site_id: IDS.site3, tenant_id: IDS.tenant,
+      quantity: 10, lr_number: 'TR-1005', status: 'rejected', initiated_by: IDS.biplab, created_at: daysAgo(6),
+      approved_by: IDS.pranab, discrepancy_reason: 'Material needed on-site — transfer cancelled' },
   ])
-  console.log('   ✓ 3 transfers')
+  console.log('   ✓ 5 transfers (2 in transit, 1 received, 1 initiated, 1 rejected)')
 
   // ── 7. Equipment assets ──────────────────────────────────────────────────────
   console.log('7. Upserting equipment assets…')
