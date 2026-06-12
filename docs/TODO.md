@@ -28,17 +28,21 @@ Last reprioritised: 2026-05-31.
 
 ## 🟠 P1 — High (launch blockers + security)
 
-- [ ] **🔔 Notification forgery within a tenant** *(found 2026-06-12 module audit)* —
-  the `notif_tenant_insert` RLS policy on `notifications` only checks
-  `tenant_id = my_tenant_id()`; it does NOT constrain `user_id`. Any authenticated
-  tenant member can insert a notification to **any colleague** in the same tenant
-  with arbitrary title/body (fake "Transfer approved", phishing-style). Bounded to
-  one tenant — no cross-tenant leak or privilege escalation. **Fix (coordinated
-  deploy — migration + client together):** add a `SECURITY DEFINER create_notification()`
-  RPC that stamps the row server-side, switch the client `createNotification()` helper
-  (`src/stores/notificationStore.js`) to call it, then tighten/replace the broad INSERT
-  policy. Do NOT remove the INSERT policy before the client is on the RPC or in-app
-  notifications break. Migration NOT yet written — deferred off the live DB deliberately.
+- [🟢 FIX WRITTEN — PENDING DEPLOY] **🔔 Notification forgery within a tenant**
+  *(found 2026-06-12 module audit; fix written same day on branch
+  `fix/notification-rls-hardening`)* — the old `notif_tenant_insert` RLS policy
+  on `notifications` only checked `tenant_id = my_tenant_id()`; it did NOT
+  constrain `user_id`, so any authenticated tenant member could insert a
+  notification to **any colleague** with arbitrary title/body (fake "Transfer
+  approved", phishing-style). Bounded to one tenant — no cross-tenant leak or
+  privilege escalation. **Fix:** migration `20260612000000_notification_create_rpc.sql`
+  adds a `SECURITY DEFINER create_notification()` RPC (stamps tenant_id from auth
+  context, verifies target is in caller's tenant) and drops the raw INSERT policy;
+  client `createNotification()` switched to the RPC.
+  **DEPLOY ORDER (do not skip):**
+  1. Apply the migration first: `npx supabase db push` against project `zgvbogxibiilnblmuohg`.
+  2. Then merge the branch → `main` (Vercel ships the client on the RPC).
+  The client helper is fire-and-forget, so the deploy window is harmless either way.
 
 - [x] ~~**🧹 Dead `service_role` JWT tracked in `.claude/settings.local.json`**~~ ✅
   **FIXED 2026-06-12.** File untracked (`git rm --cached`) + added to `.gitignore`.
