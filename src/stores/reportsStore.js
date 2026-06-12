@@ -21,9 +21,10 @@ const useReportsStore = create((set, get) => ({
       .select('material_id, quantity, unit_cost, site_id, materials(name, unit), sites(name)')
       .eq('tenant_id', tenantId)
       .eq('status', 'received')
-      // count by when stock actually arrived, not when the row was created
-      .gte('received_at', startTs)
-      .lt('received_at', endTs)
+      // Count by when stock actually arrived (received_at), but fall back to
+      // created_at for any legacy row whose received_at was never set — so no
+      // received receipt can silently drop out of the report.
+      .or(`and(received_at.gte.${startTs},received_at.lt.${endTs}),and(received_at.is.null,created_at.gte.${startTs},created_at.lt.${endTs})`)
 
     if (siteId) rQuery = rQuery.eq('site_id', siteId)
 
@@ -106,9 +107,8 @@ const useReportsStore = create((set, get) => ({
         .eq('tenant_id', tenantId)
         .eq('site_id', siteId)
         .eq('status', 'received')
-        // count by when stock actually arrived, not when the row was created
-        .gte('received_at', startTs)
-        .lt('received_at', endTs),
+        // received_at with created_at fallback for legacy rows (see fetchMonthlyReport)
+        .or(`and(received_at.gte.${startTs},received_at.lt.${endTs}),and(received_at.is.null,created_at.gte.${startTs},created_at.lt.${endTs})`),
     ])
 
     // Map actual spend per material
