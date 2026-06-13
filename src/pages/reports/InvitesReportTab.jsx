@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Mail, Clock, CheckCircle, XCircle, RotateCw, Trash2, MessageCircle } from 'lucide-react'
 
 function whatsappLink(inviteCode, email) {
-  const msg = `You've been invited to join Storey — a construction site management app.\n\nYour login email: *${email}*\nInvite code: *${inviteCode}*\n\nDownload: https://storeyinfra.com\nOpen the app → Login → tap "Accept Invite" → enter the code above.\n\nCode expires in 7 days.`
+  const msg = `You've been invited to join Storey — a construction site management app.\n\nYour login email: *${email}*\nInvite code: *${inviteCode}*\n\nDownload the app:\nAndroid: https://play.google.com/store/apps/details?id=com.storeyinfra.app\nWeb: https://storeyinfra.com\n\nOpen the app → Login → tap "Accept Invite" → enter the code above.\n\nCode expires in 7 days.`
   return `https://wa.me/?text=${encodeURIComponent(msg)}`
 }
 import { supabase } from '@/lib/supabase'
