@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Mail, Clock, CheckCircle, XCircle, RotateCw, Trash2 } from 'lucide-react'
+import { Mail, Clock, CheckCircle, XCircle, RotateCw, Trash2, MessageCircle } from 'lucide-react'
+
+function whatsappLink(inviteCode, email) {
+  const msg = `You've been invited to join Storey — a construction site management app.\n\nYour login email: *${email}*\nInvite code: *${inviteCode}*\n\nDownload: https://storeyinfra.com\nOpen the app → Login → tap "Accept Invite" → enter the code above.\n\nCode expires in 7 days.`
+  return `https://wa.me/?text=${encodeURIComponent(msg)}`
+}
 import { supabase } from '@/lib/supabase'
 import useAuthStore from '@/stores/authStore'
 import StatCard from '@/components/ui/StatCard'
@@ -177,6 +182,18 @@ export default function InvitesReportTab({ tenantId }) {
                               <RotateCw className={cn('h-3.5 w-3.5', busy && 'animate-spin')} />
                               Resend
                             </button>
+                          )}
+                          {(isPending || isExpired) && inv.invite_code && (
+                            <a
+                              href={whatsappLink(inv.invite_code, inv.email)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Share invite code via WhatsApp"
+                              className="inline-flex items-center gap-1 rounded-lg border border-green-200 bg-green-50 px-2.5 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100"
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
+                              WhatsApp
+                            </a>
                           )}
                           {status !== 'accepted' && (
                             <button

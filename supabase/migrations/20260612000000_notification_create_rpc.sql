@@ -62,7 +62,7 @@ begin
 end;
 $$;
 
-grant execute on function public.create_notification(uuid, text, text, text, uuid, uuid) to authenticated;
+grant execute on function public.create_notification(uuid, text, text, text, uuid, text) to authenticated;
 
 -- Close the raw-insert forgery surface — creation now only via the RPC above.
 drop policy if exists "notif_tenant_insert" on public.notifications;

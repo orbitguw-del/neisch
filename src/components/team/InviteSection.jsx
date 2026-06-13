@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Mail, Send, Clock, CheckCircle, Copy, Check } from 'lucide-react'
+import { Mail, Send, Clock, CheckCircle, Copy, Check, MessageCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+
+function whatsappLink(inviteCode, email) {
+  const msg = `You've been invited to join Storey — a construction site management app.\n\nYour login email: *${email}*\nInvite code: *${inviteCode}*\n\nDownload: https://storeyinfra.com\nOpen the app → Login → tap "Accept Invite" → enter the code above.\n\nCode expires in 7 days.`
+  return `https://wa.me/?text=${encodeURIComponent(msg)}`
+}
 
 const ASSIGNABLE_ROLES = [
   { value: 'site_manager', label: 'Site Manager' },
@@ -166,12 +171,24 @@ export default function InviteSection({ sites = [] }) {
 
                 {/* Invite code box */}
                 {inv.invite_code && !inv.accepted && (
-                  <div className="mt-3 flex items-center justify-between rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
-                    <div>
-                      <p className="text-xs text-brand-600 mb-0.5">Invite code — share this with them</p>
-                      <p className="font-mono text-base font-bold tracking-widest text-brand-800">{inv.invite_code}</p>
+                  <div className="mt-3 rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-brand-600 mb-0.5">Invite code — share this with them</p>
+                        <p className="font-mono text-base font-bold tracking-widest text-brand-800">{inv.invite_code}</p>
+                      </div>
+                      <CopyButton text={inv.invite_code} />
                     </div>
-                    <CopyButton text={inv.invite_code} />
+                    <a
+                      href={whatsappLink(inv.invite_code, inv.email)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-green-500 px-3 py-2 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      Share via WhatsApp
+                    </a>
+
                   </div>
                 )}
               </div>
