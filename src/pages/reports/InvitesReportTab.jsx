@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Mail, Clock, CheckCircle, XCircle } from 'lucide-react'
+import { Mail, Clock, CheckCircle, XCircle, RotateCw, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import useAuthStore from '@/stores/authStore'
 import StatCard from '@/components/ui/StatCard'
 import PrintButton from '@/components/print/PrintButton'
 import PrintHeader from '@/components/print/PrintHeader'
@@ -26,9 +27,15 @@ const STATUS_STYLE = {
 const STATUS_LABEL = { accepted: 'Accepted', expired: 'Expired', pending: 'Pending' }
 
 export default function InvitesReportTab({ tenantId }) {
+  const role = useAuthStore((s) => s.profile?.role)
+  const canManage = ['contractor', 'superadmin'].includes(role)
+
   const [invites, setInvites] = useState([])
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(null)
+  const [busyId,  setBusyId]  = useState(null)   // invite id mid-action
+  const [actionError, setActionError] = useState(null)
+  const [flashId, setFlashId] = useState(null)   // invite id that just resent OK
 
   useEffect(() => {
     if (!tenantId) return
@@ -37,7 +44,7 @@ export default function InvitesReportTab({ tenantId }) {
     setError(null)
     supabase
       .from('pending_invites')
-      .select('id, email, role, invite_code, accepted_at, expires_at, created_at, sites(name)')
+      .select('id, email, role, site_id, invite_code, accepted_at, expires_at, created_at, sites(name)')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .then(({ data, error }) => {
@@ -48,6 +55,43 @@ export default function InvitesReportTab({ tenantId }) {
       })
     return () => { cancelled = true }
   }, [tenantId])
+
+  const handleResend = async (inv) => {
+    setBusyId(inv.id); setActionError(null); setFlashId(null)
+    try {
+      const { data, error: fnErr } = await supabase.functions.invoke('invite-user', {
+        body: { email: inv.email, role: inv.role, site_id: inv.site_id, tenant_id: tenantId },
+      })
+      if (fnErr || data?.error) throw new Error(data?.error || fnErr.message)
+      // invite-user regenerates the code + resets expiry to now + 7 days
+      const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      setInvites((list) => list.map((i) =>
+        i.id === inv.id
+          ? { ...i, invite_code: data.invite_code ?? i.invite_code, expires_at: newExpiry }
+          : i,
+      ))
+      setFlashId(inv.id)
+      setTimeout(() => setFlashId((cur) => (cur === inv.id ? null : cur)), 3000)
+    } catch (e) {
+      setActionError(`Resend failed: ${e.message}`)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const handleRevoke = async (inv) => {
+    if (!window.confirm(`Revoke the invite for ${inv.email}? The code will stop working.`)) return
+    setBusyId(inv.id); setActionError(null)
+    try {
+      const { error: delErr } = await supabase.from('pending_invites').delete().eq('id', inv.id)
+      if (delErr) throw delErr
+      setInvites((list) => list.filter((i) => i.id !== inv.id))
+    } catch (e) {
+      setActionError(`Revoke failed: ${e.message}`)
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   if (loading) return <p className="text-sm text-gray-500">Loading invites…</p>
   if (error)   return <p className="text-sm text-red-600">{error}</p>
@@ -72,6 +116,10 @@ export default function InvitesReportTab({ tenantId }) {
         <StatCard label="Expired"       value={counts.expired}  icon={XCircle}     color="red" />
       </div>
 
+      {actionError && (
+        <p className="no-print text-sm text-red-600 rounded-lg bg-red-50 border border-red-200 px-3 py-2">{actionError}</p>
+      )}
+
       {invites.length === 0 ? (
         <p className="text-sm text-gray-500">No invites have been sent yet.</p>
       ) : (
@@ -86,17 +134,24 @@ export default function InvitesReportTab({ tenantId }) {
                 <th className="px-4 py-3">Sent</th>
                 <th className="px-4 py-3">Expires</th>
                 <th className="px-4 py-3">Status</th>
+                {canManage && <th className="px-4 py-3 no-print text-right">Actions</th>}
               </tr>
             </thead>
             <tbody>
               {invites.map((inv) => {
                 const status = inviteStatus(inv)
+                const isPending = status === 'pending'
+                const isExpired = status === 'expired'
+                const busy = busyId === inv.id
                 return (
                   <tr key={inv.id} className="border-b border-gray-100 last:border-0">
                     <td className="px-4 py-3 font-medium text-gray-900">{inv.email}</td>
                     <td className="px-4 py-3 text-gray-600">{ROLE_LABELS[inv.role] ?? inv.role}</td>
                     <td className="px-4 py-3 text-gray-600">{inv.sites?.name ?? '—'}</td>
-                    <td className="px-4 py-3 font-mono text-gray-700">{inv.invite_code}</td>
+                    <td className="px-4 py-3 font-mono text-gray-700">
+                      {inv.invite_code}
+                      {flashId === inv.id && <span className="ml-2 text-xs font-sans font-semibold text-green-600">Resent ✓</span>}
+                    </td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(inv.created_at)}</td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(inv.expires_at)}</td>
                     <td className="px-4 py-3">
@@ -107,6 +162,37 @@ export default function InvitesReportTab({ tenantId }) {
                         {STATUS_LABEL[status]}
                       </span>
                     </td>
+                    {canManage && (
+                      <td className="px-4 py-3 no-print">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {/* Resend regenerates the code + re-sends; useful for pending OR expired */}
+                          {(isPending || isExpired) && (
+                            <button
+                              type="button"
+                              onClick={() => handleResend(inv)}
+                              disabled={busy}
+                              title="Resend invite (new code, +7 days)"
+                              className="inline-flex items-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-100 disabled:opacity-50"
+                            >
+                              <RotateCw className={cn('h-3.5 w-3.5', busy && 'animate-spin')} />
+                              Resend
+                            </button>
+                          )}
+                          {status !== 'accepted' && (
+                            <button
+                              type="button"
+                              onClick={() => handleRevoke(inv)}
+                              disabled={busy}
+                              title="Revoke invite"
+                              className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Revoke
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 )
               })}
