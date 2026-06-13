@@ -446,10 +446,11 @@ fixed on web · APK status)*
   invite-capture deploy + a quick scope decision (full phone-OTP onboarding vs.
   WhatsApp-share-the-code first cut).
 
-- [ ] **Invite resend / revoke actions** — the Reports → Invites tab now lists
-  all pending invites (email, role, site, code, sent, expiry, status). Still
-  missing: resend and revoke buttons on the Team page (revoke DELETE policy is
-  already in place from migration 009).
+- [x] ~~**Invite resend / revoke actions**~~ ✅ **DONE 2026-06-13.** Reports →
+  Invites tab gained an Actions column: **Resend** (re-invokes invite-user — new
+  code, +7 days; works for pending + expired) and **Revoke** (deletes via the
+  migration-009 DELETE policy). Gated to contractor/superadmin, hidden from print,
+  no actions on accepted invites. Build + render verified.
 
 - [🟠 SECURITY — PARTIAL FIX, PENDING DEPLOY] **Invite captured already-registered
   emails into the inviter's tenant** *(escalated 2026-06-12 invite-module audit)* —
