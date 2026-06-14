@@ -1,0 +1,735 @@
+
+<style>
+  *{box-sizing:border-box;font-family:Arial,sans-serif;margin:0;padding:0}
+  body{background:#f4f4f4;padding:20px;color:#222}
+  h1{background:#1a1a2e;color:#fff;padding:16px 24px;border-radius:8px;font-size:20px;margin-bottom:20px}
+  .card{background:#fff;border-radius:8px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+  h2{font-size:15px;color:#1a1a2e;margin-bottom:12px;border-bottom:2px solid #1a1a2e;padding-bottom:6px}
+  .drop{border:2px dashed #aaa;border-radius:8px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:#fafafa}
+  .drop:hover,.drop.over{border-color:#c9a84c;background:#fffbee}
+  .drop p{color:#888;font-size:14px;margin-top:8px}
+  label{display:block;font-size:13px;font-weight:bold;color:#444;margin-bottom:4px;margin-top:10px}
+  select,input{width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px}
+  .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+  .btn{background:#1a1a2e;color:#fff;border:none;padding:12px 24px;border-radius:6px;font-size:14px;cursor:pointer;margin-top:12px;width:100%}
+  .btn:hover{background:#2d2d5e}
+  .btn:disabled{background:#888;cursor:not-allowed}
+  .btn-dl{background:#c9a84c;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer;margin-top:12px;display:none;width:100%}
+  .btn-dl:hover{background:#b8933a}
+  .btn-sm{background:#666;color:#fff;border:none;padding:6px 12px;border-radius:5px;font-size:12px;cursor:pointer;width:auto;margin-top:6px}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+  th{background:#1a1a2e;color:#fff;padding:6px 8px;text-align:left;position:sticky;top:0}
+  td{padding:5px 8px;border-bottom:1px solid #eee;white-space:nowrap}
+  tr:nth-child(even) td{background:#f9f9f9}
+  .eoss td{background:#fff3cd !important}
+  .neg{color:#c0392b}
+  .pos{color:#1a7a4a}
+  #status{font-size:13px;margin-top:8px;color:#555;min-height:20px}
+  .warn{color:#c0392b;font-weight:bold;font-size:13px;margin-top:6px}
+  .calc-path{font-size:12px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:4px;padding:6px 10px;margin-top:10px;color:#2e7d32}
+  .col-map-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .hint{font-size:11px;color:#888;margin-top:2px}
+  .sample{font-size:11px;color:#555;margin-top:3px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scroll{max-height:520px;overflow:auto;border:1px solid #eee;border-radius:6px;margin-top:8px}
+  .brandgrid{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:6px;align-items:center;margin-top:6px}
+  .brandgrid .h{font-weight:bold;font-size:12px;color:#444}
+  .pill{display:inline-block;background:#fff3cd;color:#856404;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:bold}
+</style>
+</head>
+<body>
+<h1>EOSS Dealer Credit-Note Tool</h1>
+
+<div class="card">
+  <h2>Step 1 - Load Dealer Sales File</h2>
+  <div class="drop" id="drop" onclick="document.getElementById('fileIn').click()">
+    <b>Click or drag-drop one or more dealer Excel files here</b>
+    <p>.xlsx (W, Aurelia, Status Quo, Rangriti, any format) &middot; multiple files = batch, applies your Step 3 settings to all</p>
+    <input type="file" id="fileIn" accept=".xlsx,.xls" multiple style="display:none" onchange="processIncoming(this.files)">
+  </div>
+  <div id="status"></div>
+  <div id="batchBox"></div>
+</div>
+
+<div class="card" id="mapCard" style="display:none">
+  <h2>Step 2 - Map Columns</h2>
+  <div class="row" style="margin-bottom:10px">
+    <div><label>Sheet</label><select id="sheetSel" onchange="loadSheet()"></select></div>
+    <div><label>Header row number</label><input type="number" id="headerRow" value="1" min="1" max="20" onchange="headerManual=true;loadSheet()"></div>
+    <div></div>
+  </div>
+  <div class="col-map-grid" id="mapGrid"></div>
+  <div id="mapWarnings"></div>
+</div>
+
+<div class="card" id="schemeCard" style="display:none">
+  <h2>Step 3 - Scheme</h2>
+  <div class="row4">
+    <div>
+      <label>Model</label>
+      <select id="model" onchange="onModelChange()">
+        <option value="fixed">Fixed margin</option>
+        <option value="5050">50/50 share</option>
+      </select>
+    </div>
+    <div id="baseWrap">
+      <label>Margin base</label>
+      <select id="base"><option value="NRP">NRP (ex-GST)</option><option value="MRP">MRP (gross)</option></select>
+    </div>
+    <div>
+      <label>EOSS start date</label>
+      <input type="date" id="eossStart">
+    </div>
+    <div>
+      <label>EOSS end date</label>
+      <input type="date" id="eossEnd">
+    </div>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <div>
+      <label>Default GST % (last-resort fallback)</label>
+      <input type="number" id="defGst" value="12" step="0.1">
+      <div class="hint">Dual GST: EOSS side = actual (file column &rarr; else slab by date &amp; selling price: &le;22 Sep 2025 5% to Rs1000 else 12%; from 22 Sep 2025 5% to Rs2500 else 18% &rarr; else this default). Normal side uses the slab the MRP falls in.</div>
+    </div>
+    <div id="defNormWrap">
+      <label>Default Normal %</label>
+      <input type="number" id="defNorm" placeholder="e.g. 28" step="0.01">
+    </div>
+    <div id="defEossWrap">
+      <label>Default EOSS %</label>
+      <input type="number" id="defEoss" placeholder="e.g. 20" step="0.01">
+    </div>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <div>
+      <label>Store / Party name (if not in file)</label>
+      <input type="text" id="manualStore" placeholder="e.g. HIGH STREET RETAIL">
+      <div class="hint">Used as the dealer when the file has no store column or it is blank.</div>
+    </div>
+    <div>
+      <label>GST on MRP slab (reimbursement)</label>
+      <select id="mrpGstMode">
+        <option value="auto">By sale date (auto)</option>
+        <option value="pre">Pre-22 Sep 2025 (5% / 12%)</option>
+        <option value="post">From 22 Sep 2025 (5% / 18%)</option>
+      </select>
+      <div class="hint">If goods were billed to the dealer before 22 Sep, pick Pre-22 Sep so GST-on-MRP uses 12%, not the sale-day 18%.</div>
+    </div>
+    <div></div>
+  </div>
+  <div id="brandBox" style="margin-top:10px">
+    <label>Per-brand margins <span class="hint">(used when the file has no Cost column)</span></label>
+    <button class="btn-sm" onclick="fillAllBrands()">Apply defaults to all brands</button>
+    <div id="brandGrid"></div>
+  </div>
+  <div id="schemeInfo"></div>
+  <button class="btn" id="calcBtn" onclick="compute()" disabled>Calculate Credit Note</button>
+</div>
+
+<div class="card" id="resultCard" style="display:none">
+  <h2>Step 4 - Credit-Note Result <span id="eossLegend"></span></h2>
+  <button class="btn-dl" id="dlBtn" onclick="downloadExcel()">Export to Excel (.xlsx) - row-wise + summary</button>
+  <div id="summaryBanner"></div>
+  <div id="summaryHtml"></div>
+  <div class="scroll" id="rowsWrap"></div>
+</div>
+
+<div class="card" id="libCard">
+  <h2>Library &mdash; saved calculations <span class="hint">(stored on this PC; Export is your permanent backup)</span></h2>
+  <input type="text" id="libSearch" placeholder="search dealer / brand / date" oninput="renderLibrary()" style="margin-bottom:8px">
+  <div id="libTree"></div>
+</div>
+
+<script>
+var WB=null,AOA=[],HEADERS=[],lastRows=null,lastSummary=null,userMappingTouched=false,headerManual=false,currentFileName='',DB=null,libRuns=[];
+
+document.getElementById('drop').addEventListener('dragover',function(e){e.preventDefault();document.getElementById('drop').classList.add('over');});
+document.getElementById('drop').addEventListener('dragleave',function(){document.getElementById('drop').classList.remove('over');});
+document.getElementById('drop').addEventListener('drop',function(e){e.preventDefault();document.getElementById('drop').classList.remove('over');processIncoming(e.dataTransfer.files);});
+
+function processIncoming(files){
+  if(!files||!files.length)return;
+  document.getElementById('batchBox').innerHTML='';
+  if(files.length===1){ loadFile(files[0]); return; }
+  runBatch(Array.prototype.slice.call(files));
+}
+function runBatch(files){
+  var results=[], i=0, st=document.getElementById('status');
+  function next(){
+    if(i>=files.length){ finishBatch(results); return; }
+    var f=files[i]; currentFileName=f.name;
+    st.textContent='Batch '+(i+1)+'/'+files.length+': '+f.name+' ...';
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      try{
+        WB=XLSX.read(ev.target.result,{type:'array',cellDates:true});
+        document.getElementById('sheetSel').innerHTML=WB.SheetNames.map(function(n,k){return '<option value="'+k+'">'+safeText(n)+'</option>';}).join('');
+        document.getElementById('mapCard').style.display='';
+        document.getElementById('schemeCard').style.display='';
+        headerManual=false; loadSheet();
+        if(getCol('fMrp')<0){ results.push({name:f.name,ok:false,msg:'no MRP column found'}); }
+        else { compute(); results.push({name:f.name,ok:true,total:(lastSummary&&lastSummary.total)||0,eoss:(lastSummary&&lastSummary.eossCount)||0,skipped:(lastSummary&&lastSummary.skipped)||0}); }
+      }catch(err){ results.push({name:f.name,ok:false,msg:err.message}); }
+      i++; setTimeout(next,0);
+    };
+    reader.readAsArrayBuffer(f);
+  }
+  next();
+}
+function finishBatch(results){
+  var grand=results.reduce(function(a,r){return a+(r.ok?r.total:0);},0);
+  var rowsH=results.map(function(r){return '<tr><td>'+safeText(r.name)+'</td><td>'+(r.ok?r.eoss:'-')+'</td><td class="'+(r.ok?cls(r.total):'')+'">'+(r.ok?inr(r.total):'-')+'</td><td>'+(r.ok?(r.skipped?('<span class="warn">'+r.skipped+' skipped</span>'):'ok'):('<span class="warn">'+safeText(r.msg)+'</span>'))+'</td></tr>';}).join('');
+  document.getElementById('batchBox').innerHTML=
+    '<h2 style="margin-top:14px">Batch results &mdash; '+results.length+' files</h2>'+
+    '<table><tr><th>File</th><th>EOSS lines</th><th>Total CN</th><th>Status</th></tr>'+rowsH+
+    '<tr><th>GRAND TOTAL</th><th></th><th class="'+cls(grand)+'">'+inr(grand)+'</th><th></th></tr></table>'+
+    '<div class="hint" style="margin-top:6px">All saved to the Library below (Dealer &rsaquo; Brand &rsaquo; Date). Set your Step 3 defaults (margin, GST-on-MRP slab) before batching.</div>';
+  document.getElementById('status').textContent='Batch done: '+results.length+' files, grand total '+inr(grand);
+  renderLibrary();
+}
+
+function loadFile(f){
+  if(!f)return;
+  currentFileName=f.name;
+  document.getElementById('status').textContent='Reading '+f.name+' ...';
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    WB=XLSX.read(ev.target.result,{type:'array',cellDates:true});
+    var sel=document.getElementById('sheetSel');
+    sel.innerHTML=WB.SheetNames.map(function(n,i){return '<option value="'+i+'">'+safeText(n)+'</option>';}).join('');
+    document.getElementById('mapCard').style.display='';
+    document.getElementById('schemeCard').style.display='';
+    document.getElementById('status').textContent='Loaded: '+f.name+' ('+WB.SheetNames.length+' sheet'+(WB.SheetNames.length>1?'s':'')+')';
+    userMappingTouched=false; headerManual=false;
+    loadSheet();
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+function matchIdx(arr,cands){
+  for(var ci=0;ci<cands.length;ci++){var ck=cands[ci].toLowerCase().replace(/[\s\-_%]/g,'');
+    for(var hi=0;hi<arr.length;hi++){var hl=arr[hi]!=null?String(arr[hi]):'';var hn=hl.toLowerCase().replace(/[\s\-_%]/g,'');
+      var hit=ck.length<=4?(hn===ck||hn.indexOf(ck)===0):(hn.indexOf(ck)>=0);if(hit)return hi;}}
+  return -1;
+}
+function detectHeaderRow(){
+  var keys=[['NET AMOUNT','NET SALE','NET SALES'],['SALES QTY','QTY','QUANTITY'],['BRAND','CATEGORY'],['VOUCHER DATE','BILL DATE','DATE'],['DISCOUNT','DISC']];
+  var best=1,bestScore=-1;
+  for(var hr=1;hr<=Math.min(12,AOA.length);hr++){var arr=AOA[hr-1]||[];
+    if(matchIdx(arr,['RETAIL PRICE','MRP','SELLING PRICE'])<0)continue;  // need an MRP-ish header
+    var sc=1;for(var k=0;k<keys.length;k++)if(matchIdx(arr,keys[k])>=0)sc++;
+    if(sc>bestScore){bestScore=sc;best=hr;}}
+  return bestScore<0?1:best;
+}
+function loadSheet(){
+  var si=parseInt(document.getElementById('sheetSel').value);
+  var ws=WB.Sheets[WB.SheetNames[si]];
+  AOA=XLSX.utils.sheet_to_json(ws,{header:1,blankrows:false,defval:null});
+  if(!headerManual){ document.getElementById('headerRow').value=detectHeaderRow(); }  // skip title banners
+  var hr=parseInt(document.getElementById('headerRow').value)||1;
+  HEADERS=(AOA[hr-1]||[]).map(function(h,i){return{label:h!=null?h:'(col '+(i+1)+')',idx:i};});
+  userMappingTouched=false;
+  buildMapGrid();
+}
+
+var FIELDS=[
+  {id:'fDate',  label:'Date (Voucher Date)', hint:'used for EOSS range'},
+  {id:'fVoucher',label:'Voucher / Bill No',  hint:'invoice number (optional)'},
+  {id:'fDealer',label:'Dealer / Company',    hint:'store / company name'},
+  {id:'fBrand', label:'Brand',               hint:'brand column'},
+  {id:'fType',  label:'Voucher Type',        hint:'Sales / Sales Return'},
+  {id:'fQty',   label:'Qty',                 hint:'sales qty'},
+  {id:'fMrp',   label:'MRP (Retail Price) *',hint:'REQUIRED', required:true},
+  {id:'fNetSale',label:'Net Amount',         hint:'actual sale value (incl GST)'},
+  {id:'fDiscount',label:'Discount',          hint:'for 50/50; else MRP - Net'},
+  {id:'fGst',   label:'GST % (Tax Percentage)',hint:'per-line GST rate'},
+  {id:'fGstMrp',label:'GST on MRP (col, opt)', hint:'e.g. GST Reimbursed'},
+  {id:'fGstAct',label:'GST Actual amt (col, opt)',hint:'e.g. Tax Amount'},
+  {id:'fDealerCN',label:'Dealer CN (col, opt)',hint:'their NETSHARING - to compare'},
+  {id:'fCost',  label:'Cost (optional)',     hint:'if present, used instead of margin'}
+];
+
+function safeText(s){var d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
+
+function buildMapGrid(){
+  var g=document.getElementById('mapGrid');
+  var opts='<option value="">-- not in file --</option>'+
+    HEADERS.map(function(h){return '<option value="'+h.idx+'">'+safeText(String(h.label))+'</option>';}).join('');
+  g.innerHTML=FIELDS.map(function(f){
+    return '<div>'+
+      '<label style="'+(f.required?'color:#c0392b':'')+'">'+f.label+'</label>'+
+      '<select id="'+f.id+'" onchange="onMapChange(this)">'+opts+'</select>'+
+      '<div class="hint">'+f.hint+'</div>'+
+      '<div class="sample" id="'+f.id+'Smp">&nbsp;</div>'+
+      '</div>';
+  }).join('');
+  if(!userMappingTouched)autoGuess();
+  buildBrandGrid();
+  validateCalc();
+}
+
+function onMapChange(sel){
+  userMappingTouched=true;
+  updateSample(sel.id);
+  if(sel.id==='fBrand')buildBrandGrid();
+  validateCalc();
+}
+
+function updateSample(fieldId){
+  var sel=document.getElementById(fieldId);
+  var sEl=document.getElementById(fieldId+'Smp');
+  if(!sel||!sEl)return;
+  var col=sel.value===''?-1:parseInt(sel.value);
+  if(col<0){sEl.innerHTML='&nbsp;';return;}
+  var hr=parseInt(document.getElementById('headerRow').value)||1;
+  var vals=[];
+  for(var r=hr;r<AOA.length&&vals.length<3;r++){
+    var v=AOA[r][col];
+    if(v!=null&&String(v).trim()!=''){ vals.push(v instanceof Date?fmtDate(v):String(v).trim()); }
+  }
+  sEl.textContent=vals.length?'e.g. '+vals.join(' / '):'(no data)';
+}
+
+function autoGuess(){
+  function trySet(id,cands){
+    for(var ci=0;ci<cands.length;ci++){
+      var ck=cands[ci].toLowerCase().replace(/[\s\-_%]/g,'');
+      for(var hi=0;hi<HEADERS.length;hi++){
+        var hl=HEADERS[hi].label!=null?String(HEADERS[hi].label):'';
+        var hn=hl.toLowerCase().replace(/[\s\-_%]/g,'');
+        // short tokens (gst/qty/mrp) must match the START of a header, not mid-word,
+        // else "GST" wrongly matches "Closin(gst)ock". Longer tokens allow contains.
+        var hit = ck.length<=4 ? (hn===ck||hn.indexOf(ck)===0) : (hn.indexOf(ck)>=0);
+        if(hit){
+          var e=document.getElementById(id); if(e){e.value=String(HEADERS[hi].idx);updateSample(id);} return;
+        }
+      }
+    }
+  }
+  trySet('fDate',['VOUCHER DATE','BILL DATE','INVOICE DATE','DATE']);
+  trySet('fVoucher',['VOUCHER NO','VOUCHER NUMBER','INVOICE NO','BILL NUMBER','BILL NO']);
+  trySet('fDealer',['COMPANY NAME','STORE NAME','DEALER','RETAILER','STORE','DISTRIBUTOR']);
+  trySet('fBrand',['BRAND','CATEGORY']);
+  trySet('fType',['VOUCHER TYPE','BILL TYPE','SALETYPE','TYPE']);
+  trySet('fQty',['SALES QTY','SALE QTY','QTY','QUANTITY']);
+  trySet('fMrp',['RETAIL PRICE','MRP - D2R','MRP2','MRP','SELLING PRICE']);
+  trySet('fNetSale',['NET AMOUNT','NET SALES- D2R','NET SALE','NETSALE','NET SALES']);
+  trySet('fDiscount',['TOTAL DISCOUNT','DISCOUNT AMT','ITEM LEVEL DISC AMT','ITEM LEVEL DISC','DISCOUNT','DIS VALUE']);
+  trySet('fGst',['TAX PERCENTAGE','TAX PER','TAX %','GST PERCENT','GST %','GST']);
+  trySet('fGstMrp',['GST REIMBURSED','GST ON MRP','GST MRP AMOUNT','REIMBURSED']);
+  trySet('fGstAct',['TAX AMOUNT','GST AMOUNT','GST ACTUAL']);
+  trySet('fDealerCN',['NETSHARING','NET SHARING','DEALER CN','EOSS CN']);
+  trySet('fCost',['PURCHASE PRICE','PURCHASE COST','LANDING COST','COST PRICE','COST']);
+}
+
+function getCol(id){var e=document.getElementById(id);var v=e?e.value:'';return(v===''||v==null)?-1:parseInt(v);}
+function numV(id){var e=document.getElementById(id);var v=e?parseFloat(e.value):NaN;return isNaN(v)?null:v;}
+
+function uniqueBrands(){
+  var bc=getCol('fBrand');
+  if(bc<0)return['ALL'];
+  var hr=parseInt(document.getElementById('headerRow').value)||1;
+  var seen={},out=[];
+  for(var r=hr;r<AOA.length;r++){
+    var v=AOA[r][bc];
+    var b=v!=null&&String(v).trim()!=''?String(v).trim():'(blank)';
+    if(!seen[b]){seen[b]=1;out.push(b);}
+  }
+  return out.length?out:['ALL'];
+}
+
+function buildBrandGrid(){
+  var brands=uniqueBrands();
+  var g=document.getElementById('brandGrid');
+  // preserve existing typed values
+  var prev={};
+  brands.forEach(function(b){
+    var n=document.getElementById('bn_'+cssId(b)), e=document.getElementById('be_'+cssId(b));
+    if(n)prev[b]={n:n.value,e:e?e.value:''};
+  });
+  var html='<div class="brandgrid"><div class="h">Brand</div><div class="h">Normal %</div><div class="h">EOSS %</div></div>';
+  brands.forEach(function(b){
+    var id=cssId(b);
+    var pv=prev[b]||{n:'',e:''};
+    html+='<div class="brandgrid">'+
+      '<div>'+safeText(b)+'</div>'+
+      '<input type="number" step="0.01" id="bn_'+id+'" value="'+pv.n+'" placeholder="Normal %">'+
+      '<input type="number" step="0.01" id="be_'+id+'" value="'+pv.e+'" placeholder="EOSS % (blank = same)">'+
+      '</div>';
+  });
+  g.innerHTML=html;
+}
+
+function cssId(s){return String(s).replace(/[^a-zA-Z0-9]/g,'_');}
+
+function fillAllBrands(){
+  var dn=document.getElementById('defNorm').value, de=document.getElementById('defEoss').value;
+  uniqueBrands().forEach(function(b){
+    var n=document.getElementById('bn_'+cssId(b)), e=document.getElementById('be_'+cssId(b));
+    if(n&&dn!=='')n.value=dn;
+    if(e&&de!=='')e.value=de;
+  });
+}
+
+function brandMargin(b){
+  var id=cssId(b);
+  var n=document.getElementById('bn_'+id), e=document.getElementById('be_'+id);
+  var dn=numV('defNorm'), de=numV('defEoss');          // fall back to the Default % when a brand box is blank
+  var nv=n&&n.value!==''?parseFloat(n.value):dn;
+  var ev=e&&e.value!==''?parseFloat(e.value):de;
+  return {normal:nv,eoss:ev};
+}
+
+function onModelChange(){
+  var m=document.getElementById('model').value;
+  var show=(m==='fixed');
+  document.getElementById('baseWrap').style.display=show?'':'none';
+  document.getElementById('defNormWrap').style.display=show?'':'none';
+  document.getElementById('defEossWrap').style.display=show?'':'none';
+  document.getElementById('brandBox').style.display=show?'':'none';
+  validateCalc();
+}
+
+function validateCalc(){
+  var warns=[];
+  if(getCol('fMrp')<0)warns.push('MRP column is required.');
+  if(getCol('fNetSale')<0&&getCol('fDiscount')<0)
+    warns.push('Map Net Amount or Discount (sale value = MRP - Discount when Net Amount is absent).');
+  if(getCol('fGst')<0&&getCol('fDate')<0)
+    warns.push('No GST column and no Date: GST falls back to the flat default. Map Date to enable the 5/12/18% slab.');
+  document.getElementById('mapWarnings').innerHTML=warns.map(function(w){return '<div class="warn">! '+w+'</div>';}).join('');
+  document.getElementById('calcBtn').disabled=(getCol('fMrp')<0);
+}
+
+function fmtDate(d){
+  if(!(d instanceof Date)||isNaN(d.getTime()))return '';
+  var y=d.getFullYear(),m=('0'+(d.getMonth()+1)).slice(-2),day=('0'+d.getDate()).slice(-2);
+  return y+'-'+m+'-'+day;
+}
+function toDate(v){
+  if(v==null)return null;
+  if(v instanceof Date)return isNaN(v.getTime())?null:v;
+  if(typeof v==='number'){ var d=new Date(Math.round((v-25569)*86400000)); return isNaN(d.getTime())?null:d; }
+  var p=new Date(String(v)); return isNaN(p.getTime())?null:p;
+}
+
+// GST slab by selling price per piece + date. Slab changed on 22 Sep 2025.
+var GST_CUTOVER=new Date('2025-09-22T00:00:00');
+function gstSlab(sellPerPiece,date){
+  var sp=Math.abs(sellPerPiece||0);
+  if(date&&date>=GST_CUTOVER) return sp<=2500?0.05:0.18;   // from 22 Sep 2025
+  return sp<=1000?0.05:0.12;                                // before 22 Sep 2025
+}
+
+function compute(){
+  var hr=parseInt(document.getElementById('headerRow').value)||1;
+  var model=document.getElementById('model').value;
+  var base=document.getElementById('base').value;
+  var manualStore=(document.getElementById('manualStore').value||'').trim();
+  var mrpGstMode=document.getElementById('mrpGstMode').value;
+  var defGst=parseFloat(document.getElementById('defGst').value)||0;
+  var sStr=document.getElementById('eossStart').value, eStr=document.getElementById('eossEnd').value;
+  var sDate=sStr?new Date(sStr+'T00:00:00'):null;
+  var eDate=eStr?new Date(eStr+'T23:59:59'):null;
+  var rangeSet=!!(sDate||eDate);
+
+  var c={date:getCol('fDate'),voucher:getCol('fVoucher'),dealer:getCol('fDealer'),brand:getCol('fBrand'),type:getCol('fType'),
+    qty:getCol('fQty'),mrp:getCol('fMrp'),ns:getCol('fNetSale'),disc:getCol('fDiscount'),
+    gst:getCol('fGst'),gstMrpCol:getCol('fGstMrp'),gstActCol:getCol('fGstAct'),dcn:getCol('fDealerCN'),cost:getCol('fCost')};
+
+  var rows=[], total=0, eossCount=0, skipped=0;
+  var byBrand={}, byDealer={}, mchk={};
+  var fileMin=null, fileMax=null, skipBrands=[];
+
+  for(var r=hr;r<AOA.length;r++){
+    var row=AOA[r];
+    if(c.mrp<0||row[c.mrp]==null)continue;
+    var mrp=+row[c.mrp]||0;
+    var qty=c.qty>=0?(+row[c.qty]||0):1;
+    var dlr=c.dealer>=0&&row[c.dealer]!=null?String(row[c.dealer]).trim():'';
+    var dealer=dlr!==''?dlr:(manualStore||'Dealer');   // manual store name when file has none/blank
+    var brand=c.brand>=0&&row[c.brand]!=null?String(row[c.brand]).trim():'ALL';
+    var type;
+    if(c.type>=0&&row[c.type]!=null)type=String(row[c.type]).trim();
+    else type=(qty<0?'Goods Return':'Sales');   // no Type column: derive from qty sign
+    var dt=c.date>=0?toDate(row[c.date]):null;
+    if(dt){ if(!fileMin||dt<fileMin)fileMin=dt; if(!fileMax||dt>fileMax)fileMax=dt; }
+
+    // MRP column is per-unit; line MRP = unit MRP * qty. qty is negative on returns,
+    // so signs align with a negative Net Amount and returns correctly reverse the CN.
+    var lineMrp=mrp*qty;
+    var sale=(c.ns>=0&&row[c.ns]!=null)?(+row[c.ns]||0):(c.disc>=0?lineMrp-(+row[c.disc]||0):lineMrp);
+    var disc=c.disc>=0&&row[c.disc]!=null?(+row[c.disc]||0):(lineMrp-sale);
+    // Dual GST: ACTUAL rate on the discounted sale (EOSS side), MRP-slab rate on the normal side.
+    // actual = file GST column -> else slab by selling price/piece -> else flat default.
+    // GST column may be a percent (5/12/18) or a fraction (0.05/0.12) - detect.
+    var gstAct;
+    if(c.gst>=0&&row[c.gst]!=null){ var rg=+row[c.gst]||0; gstAct=rg>1?rg/100:rg; }
+    else if(dt) gstAct=gstSlab(qty!=0?sale/qty:sale, dt);
+    else gstAct=defGst/100;
+    // GST-on-MRP slab: by sale date, or forced to the pre/from-22-Sep regime (goods billed before/after cutoff)
+    var gstMrp;
+    if(mrpGstMode==='pre') gstMrp=Math.abs(mrp)<=1000?0.05:0.12;
+    else if(mrpGstMode==='post') gstMrp=Math.abs(mrp)<=2500?0.05:0.18;
+    else gstMrp=dt?gstSlab(mrp, dt):gstAct;
+    // GST amounts: from file columns if mapped (matches the dealer's own working), else from slab rates
+    var gstOnMrp=(c.gstMrpCol>=0&&row[c.gstMrpCol]!=null&&!isNaN(+row[c.gstMrpCol]))?+row[c.gstMrpCol]:(lineMrp-lineMrp/(1+gstMrp));
+    var gstOnSale=(c.gstActCol>=0&&row[c.gstActCol]!=null&&!isNaN(+row[c.gstActCol]))?+row[c.gstActCol]:(sale-sale/(1+gstAct));
+    var nrp=lineMrp-gstOnMrp, netReal=sale-gstOnSale;
+
+    // cost-implied actual margin (per-unit ratio) for the reconciliation check
+    var cost=(c.cost>=0&&row[c.cost]!=null&&!isNaN(+row[c.cost]))?+row[c.cost]:null;
+    var actMargin=null;
+    if(cost!=null&&mrp>0&&qty>0){
+      var uNrp=mrp/(1+gstMrp);
+      actMargin=(base==='MRP')?((uNrp-cost)/mrp*100):((uNrp-cost)/uNrp*100);
+      if(!mchk[brand])mchk[brand]={sum:0,n:0,min:actMargin,max:actMargin};
+      var mc=mchk[brand]; mc.sum+=actMargin; mc.n++;
+      if(actMargin<mc.min)mc.min=actMargin; if(actMargin>mc.max)mc.max=actMargin;
+    }
+
+    var inEoss=true;
+    if(rangeSet){ inEoss=!!dt && (!sDate||dt>=sDate) && (!eDate||dt<=eDate); }
+
+    var cn=0, d1=null, d2=null, counted=true;
+    if(inEoss){
+      if(model==='fixed'){
+        var normalCost, eossCost, ok=true;
+        var mg=brandMargin(brand);
+        var eossPct=(mg.eoss!=null)?mg.eoss:mg.normal;   // EOSS % blank -> same as Normal %
+        if(cost!=null){ normalCost=cost*qty; }            // per-unit cost x qty = line cost
+        else if(mg.normal!=null){ normalCost=(base==='MRP')?(nrp-(mg.normal/100)*lineMrp):(nrp*(1-mg.normal/100)); }
+        else { ok=false; }
+        if(eossPct!=null){ eossCost=(base==='MRP')?(netReal-(eossPct/100)*sale):(netReal*(1-eossPct/100)); }
+        else { ok=false; }
+        if(!ok){ skipped++; counted=false; if(skipBrands.indexOf(brand)<0)skipBrands.push(brand); }
+        else{
+          cn=normalCost-eossCost;   // ex-GST cost difference; no gross-up (model B)
+          d1=normalCost; d2=eossCost;
+        }
+      } else {
+        var excessGst=(Math.abs(disc)>0.01)?(gstOnMrp-gstOnSale):0;   // no discount -> no GST excess
+        cn=(Math.abs(disc)>0.01)?(disc/2-excessGst):0;                 // no discount -> no sharing
+        d1=disc; d2=excessGst;
+      }
+      if(counted){
+        eossCount++;
+        total+=cn;
+        if(!byBrand[brand])byBrand[brand]={cn:0,qty:0};
+        byBrand[brand].cn+=cn; byBrand[brand].qty+=qty;
+        if(!byDealer[dealer])byDealer[dealer]={cn:0,qty:0};
+        byDealer[dealer].cn+=cn; byDealer[dealer].qty+=qty;
+      }
+    }
+    var voucher=c.voucher>=0&&row[c.voucher]!=null?String(row[c.voucher]).trim():'';
+    var dealerCN=c.dcn>=0&&row[c.dcn]!=null&&!isNaN(+row[c.dcn])?+row[c.dcn]:null;
+    rows.push({date:dt?fmtDate(dt):'',voucher:voucher,dealer:dealer,brand:brand,type:type,qty:qty,mrp:lineMrp,
+      sale:sale,disc:disc,gstPct:gstAct*100,gstMrpPct:gstMrp*100,gstOnMrp:gstOnMrp,gstOnSale:gstOnSale,nrp:nrp,netReal:netReal,actMargin:actMargin,eoss:inEoss,d1:d1,d2:d2,cn:cn,dealerCN:dealerCN});
+  }
+
+  // margin reconciliation: entered Normal % vs cost-implied actual margin (tolerance 0.5%)
+  var marginCheck=[];
+  Object.keys(mchk).forEach(function(b){
+    var m=mchk[b], avg=m.sum/m.n, entered=brandMargin(b).normal;
+    var diff=entered==null?null:(avg-entered);
+    var flag=(diff!=null&&Math.abs(diff)>0.5)||((m.max-m.min)>0.5);
+    marginCheck.push({brand:b,entered:entered,actual:avg,min:m.min,max:m.max,diff:diff,flag:flag});
+  });
+  marginCheck.sort(function(a,b){return (b.flag?1:0)-(a.flag?1:0);});
+
+  // dealer-CN comparison (when their column is mapped)
+  var dealerTotal=0,diffCount=0,hasDcn=false;
+  rows.forEach(function(x){ if(x.dealerCN!=null){ hasDcn=true; if(x.eoss){ dealerTotal+=x.dealerCN; if(Math.abs((x.cn||0)-x.dealerCN)>1)diffCount++; } } });
+
+  lastRows={rows:rows,model:model};
+  lastSummary={total:total,eossCount:eossCount,skipped:skipped,byBrand:byBrand,byDealer:byDealer,model:model,marginCheck:marginCheck,
+    rangeSet:rangeSet,eossStart:sStr,eossEnd:eStr,fileMin:fileMin?fmtDate(fileMin):null,fileMax:fileMax?fmtDate(fileMax):null,totalRows:rows.length,skipBrands:skipBrands,
+    hasDcn:hasDcn,dealerTotal:dealerTotal,diffCount:diffCount};
+  renderResult();
+  saveCurrentRun();   // persist to the in-app library
+}
+
+function inr(n){return 'Rs '+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function num2(n){return (n==null)?'':(Math.round(n*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function cls(n){return n<-0.01?'neg':n>0.01?'pos':'';}
+function sortedPairs(o){return Object.keys(o).map(function(k){return[k,o[k]];}).sort(function(a,b){return b[1].cn-a[1].cn;});}
+
+function renderResult(){
+  var s=lastSummary, model=s.model;
+  document.getElementById('resultCard').style.display='';
+  document.getElementById('dlBtn').style.display='block';   // CSS default is none; '' would keep it hidden
+  document.getElementById('eossLegend').innerHTML=' <span class="pill">EOSS rows highlighted</span>';
+
+  // explain a zero/empty result instead of silently showing Rs 0
+  var inRange=0; (lastRows&&lastRows.rows||[]).forEach(function(x){if(x.eoss)inRange++;});
+  var banner='';
+  if(s.eossCount===0){
+    if(s.skipped>0){   // rows ARE in range but were skipped for no margin - the real cause
+      banner='All '+s.skipped+' EOSS lines skipped: no margin entered for '+((s.skipBrands||[]).join(', ')||'this brand')+'. Fill the Default Normal/EOSS % (now auto-applied), or type Normal % in the per-brand row, then Calculate again. (Cost column alone is not enough - the EOSS margin is still required.)';
+    } else if(s.rangeSet && inRange===0){
+      banner='0 lines fall in your EOSS date range ('+(s.eossStart||'?')+' to '+(s.eossEnd||'?')+'). This file\'s dates run '+(s.fileMin||'?')+' to '+(s.fileMax||'?')+'. Widen or clear the date range.';
+    } else {
+      banner='No lines matched. Check the MRP column mapping.';
+    }
+  }
+  document.getElementById('summaryBanner').innerHTML=banner?('<div class="warn" style="padding:10px;background:#fff3cd;border:1px solid #ffe08a;border-radius:6px">! '+banner+'</div>'):'';
+
+  var brandRows=sortedPairs(s.byBrand).map(function(e){return '<tr><td>'+safeText(e[0])+'</td><td class="'+cls(e[1].cn)+'">'+inr(e[1].cn)+'</td><td>'+e[1].qty+'</td></tr>';}).join('');
+  var dealerRows=sortedPairs(s.byDealer).map(function(e){return '<tr><td>'+safeText(e[0])+'</td><td class="'+cls(e[1].cn)+'">'+inr(e[1].cn)+'</td><td>'+e[1].qty+'</td></tr>';}).join('');
+
+  // margin reconciliation panel (only when a Cost/Purchase Price column was present)
+  var mc=s.marginCheck||[], mcHtml='';
+  if(mc.length){
+    var flagged=mc.filter(function(x){return x.flag;}).length;
+    var rowsH=mc.map(function(x){
+      return '<tr'+(x.flag?' style="background:#f8d7da"':'')+'><td>'+safeText(x.brand)+'</td>'+
+        '<td>'+(x.entered==null?'-':num2(x.entered)+'%')+'</td>'+
+        '<td>'+num2(x.actual)+'%</td>'+
+        '<td>'+num2(x.min)+'% - '+num2(x.max)+'%</td>'+
+        '<td class="'+(x.diff!=null&&Math.abs(x.diff)>0.5?'neg':'')+'">'+(x.diff==null?'-':((x.diff>0?'+':'')+num2(x.diff)+'%'))+'</td>'+
+        '<td><b>'+(x.flag?'FLAG':'ok')+'</b></td></tr>';
+    }).join('');
+    mcHtml='<br><table><tr><th colspan="6" style="background:'+(flagged?'#c0392b':'#1a7a4a')+'">Margin check (cost vs entered) '+(flagged?'- '+flagged+' brand(s) FLAGGED':'- all within 0.5%')+'</th></tr>'+
+      '<tr><th>Brand</th><th>Entered</th><th>Actual (cost)</th><th>Range</th><th>Diff</th><th>Flag</th></tr>'+rowsH+'</table>';
+  }
+
+  document.getElementById('summaryHtml').innerHTML=
+    '<div style="margin:6px 0;font-size:13px;color:#666">Model: <b>'+(model==='fixed'?'Fixed margin':'50/50 share')+'</b> &nbsp; EOSS lines: <b>'+s.eossCount+'</b>'+(s.skipped?' &nbsp; <span class="warn">'+s.skipped+' skipped (no margin/cost)</span>':'')+'</div>'+
+    '<table><tr><th colspan="3" style="background:#c9a84c">TOTAL CREDIT NOTE -- <span class="'+cls(s.total)+'">'+inr(s.total)+'</span></th></tr></table>'+
+    (s.hasDcn?('<table style="margin-top:6px"><tr><th colspan="4" style="background:'+(s.diffCount?'#c0392b':'#1a7a4a')+'">Tool vs Dealer CN '+(s.diffCount?'- '+s.diffCount+' line(s) differ':'- all match')+'</th></tr>'+
+      '<tr><th>Tool total</th><th>Dealer total</th><th>Difference</th><th>Lines differ</th></tr>'+
+      '<tr><td class="'+cls(s.total)+'">'+inr(s.total)+'</td><td class="'+cls(s.dealerTotal)+'">'+inr(s.dealerTotal)+'</td><td class="'+cls(s.total-s.dealerTotal)+'">'+inr(s.total-s.dealerTotal)+'</td><td>'+s.diffCount+'</td></tr></table>'):'')+'<br>'+
+    '<table><tr><th colspan="3">By Brand</th></tr><tr><th>Brand</th><th>CN (Rs)</th><th>Qty</th></tr>'+brandRows+'</table><br>'+
+    '<table><tr><th colspan="3">By Dealer</th></tr><tr><th>Dealer</th><th>CN (Rs)</th><th>Qty</th></tr>'+dealerRows+'</table>'+mcHtml;
+
+  var d1h=model==='fixed'?'Normal Cost':'Discount';
+  var d2h=model==='fixed'?'EOSS Cost':'Excess GST';
+  var dcnH=s.hasDcn?'<th>Dealer CN</th><th>Diff</th>':'';
+  var head='<tr><th>Date</th><th>Voucher No</th><th>Dealer</th><th>Brand</th><th>Type</th><th>Qty</th><th>MRP</th><th>Net Amt</th><th>Discount</th><th>GST Act%</th><th>GST MRP%</th><th>GST on MRP</th><th>GST Actual</th><th>NRP</th><th>Net Real</th><th>Act Mgn%</th><th>'+d1h+'</th><th>'+d2h+'</th><th>EOSS</th><th>CN (Rs)</th>'+dcnH+'</tr>';
+  var body=lastRows.rows.map(function(x){
+    var dcnCells='';
+    if(s.hasDcn){ var df=(x.dealerCN!=null&&x.eoss)?(x.cn-x.dealerCN):null; dcnCells='<td>'+num2(x.dealerCN)+'</td><td class="'+(df!=null&&Math.abs(df)>1?'neg':'')+'">'+(df==null?'':num2(df))+'</td>'; }
+    return '<tr class="'+(x.eoss?'eoss':'')+(s.hasDcn&&x.dealerCN!=null&&x.eoss&&Math.abs(x.cn-x.dealerCN)>1?'" style="outline:2px solid #c0392b':'')+'">'+
+      '<td>'+x.date+'</td><td>'+safeText(x.voucher)+'</td><td>'+safeText(x.dealer)+'</td><td>'+safeText(x.brand)+'</td><td>'+safeText(x.type)+'</td>'+
+      '<td>'+x.qty+'</td><td>'+num2(x.mrp)+'</td><td>'+num2(x.sale)+'</td><td>'+num2(x.disc)+'</td><td>'+num2(x.gstPct)+'</td><td>'+num2(x.gstMrpPct)+'</td>'+
+      '<td>'+num2(x.gstOnMrp)+'</td><td>'+num2(x.gstOnSale)+'</td>'+
+      '<td>'+num2(x.nrp)+'</td><td>'+num2(x.netReal)+'</td><td>'+(x.actMargin==null?'':num2(x.actMargin)+'%')+'</td><td>'+num2(x.d1)+'</td><td>'+num2(x.d2)+'</td>'+
+      '<td>'+(x.eoss?'Yes':'No')+'</td><td class="'+cls(x.cn)+'">'+(x.eoss?num2(x.cn):'')+'</td>'+dcnCells+'</tr>';
+  }).join('');
+  document.getElementById('rowsWrap').innerHTML='<table>'+head+body+'</table>';
+}
+
+function downloadExcel(){
+  if(!lastRows)return;
+  var model=lastRows.model;
+  var d1h=model==='fixed'?'Normal Cost':'Discount';
+  var d2h=model==='fixed'?'EOSS Cost':'Excess GST';
+  var dcnOn=lastSummary&&lastSummary.hasDcn;
+  var hdr=['Date','Voucher No','Dealer','Brand','Type','Qty','MRP','Net Amount','Discount','GST Act %','GST MRP %','GST on MRP','GST Actual','NRP','Net Realisation','Act Margin %',d1h,d2h,'EOSS','CN (Rs)'];
+  if(dcnOn)hdr=hdr.concat(['Dealer CN','Diff (tool-dealer)']);
+  var aoa=[hdr];
+  lastRows.rows.forEach(function(x){
+    var rowA=[x.date,x.voucher,x.dealer,x.brand,x.type,x.qty,r2(x.mrp),r2(x.sale),r2(x.disc),r2(x.gstPct),r2(x.gstMrpPct),r2(x.gstOnMrp),r2(x.gstOnSale),r2(x.nrp),r2(x.netReal),r2(x.actMargin),r2(x.d1),r2(x.d2),x.eoss?'Yes':'No',x.eoss?r2(x.cn):''];
+    if(dcnOn)rowA=rowA.concat([r2(x.dealerCN),(x.dealerCN!=null&&x.eoss)?r2(x.cn-x.dealerCN):'']);
+    aoa.push(rowA);
+  });
+  var wsData=XLSX.utils.aoa_to_sheet(aoa);
+  wsData['!cols']=[{wch:11},{wch:14},{wch:22},{wch:12},{wch:13},{wch:6},{wch:10},{wch:11},{wch:10},{wch:9},{wch:9},{wch:11},{wch:11},{wch:10},{wch:12},{wch:10},{wch:11},{wch:11},{wch:6},{wch:12},{wch:11},{wch:14}];
+
+  var s=lastSummary;
+  var sum=[['EOSS Credit-Note Summary'],['Model',model==='fixed'?'Fixed margin':'50/50 share'],
+    ['EOSS lines',s.eossCount],['Skipped (no margin/cost)',s.skipped],
+    ['TOTAL CREDIT NOTE (Rs)',r2(s.total)],[],['By brand','CN (Rs)','Qty']];
+  sortedPairs(s.byBrand).forEach(function(e){sum.push([e[0],r2(e[1].cn),e[1].qty]);});
+  sum.push([],['By dealer','CN (Rs)','Qty']);
+  sortedPairs(s.byDealer).forEach(function(e){sum.push([e[0],r2(e[1].cn),e[1].qty]);});
+  if(s.marginCheck&&s.marginCheck.length){
+    sum.push([],['Margin check (cost vs entered)','Entered %','Actual %','Min %','Max %','Diff %','Flag']);
+    s.marginCheck.forEach(function(x){sum.push([x.brand,x.entered==null?'':r2(x.entered),r2(x.actual),r2(x.min),r2(x.max),x.diff==null?'':r2(x.diff),x.flag?'FLAG':'ok']);});
+  }
+  var wsSum=XLSX.utils.aoa_to_sheet(sum); wsSum['!cols']=[{wch:30},{wch:12},{wch:12},{wch:10},{wch:10},{wch:10},{wch:8}];
+
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,wsSum,'Summary');
+  XLSX.utils.book_append_sheet(wb,wsData,'Row-wise');
+  XLSX.writeFile(wb,eossFileName());
+}
+function r2(n){return n==null?'':Math.round(n*100)/100;}
+
+// ---------- Library (IndexedDB) ----------
+function openDB(cb){
+  try{
+    var req=indexedDB.open('eossLib',1);
+    req.onupgradeneeded=function(e){var db=e.target.result; if(!db.objectStoreNames.contains('runs'))db.createObjectStore('runs',{keyPath:'id'});};
+    req.onsuccess=function(e){DB=e.target.result; if(cb)cb();};
+    req.onerror=function(){ document.getElementById('libTree').innerHTML='<div class="hint">Local storage is unavailable in this browser/file mode, so the library cannot persist. Export still works.</div>'; };
+  }catch(_){}
+}
+function saveCurrentRun(){
+  if(!DB||!lastRows||!lastRows.rows.length)return;
+  var s=lastSummary, pset={}, bset={};
+  lastRows.rows.forEach(function(x){ if(x.dealer)pset[x.dealer]=1; if(x.brand)bset[x.brand]=1; });
+  var party=Object.keys(pset)[0]||'Dealer', brandLabel=Object.keys(bset).join('+')||'ALL';
+  var dmin=s.fileMin||'', dmax=s.fileMax||'';
+  var id=party+'|'+brandLabel+'|'+dmin+'_'+dmax+'|'+lastRows.model;
+  var rec={id:id,savedAt:new Date().toISOString(),party:party,brandLabel:brandLabel,dateMin:dmin,dateMax:dmax,
+    fileName:currentFileName,model:lastRows.model,total:s.total||0,summary:s,rows:lastRows.rows};
+  try{ var tx=DB.transaction('runs','readwrite'); tx.objectStore('runs').put(rec); tx.oncomplete=function(){renderLibrary();}; }catch(_){}
+}
+function renderLibrary(){
+  if(!DB){return;}
+  var out=[];var tx=DB.transaction('runs','readonly');var cur=tx.objectStore('runs').openCursor();
+  cur.onsuccess=function(e){var c=e.target.result; if(c){out.push(c.value);c.continue();} else paintLibrary(out);};
+}
+function paintLibrary(runs){
+  var q=(document.getElementById('libSearch').value||'').toLowerCase();
+  runs=runs.filter(function(r){return (r.party+' '+r.brandLabel+' '+r.dateMin+' '+r.dateMax+' '+(r.fileName||'')).toLowerCase().indexOf(q)>=0;});
+  libRuns=runs;
+  var tree={};
+  runs.forEach(function(r){ (tree[r.party]=tree[r.party]||{}); (tree[r.party][r.brandLabel]=tree[r.party][r.brandLabel]||[]).push(r); });
+  var parties=Object.keys(tree).sort();
+  if(!parties.length){ document.getElementById('libTree').innerHTML='<div class="hint">No saved calculations yet. Calculate a file and it is saved here automatically.</div>'; return; }
+  var html='';
+  parties.forEach(function(p){
+    html+='<div style="font-weight:bold;margin-top:12px;color:#1a1a2e;font-size:14px">'+safeText(p)+'</div>';
+    Object.keys(tree[p]).sort().forEach(function(b){
+      html+='<div style="margin-left:14px;font-weight:bold;color:#856404;margin-top:4px">'+safeText(b)+'</div>';
+      tree[p][b].sort(function(x,y){return (y.dateMax||'').localeCompare(x.dateMax||'');}).forEach(function(r){
+        var dr=(r.dateMin===r.dateMax)?(r.dateMin||'no date'):(r.dateMin+' to '+r.dateMax);
+        var i=libRuns.indexOf(r);
+        html+='<div style="margin-left:28px;padding:4px 0;font-size:13px;border-bottom:1px solid #f0f0f0">'+
+          dr+' &nbsp; <b class="'+cls(r.total)+'">'+inr(r.total)+'</b> &nbsp; <span class="hint">'+safeText(r.model==='fixed'?'Fixed':'50/50')+' &middot; '+safeText(r.fileName||'')+'</span><br>'+
+          '<button class="btn-sm" onclick="libView('+i+')">View</button> '+
+          '<button class="btn-sm" onclick="libExport('+i+')">Export</button> '+
+          '<button class="btn-sm" style="background:#c0392b" onclick="libDelete('+i+')">Delete</button></div>';
+      });
+    });
+  });
+  document.getElementById('libTree').innerHTML=html;
+}
+function libLoad(i){var r=libRuns[i]; if(!r)return null; lastSummary=r.summary; lastRows={rows:r.rows,model:r.model}; return r;}
+function libView(i){ if(libLoad(i)){ renderResult(); document.getElementById('resultCard').scrollIntoView({behavior:'smooth'}); } }
+function libExport(i){ if(libLoad(i)) downloadExcel(); }
+function libDelete(i){ var r=libRuns[i]; if(!r||!DB)return; if(!confirm('Delete this saved calculation?'))return;
+  try{ var tx=DB.transaction('runs','readwrite'); tx.objectStore('runs').delete(r.id); tx.oncomplete=function(){renderLibrary();}; }catch(_){} }
+
+function safeFile(s){return String(s).replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim();}
+function eossFileName(){
+  var bset={},dset={};
+  (lastRows&&lastRows.rows||[]).forEach(function(x){ if(x.brand)bset[x.brand]=1; if(x.dealer)dset[x.dealer]=1; });
+  var brands=Object.keys(bset), parties=Object.keys(dset);
+  function clip(s){return safeFile(s).slice(0,24);}
+  var brandStr=brands.length?clip(brands.slice(0,2).join('+'))+(brands.length>2?'+etc':''):'NA';
+  var partyStr=parties.length?clip(parties[0])+(parties.length>1?'+etc':''):'NA';
+  // date FROM THE FILE (Voucher Date span), not today
+  var s=lastSummary||{}, dateStr;
+  if(s.fileMin&&s.fileMax) dateStr=(s.fileMin===s.fileMax)?s.fileMin:(s.fileMin+'_to_'+s.fileMax);
+  else dateStr='nodate';
+  return safeFile('EOSS-'+partyStr+'-'+brandStr+'-'+dateStr)+'.xlsx';   // party before brand
+}
+
+onModelChange();
+openDB(function(){renderLibrary();});
+</script>
+</body>
+</html>

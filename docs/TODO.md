@@ -972,6 +972,42 @@ blocker, not just a liability concern.
 
 ## 🆕 New features — backlog (post-v1, tag before building)
 
+- [ ] **🏬 Remote store-management app — RETAIL/GARMENT** _(SEPARATE PROJECT — **not Storey**; concept captured 2026-06-13, not built)_
+  A separate product (sits alongside the EOSS dealer credit-note scripts in
+  `C:\consne\`, **not** part of the Storey construction app).
+  **What it is:** an app to **run a retail store remotely** — owner/manager oversee
+  the store without being on-site.
+  **Capabilities (as described by owner):**
+  - **Visual reporting** — manager shares photos: housekeeping, display, etc.
+  - **KPI tracking** (sales-centric) + **staff attendance**
+  - **3 roles:** Staff · Manager · Owner
+  - **Incentive system** — collective (whole-store) OR individual, tied to sales,
+    calculated **per-unit** or **% of sales**
+  **Decisions locked (2026-06-13):** multi-store under one owner · 3 roles all with
+  logins (Owner/Manager/Staff) · staff log own sales → **manager approves daily**
+  (anti-gaming gate) · full attendance (present/absent/late/half-day/leave/OT) ·
+  incentives = individual + collective + **attendance-gated**, calc **owner-configurable**
+  (% / per-unit / tiered) · photo categories + frequency **owner-configurable**.
+  **Payroll (added 2026-06-13):** monthly attendance view · **monthly salary calc**
+  (base − absence deductions + incentive; weekly-offs paid) · **fixed weekly holiday
+  that the manager can move within the week** to absorb an unplanned absence ·
+  **leave/off request workflow** — must be requested ≥2 days ahead + manager-approved;
+  **unapproved absence = 2× per-day deduction** (penalty).
+  **KPI + attendance method (2026-06-13):** KPIs **entered manually** (no POS
+  integration in v1; manager approves) · attendance check-in is **geo-fenced at 30m**
+  + requires a **date-stamped photo** (physical proof of presence; backs up GPS,
+  blocks buddy check-ins). ⚠️ 30m is tight — GPS drift may falsely reject; photo +
+  manager confirm are the safety net.
+  **Manager override:** manager can override attendance for genuine issues (bad GPS,
+  dead phone) — **reason required, logged, owner-visible** (controlled escape hatch).
+  **Format:** web/mobile app (multi-user + photos + live KPIs) — Excel ruled out.
+  **PROJECT SCAFFOLDED 2026-06-13** at `C:\store-manager` (own repo/Supabase, separate
+  from Storey). Stack = Storey stack (React/Vite/Capacitor/Supabase/Zustand/Tailwind)
+  **+ `@capacitor/geolocation`** for the 30m geo-fence. Builds green; dev server serves.
+  **Next build steps:** auth/roles → attendance check-in (geo + photo) → sales+approval
+  → incentive engine → payroll → store photos.
+  **PRD:** `docs/PRD-retail-staff-attendance.md` (v0.10 — full spec + stack locked).
+
 - [ ] **GST billing for customers** _(v2 — new feature; owner-approved 2026-06-01)_
   — generate GST-compliant invoices / RA bills for the contractor to bill THEIR
   client from inside Storey. **Rationale: accelerates contractor onboarding** —

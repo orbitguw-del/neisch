@@ -23,10 +23,9 @@ const WHITE = '#FFFFFF', COCOA = '#2A1410'
 
 const W = 1240, H = 1748   // A6 @ 300dpi
 
-// Pre-filled WhatsApp message — what the contractor's WhatsApp opens with
-// after they scan. They just tap send.
-const MSG = "Hi Karun, I met you at the InfraTech Summit. Please send me the Storey info pack."
-const WA_URL = `https://wa.me/919864066898?text=${encodeURIComponent(MSG)}`
+// QR now points to the /pack landing page — contractor gets PDF download
+// + WhatsApp button in one tap, no pre-approval or template needed.
+const PACK_URL = 'https://storeyinfra.com/pack'
 
 function logoBadge(x, y, s, badgeFill = WHITE) {
   const pad = s * 0.11, ix = x + pad, iy = y + pad, isz = s - pad * 2, k = isz / 32
@@ -44,7 +43,7 @@ function qrViewBox(s) {
 }
 
 async function buildJPG() {
-  const qrSvg = await QR.toString(WA_URL, {
+  const qrSvg = await QR.toString(PACK_URL, {
     type: 'svg', margin: 0, errorCorrectionLevel: 'Q',
     color: { dark: COCOA, light: '#00000000' },
   })
@@ -85,23 +84,23 @@ async function buildJPG() {
         fill="${WHITE}" text-anchor="middle">info?</text>
 
   <text x="${W/2}" y="490" font-family="Calibri, Arial, sans-serif" font-size="34"
-        fill="${SAND}" text-anchor="middle">Scan — and we'll send the Storey pack</text>
+        fill="${SAND}" text-anchor="middle">Scan → download the pack</text>
   <text x="${W/2}" y="535" font-family="Calibri, Arial, sans-serif" font-size="34"
-        fill="${SAND}" text-anchor="middle">to your WhatsApp.</text>
+        fill="${SAND}" text-anchor="middle">&amp; WhatsApp Karun in one tap.</text>
 
   <!-- ── QR card ───────────────────────────────────────── -->
   <rect x="170" y="600" width="900" height="900" rx="40" fill="${WHITE}" filter="url(#cardShadow)"/>
 
-  <!-- WhatsApp chip on QR card -->
-  <rect x="${W/2-200}" y="640" width="400" height="80" rx="40" fill="#25D366"/>
+  <!-- chip on QR card -->
+  <rect x="${W/2-200}" y="640" width="400" height="80" rx="40" fill="${TERRA}"/>
   <text x="${W/2}" y="693" font-family="Calibri, Arial, sans-serif" font-size="36" font-weight="bold"
-        fill="${WHITE}" text-anchor="middle">📱 OPENS WHATSAPP</text>
+        fill="${WHITE}" text-anchor="middle">⬇  GET THE PACK</text>
 
   <!-- QR -->
   <svg x="295" y="760" width="650" height="650" viewBox="0 0 ${vb} ${vb}">${qrInner}</svg>
 
   <text x="${W/2}" y="1450" font-family="Calibri, Arial, sans-serif" font-size="28"
-        fill="${COCOA}" text-anchor="middle">Just tap "Send" — Karun will reply.</text>
+        fill="${COCOA}" text-anchor="middle">storeyinfra.com/pack</text>
 
   <!-- ── Footer band ───────────────────────────────────── -->
   <rect x="0" y="1560" width="${W}" height="188" fill="${TERRA_DK}"/>
@@ -139,16 +138,16 @@ async function buildPPTX() {
   s.addText('INFRATECH SUMMIT', { x: 0.8, y: 0.72, w: 3.2, h: 0.25, fontFace: 'Calibri', fontSize: 10, color: 'E7E8D1', charSpacing: 2 })
 
   s.addText('Want more info?', { x: 0, y: 1.2, w: 4.13, h: 0.6, align: 'center', fontFace: 'Georgia', fontSize: 32, bold: true, color: 'FFFFFF' })
-  s.addText("Scan — we'll send the Storey pack to your WhatsApp.", {
+  s.addText("Scan → download the pack & WhatsApp Karun in one tap.", {
     x: 0.4, y: 1.85, w: 3.33, h: 0.55, align: 'center', fontFace: 'Calibri', fontSize: 13, color: 'E7E8D1',
   })
 
   s.addShape(pptx.ShapeType.roundRect, { x: 0.55, y: 2.55, w: 3.03, h: 2.4, rectRadius: 0.15, fill: { color: 'FFFFFF' } })
 
-  s.addShape(pptx.ShapeType.roundRect, { x: 1.05, y: 2.7, w: 2.03, h: 0.35, rectRadius: 0.18, fill: { color: '25D366' } })
-  s.addText('OPENS WHATSAPP', { x: 1.05, y: 2.71, w: 2.03, h: 0.33, align: 'center', fontFace: 'Calibri', fontSize: 11, bold: true, color: 'FFFFFF' })
+  s.addShape(pptx.ShapeType.roundRect, { x: 1.05, y: 2.7, w: 2.03, h: 0.35, rectRadius: 0.18, fill: { color: 'B85042' } })
+  s.addText('GET THE PACK', { x: 1.05, y: 2.71, w: 2.03, h: 0.33, align: 'center', fontFace: 'Calibri', fontSize: 11, bold: true, color: 'FFFFFF' })
 
-  const qrData = await QR.toDataURL(WA_URL, { margin: 1, width: 500, errorCorrectionLevel: 'Q', color: { dark: '#2A1410', light: '#FFFFFF' } })
+  const qrData = await QR.toDataURL(PACK_URL, { margin: 1, width: 500, errorCorrectionLevel: 'Q', color: { dark: '#2A1410', light: '#FFFFFF' } })
   s.addImage({ data: qrData, x: 1.0, y: 3.13, w: 2.13, h: 2.13 })
 
   s.addShape(pptx.ShapeType.rect, { x: 0, y: 5.05, w: 4.13, h: 0.78, fill: { color: '9A3F33' } })
@@ -164,7 +163,6 @@ async function main() {
   await buildPPTX()
   console.log('PPTX: storey-scanner-card.pptx')
   console.log('')
-  console.log('QR opens WhatsApp to +919864066898 with pre-filled message:')
-  console.log('  "' + MSG + '"')
+  console.log('QR points to:', PACK_URL)
 }
 main().catch(e => { console.error(e); process.exit(1) })

@@ -16,6 +16,7 @@ import {
   Wallet,
   ListTodo,
   HardDriveDownload,
+  LifeBuoy,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import useAuthStore from '@/stores/authStore'
@@ -25,6 +26,7 @@ const NAV_BY_ROLE = {
   superadmin: [
     { label: 'Dashboard',  to: '/dashboard',     icon: LayoutDashboard },
     { label: 'All Tenants', to: '/admin/tenants', icon: Shield },
+    { label: 'Help',       to: '/help',          icon: LifeBuoy },
     { label: 'Settings',   to: '/settings',      icon: Settings },
   ],
   contractor: [
@@ -42,6 +44,7 @@ const NAV_BY_ROLE = {
     { label: 'Expenses',   to: '/expenses',   icon: Wallet },
     { label: 'Reports',    to: '/reports',    icon: BarChart3 },
     { label: 'Team',       to: '/team',       icon: UserCog },
+    { label: 'Help',       to: '/help',       icon: LifeBuoy },
     { label: 'Settings',   to: '/settings',   icon: Settings },
   ],
   site_manager: [
@@ -57,6 +60,7 @@ const NAV_BY_ROLE = {
     { label: 'Expenses',   to: '/expenses',   icon: Wallet },
     { label: 'Sub-contractors', to: '/subcontractors', icon: HardDriveDownload },
     { label: 'Daily Logs', to: '/logs',       icon: ClipboardList },
+    { label: 'Help',       to: '/help',       icon: LifeBuoy },
     { label: 'Settings',   to: '/settings',   icon: Settings },
   ],
   supervisor: [
@@ -71,6 +75,7 @@ const NAV_BY_ROLE = {
     { label: 'Expenses',   to: '/expenses',   icon: Wallet },
     { label: 'Sub-contractors', to: '/subcontractors', icon: HardDriveDownload },
     { label: 'Daily Logs', to: '/logs',       icon: ClipboardList },
+    { label: 'Help',       to: '/help',       icon: LifeBuoy },
     { label: 'Settings',   to: '/settings',   icon: Settings },
   ],
   store_keeper: [
@@ -80,6 +85,7 @@ const NAV_BY_ROLE = {
     { label: 'Receipts',   to: '/receipts',   icon: ClipboardCheck },
     { label: 'Transfers',  to: '/transfers',  icon: ArrowRightLeft },
     { label: 'Equipment',  to: '/equipment',  icon: Wrench },
+    { label: 'Help',       to: '/help',       icon: LifeBuoy },
     { label: 'Settings',   to: '/settings',   icon: Settings },
   ],
 }
