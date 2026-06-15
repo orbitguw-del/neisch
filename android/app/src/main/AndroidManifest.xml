@@ -52,13 +52,8 @@
     <!-- Camera (added 2026-05-22 — was missing, app crashed when invoking camera) -->
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- Photo storage — split by Android version per Google's guidelines -->
-    <!-- Android 12 and below: legacy external-storage read -->
-    <uses-permission
-        android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
-    <!-- Android 13+: scoped media access -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Photo capture uses the HTML file-input path (not native camera plugin),
+         so no READ_MEDIA_IMAGES or READ_EXTERNAL_STORAGE needed. -->
 
     <!-- Camera hardware is required but the feature is OPTIONAL so the app
          installs on tablets without a rear camera. -->
