@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Storey · Vendor Registration</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="description" content="Register as a vendor on Storey — supply materials and services to construction contractors across NE India."/>
+<meta name="theme-color" content="#B85042"/>
+<style>
+  :root {
+    --terra: #B85042;
+    --terra-dk: #9A3F33;
+    --sand: #E7E8D1;
+    --sage: #A7BEAE;
+    --wa: #25D366;
+    --cocoa: #2A1410;
+    --light: #FAF7F2;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100vh;
+    background: linear-gradient(160deg, var(--terra) 0%, var(--terra-dk) 100%);
+    color: #fff;
+    font-family: 'Calibri', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  }
+  .wrap {
+    max-width: 480px; margin: 0 auto; padding: 24px 20px 32px;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+  }
+  .brand .logo {
+    width: 44px; height: 44px; flex-shrink: 0;
+  }
+  .brand .name {
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    font-size: 28px; letter-spacing: 4px; line-height: 1;
+  }
+  .brand .sub {
+    font-size: 10px; letter-spacing: 2px; color: var(--sand);
+    margin-top: 2px;
+  }
+  .hero {
+    padding: 28px 0 20px;
+    text-align: center;
+  }
+  .hero h1 {
+    font-family: Georgia, 'Cambria', serif;
+    font-size: 28px; line-height: 1.2;
+    margin: 0 0 10px;
+    font-weight: 700;
+  }
+  .hero p {
+    font-size: 14px; color: var(--sand); margin: 0;
+    line-height: 1.5;
+  }
+
+  .form-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 24px 20px 28px;
+    margin-top: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    color: var(--cocoa);
+  }
+  .field { margin-bottom: 16px; }
+  .field:last-of-type { margin-bottom: 20px; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--terra);
+    margin-bottom: 5px;
+    letter-spacing: 0.3px;
+  }
+  .field label .req { color: #e53e3e; }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #ddd;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--cocoa);
+    background: var(--light);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--terra);
+  }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .field select { appearance: auto; }
+
+  .submit-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    background: var(--terra);
+    color: #fff;
+    font-family: Georgia, serif;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.05s;
+  }
+  .submit-btn:active { transform: scale(0.98); }
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .success {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .success .check {
+    width: 64px; height: 64px;
+    background: var(--sage);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 16px;
+  }
+  .success h2 {
+    font-family: Georgia, serif;
+    font-size: 24px;
+    margin: 0 0 10px;
+  }
+  .success p {
+    font-size: 14px;
+    color: var(--sand);
+    line-height: 1.5;
+    margin: 0 0 20px;
+  }
+  .success .wa-btn {
+    display: inline-block;
+    background: var(--wa);
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .error-msg {
+    display: none;
+    background: #fee;
+    color: #c53030;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  .small {
+    margin-top: auto;
+    padding-top: 22px;
+    font-size: 11.5px;
+    color: var(--sand);
+    text-align: center;
+    line-height: 1.6;
+  }
+  .small a { color: #fff; text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="8" fill="#fff"/>
+        <rect x="2" y="2" width="28" height="28" rx="6" fill="#B85042"/>
+        <rect x="6" y="18" width="6" height="9" rx="1" fill="#fff"/>
+        <rect x="13" y="13" width="6" height="14" rx="1" fill="#fff"/>
+        <rect x="20" y="7" width="6" height="20" rx="1" fill="#fff"/>
+      </svg>
+      <div>
+        <div class="name">STOREY</div>
+        <div class="sub">VENDOR REGISTRATION</div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <h1>Register as a<br/>Storey Vendor</h1>
+      <p>Supply materials &amp; services to contractors<br/>across North-East India.</p>
+    </div>
+
+    <div class="form-card" id="formCard">
+      <div class="error-msg" id="errorMsg"></div>
+
+      <form id="vendorForm" novalidate>
+        <div class="field">
+          <label>Business Name <span class="req">*</span></label>
+          <input type="text" name="business_name" required placeholder="e.g. Sharma Building Materials"/>
+        </div>
+
+        <div class="field">
+          <label>Contact Person <span class="req">*</span></label>
+          <input type="text" name="contact_name" required placeholder="Your name"/>
+        </div>
+
+        <div class="field">
+          <label>Phone Number <span class="req">*</span></label>
+          <input type="tel" name="phone" required placeholder="98640 XXXXX" pattern="[0-9]{10,12}"/>
+        </div>
+
+        <div class="field">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="Optional"/>
+        </div>
+
+        <div class="field">
+          <label>City</label>
+          <input type="text" name="city" placeholder="e.g. Guwahati"/>
+        </div>
+
+        <div class="field">
+          <label>Type of Work / Supply</label>
+          <select name="work_type">
+            <option value="">— Select —</option>
+            <option value="cement_sand_aggregate">Cement / Sand / Aggregate</option>
+            <option value="steel_tmt">Steel / TMT Bars</option>
+            <option value="bricks_blocks">Bricks / Blocks</option>
+            <option value="electrical">Electrical Materials</option>
+            <option value="plumbing">Plumbing / Sanitary</option>
+            <option value="hardware">Hardware / Tools</option>
+            <option value="paint_finishing">Paint / Finishing</option>
+            <option value="wood_timber">Wood / Timber</option>
+            <option value="waterproofing">Waterproofing</option>
+            <option value="rmc">Ready-Mix Concrete (RMC)</option>
+            <option value="transport">Transport / Logistics</option>
+            <option value="labour_contractor">Labour Contractor</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>GST Number</label>
+          <input type="text" name="gst_number" placeholder="Optional"/>
+        </div>
+
+        <div class="field">
+          <label>Anything else?</label>
+          <textarea name="note" placeholder="Products you supply, areas you cover, etc."></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Register</button>
+      </form>
+    </div>
+
+    <div class="success" id="successCard">
+      <div class="check">✓</div>
+      <h2>Registration Received</h2>
+      <p>We'll review your details and get back<br/>to you within 2 business days.</p>
+      <a class="wa-btn" href="https://wa.me/919864066898?text=Hi%20Karun%2C%20I%20just%20registered%20as%20a%20vendor%20on%20Storey.">
+        💬 WhatsApp Karun
+      </a>
+    </div>
+
+    <div class="small">
+      <a href="https://storeyinfra.com">storeyinfra.com</a> ·
+      <a href="https://storeyinfra.com/privacy">Privacy</a> ·
+      <a href="https://storeyinfra.com/terms">Terms</a>
+      <br/>
+      Karun Roongta · Founder · +91 98640 66898
+    </div>
+
+  </div>
+
+<script>
+const SB_URL = 'https://zgvbogxibiilnblmuohg.supabase.co';
+const SB_KEY = 'sb_publishable_zeHTezREKcyaJMBY-IcJQg_ZS-O0AvW';
+
+const form = document.getElementById('vendorForm');
+const btn = document.getElementById('submitBtn');
+const errEl = document.getElementById('errorMsg');
+const formCard = document.getElementById('formCard');
+const successCard = document.getElementById('successCard');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errEl.style.display = 'none';
+
+  const fd = new FormData(form);
+  const business_name = fd.get('business_name')?.trim();
+  const contact_name = fd.get('contact_name')?.trim();
+  const phone = fd.get('phone')?.trim().replace(/\s+/g, '');
+
+  if (!business_name || !contact_name || !phone) {
+    errEl.textContent = 'Please fill in Business Name, Contact Person, and Phone.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  if (!/^\d{10,12}$/.test(phone)) {
+    errEl.textContent = 'Enter a valid 10-digit phone number.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  try {
+    const body = {
+      business_name,
+      contact_name,
+      phone,
+      email: fd.get('email')?.trim() || null,
+      city: fd.get('city')?.trim() || null,
+      work_type: fd.get('work_type') || null,
+      gst_number: fd.get('gst_number')?.trim() || null,
+      note: fd.get('note')?.trim() || null,
+    };
+
+    const res = await fetch(SB_URL + '/rest/v1/vendor_registrations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) throw new Error('Server error');
+
+    formCard.style.display = 'none';
+    successCard.style.display = 'block';
+  } catch (err) {
+    errEl.textContent = 'Something went wrong. Please try again or WhatsApp us directly.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Register';
+  }
+});
+</script>
+</body>
+</html>
