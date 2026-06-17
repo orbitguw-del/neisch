@@ -96,6 +96,12 @@ Last reprioritised: 2026-05-31.
 - [ ] **Data Safety form** — fill in Play Console with declared data types
   (name, email, phone, address, worker ID-proof, app content; collected not shared).
 
+- [ ] **Review & import vendor registrations** — public form at
+  `storeyinfra.com/vendor` saves to `vendor_registrations` table (separate
+  from main app). When ready: review in Supabase Table Editor, approve good
+  ones, import into the main vendor module (Phase 2). Don't forget to check
+  this table periodically — every vendor who fills the form is a warm lead.
+
 ---
 
 ## 💳 Pricing & payment tiers *(NEW feature — set 2026-06-01; NOW IN 90-day plan)*

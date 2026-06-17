@@ -346,6 +346,16 @@ form.addEventListener('submit', async (e) => {
 
     if (!res.ok) throw new Error('Server error');
 
+    const emailData = { contact_name, business_name, phone,
+      email: fd.get('email')?.trim() || '', city: fd.get('city')?.trim() || '',
+      work_type: workType || '', gst_number: fd.get('gst_number')?.trim() || '',
+      note: fd.get('note')?.trim() || '' };
+    fetch(SB_URL + '/functions/v1/vendor-confirm-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SB_KEY },
+      body: JSON.stringify(emailData),
+    }).catch(() => {});
+
     formCard.style.display = 'none';
     successCard.style.display = 'block';
   } catch (err) {
