@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { getCached, setCache, clearAllCache } from '@/lib/offlineCache'
+import useOfflineStore from '@/stores/offlineStore'
 
 const useAuthStore = create((set, get) => ({
   session: null,
@@ -95,6 +97,14 @@ const useAuthStore = create((set, get) => ({
 
     const promise = (async () => {
       try {
+        const profileCacheKey = `auth:profile:u=${userId}`
+        const cached = await getCached(profileCacheKey)
+        if (cached) {
+          const cp = cached.data.profile
+          set({ profile: cp, profileError: null, loading: false })
+          if (!useOfflineStore.getState().online) return
+        }
+
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
@@ -144,7 +154,10 @@ const useAuthStore = create((set, get) => ({
             console.error('[fetchProfile] tenant fetch failed', tenantError.code, tenantError.message)
           } else if (tenant) {
             set((state) => ({ profile: state.profile ? { ...state.profile, tenant } : state.profile }))
+            await setCache(profileCacheKey, { profile: { ...profile, tenant } })
           }
+        } else {
+          await setCache(profileCacheKey, { profile })
         }
       } catch (err) {
         console.error('[authStore] fetchProfile failed:', err)
@@ -219,9 +232,7 @@ const useAuthStore = create((set, get) => ({
   },
 
   signOut: async () => {
-    // Keep the auth listener subscribed — onAuthStateChange will fire SIGNED_OUT
-    // and clear state via the existing handler in init(). Unsubscribing here would
-    // leave this tab unable to react to fresh sessions from sibling tabs.
+    await clearAllCache()
     await supabase.auth.signOut()
   },
 }))

@@ -1,65 +1,87 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { withCache } from '@/lib/cachedFetch'
 
 const useAssignmentStore = create((set) => ({
   assignments: [],
   loading: false,
   error: null,
 
-  /** Fetch all assignments for a site (contractor / manager view). */
   fetchAssignments: async (siteId) => {
     set({ loading: true, error: null })
-    const { data, error } = await supabase
-      .from('site_assignments').select('*').eq('site_id', siteId).order('created_at')
-    if (error) { set({ loading: false, error: error.message }); return }
-    const profileIds = [...new Set((data ?? []).map(a => a.profile_id))]
-    let profileMap = {}
-    if (profileIds.length) {
-      const { data: profiles } = await supabase.from('profiles').select('id, full_name, role').in('id', profileIds)
-      profileMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p]))
+    try {
+      await withCache('assignment', 'fetchAssignments', { s: siteId },
+        async () => {
+          const { data, error } = await supabase
+            .from('site_assignments').select('*').eq('site_id', siteId).order('created_at')
+          if (error) throw new Error(error.message)
+          const profileIds = [...new Set((data ?? []).map(a => a.profile_id))]
+          let profileMap = {}
+          if (profileIds.length) {
+            const { data: profiles } = await supabase.from('profiles').select('id, full_name, role').in('id', profileIds)
+            profileMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p]))
+          }
+          return (data ?? []).map(a => ({ ...a, profile: profileMap[a.profile_id] ?? null }))
+        },
+        (data) => set({ assignments: data, loading: false, error: null }),
+      )
+    } catch (err) {
+      set({ loading: false, error: err.message })
     }
-    const enriched = (data ?? []).map(a => ({ ...a, profile: profileMap[a.profile_id] ?? null }))
-    set({ assignments: enriched, loading: false, error: null })
   },
 
-  /** Fetch all assignments for a tenant (contractor overview). */
   fetchTenantAssignments: async (tenantId) => {
     set({ loading: true, error: null })
-    const { data, error } = await supabase
-      .from('site_assignments').select('*').eq('tenant_id', tenantId).order('created_at')
-    if (error) { set({ loading: false, error: error.message }); return }
-    const list = data ?? []
-    const profileIds = [...new Set(list.map(a => a.profile_id))]
-    const siteIds    = [...new Set(list.map(a => a.site_id))]
-    let profileMap = {}, siteMap = {}
-    if (profileIds.length) {
-      const { data: profiles } = await supabase.from('profiles').select('id, full_name, role').in('id', profileIds)
-      profileMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p]))
+    try {
+      await withCache('assignment', 'fetchTenantAssignments', { t: tenantId },
+        async () => {
+          const { data, error } = await supabase
+            .from('site_assignments').select('*').eq('tenant_id', tenantId).order('created_at')
+          if (error) throw new Error(error.message)
+          const list = data ?? []
+          const profileIds = [...new Set(list.map(a => a.profile_id))]
+          const siteIds    = [...new Set(list.map(a => a.site_id))]
+          let profileMap = {}, siteMap = {}
+          if (profileIds.length) {
+            const { data: profiles } = await supabase.from('profiles').select('id, full_name, role').in('id', profileIds)
+            profileMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p]))
+          }
+          if (siteIds.length) {
+            const { data: sites } = await supabase.from('sites').select('id, name, location').in('id', siteIds)
+            siteMap = Object.fromEntries((sites ?? []).map(s => [s.id, s]))
+          }
+          return list.map(a => ({ ...a, profile: profileMap[a.profile_id] ?? null, site: siteMap[a.site_id] ?? null }))
+        },
+        (data) => set({ assignments: data, loading: false, error: null }),
+      )
+    } catch (err) {
+      set({ loading: false, error: err.message })
     }
-    if (siteIds.length) {
-      const { data: sites } = await supabase.from('sites').select('id, name, location').in('id', siteIds)
-      siteMap = Object.fromEntries((sites ?? []).map(s => [s.id, s]))
-    }
-    const enriched = list.map(a => ({ ...a, profile: profileMap[a.profile_id] ?? null, site: siteMap[a.site_id] ?? null }))
-    set({ assignments: enriched, loading: false, error: null })
   },
 
-  /** Fetch sites assigned to the currently logged-in user. */
   fetchMyAssignments: async () => {
     set({ loading: true, error: null })
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { set({ loading: false }); return }
-    const { data, error } = await supabase
-      .from('site_assignments').select('*').eq('profile_id', user.id).order('created_at')
-    if (error) { set({ loading: false, error: error.message }); return }
-    const siteIds = [...new Set((data ?? []).map(a => a.site_id))]
-    let siteMap = {}
-    if (siteIds.length) {
-      const { data: sites } = await supabase.from('sites').select('*').in('id', siteIds)
-      siteMap = Object.fromEntries((sites ?? []).map(s => [s.id, s]))
+    try {
+      await withCache('assignment', 'fetchMyAssignments', { u: user.id },
+        async () => {
+          const { data, error } = await supabase
+            .from('site_assignments').select('*').eq('profile_id', user.id).order('created_at')
+          if (error) throw new Error(error.message)
+          const siteIds = [...new Set((data ?? []).map(a => a.site_id))]
+          let siteMap = {}
+          if (siteIds.length) {
+            const { data: sites } = await supabase.from('sites').select('*').in('id', siteIds)
+            siteMap = Object.fromEntries((sites ?? []).map(s => [s.id, s]))
+          }
+          return (data ?? []).map(a => ({ ...a, site: siteMap[a.site_id] ?? null }))
+        },
+        (data) => set({ assignments: data, loading: false, error: null }),
+      )
+    } catch (err) {
+      set({ loading: false, error: err.message })
     }
-    const enriched = (data ?? []).map(a => ({ ...a, site: siteMap[a.site_id] ?? null }))
-    set({ assignments: enriched, loading: false, error: null })
   },
 
   createAssignment: async (payload) => {

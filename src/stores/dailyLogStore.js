@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { createNotification } from '@/stores/notificationStore'
 import { isOnline, queueWrite, offlineId } from '@/lib/offlineWrite'
+import { withCache } from '@/lib/cachedFetch'
 
 async function attachCreators(logs) {
   const ids = [...new Set(logs.map(l => l.created_by).filter(Boolean))]
@@ -19,22 +20,36 @@ const useDailyLogStore = create((set) => ({
 
   fetchLogs: async (siteId) => {
     set({ loading: true, error: null })
-    const { data, error } = await supabase
-      .from('daily_logs')
-      .select('*, daily_log_photos(id, photo_path, caption)')
-      .eq('site_id', siteId)
-      .order('log_date', { ascending: false })
-    if (error) { set({ loading: false, error: error.message }); return }
-    const enriched = await attachCreators(data ?? [])
-    set({ logs: enriched, loading: false, error: null })
+    try {
+      await withCache('dailyLog', 'fetchLogs', { s: siteId },
+        async () => {
+          const { data, error } = await supabase
+            .from('daily_logs')
+            .select('*, daily_log_photos(id, photo_path, caption)')
+            .eq('site_id', siteId)
+            .order('log_date', { ascending: false })
+          if (error) throw new Error(error.message)
+          return await attachCreators(data ?? [])
+        },
+        (data) => set({ logs: data, loading: false, error: null }),
+      )
+    } catch (err) {
+      set({ loading: false, error: err.message })
+    }
   },
 
   fetchLog: async (logId) => {
-    const { data, error } = await supabase.from('daily_logs').select('*').eq('id', logId).single()
-    if (error) throw error
-    const [enriched] = await attachCreators([data])
-    set({ activeLog: enriched })
-    return enriched
+    let result = null
+    await withCache('dailyLog', 'fetchLog', { id: logId },
+      async () => {
+        const { data, error } = await supabase.from('daily_logs').select('*').eq('id', logId).single()
+        if (error) throw error
+        const [enriched] = await attachCreators([data])
+        return enriched
+      },
+      (data) => { result = data; set({ activeLog: data }) },
+    )
+    return result
   },
 
   createLog: async (payload) => {

@@ -4,6 +4,20 @@ import { Network } from '@capacitor/network'
 import { supabase } from '@/lib/supabase'
 import { getQueued, removeMutation, markFailed } from '@/lib/offlineQueue'
 import useOfflineStore from '@/stores/offlineStore'
+import { invalidateCache } from '@/lib/offlineCache'
+
+const INVALIDATION_MAP = {
+  attendance:          ['worker:'],
+  daily_logs:          ['dailyLog:'],
+  site_expenses:       ['expense:'],
+  workers:             ['worker:'],
+  sites:               ['site:'],
+  materials:           ['material:'],
+  material_receipts:   ['materialReceipt:', 'material:'],
+  material_transfers:  ['materialTransfer:', 'material:'],
+  tasks:               ['task:'],
+  site_assignments:    ['assignment:'],
+}
 
 /** Replay one queued mutation against Supabase. Throws on error. */
 async function applyMutation(m) {
@@ -47,6 +61,10 @@ export async function drainQueue() {
       try {
         await applyMutation(m)
         await removeMutation(m.id)
+        const prefixes = INVALIDATION_MAP[m.table]
+        if (prefixes) {
+          for (const p of prefixes) await invalidateCache(p)
+        }
       } catch (err) {
         const msg = err?.message ?? String(err)
         await markFailed(m.id, msg)

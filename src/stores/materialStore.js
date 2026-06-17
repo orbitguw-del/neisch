@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { withCache } from '@/lib/cachedFetch'
 
 const useMaterialStore = create((set) => ({
   materials: [],
@@ -8,12 +9,22 @@ const useMaterialStore = create((set) => ({
 
   fetchMaterials: async (siteId) => {
     set({ loading: true, error: null })
-    const { data, error } = await supabase
-      .from('materials')
-      .select('*')
-      .eq('site_id', siteId)
-      .order('name')
-    set({ materials: data ?? [], loading: false, error: error?.message ?? null })
+    try {
+      await withCache('material', 'fetchMaterials', { s: siteId },
+        async () => {
+          const { data, error } = await supabase
+            .from('materials')
+            .select('*')
+            .eq('site_id', siteId)
+            .order('name')
+          if (error) throw new Error(error.message)
+          return data ?? []
+        },
+        (data) => set({ materials: data, loading: false, error: null }),
+      )
+    } catch (err) {
+      set({ loading: false, error: err.message })
+    }
   },
 
   createMaterial: async (payload) => {

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { isOnline, queueWrite, offlineId } from '@/lib/offlineWrite'
+import { withCache } from '@/lib/cachedFetch'
 
 const useExpenseStore = create((set, get) => ({
   expenses: [],
@@ -13,19 +14,27 @@ const useExpenseStore = create((set, get) => ({
    */
   fetchExpenses: async (tenantId, { siteId = null, startDate = null, endDate = null } = {}) => {
     set({ loading: true, error: null })
-    let q = supabase
-      .from('site_expenses')
-      .select('*, sites(name), creator:created_by(full_name), approver:approved_by(full_name)')
-      .eq('tenant_id', tenantId)
-      .order('expense_date', { ascending: false })
-      .order('created_at', { ascending: false })
-
-    if (siteId)    q = q.eq('site_id', siteId)
-    if (startDate) q = q.gte('expense_date', startDate)
-    if (endDate)   q = q.lte('expense_date', endDate)
-
-    const { data, error } = await q
-    set({ expenses: data ?? [], loading: false, error: error?.message ?? null })
+    try {
+      await withCache('expense', 'fetchExpenses', { t: tenantId, s: siteId, sd: startDate, ed: endDate },
+        async () => {
+          let q = supabase
+            .from('site_expenses')
+            .select('*, sites(name), creator:created_by(full_name), approver:approved_by(full_name)')
+            .eq('tenant_id', tenantId)
+            .order('expense_date', { ascending: false })
+            .order('created_at', { ascending: false })
+          if (siteId)    q = q.eq('site_id', siteId)
+          if (startDate) q = q.gte('expense_date', startDate)
+          if (endDate)   q = q.lte('expense_date', endDate)
+          const { data, error } = await q
+          if (error) throw new Error(error.message)
+          return data ?? []
+        },
+        (data) => set({ expenses: data, loading: false, error: null }),
+      )
+    } catch (err) {
+      set({ loading: false, error: err.message })
+    }
   },
 
   createExpense: async (payload) => {

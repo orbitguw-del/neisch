@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { isOnline, queueWrite } from '@/lib/offlineWrite'
+import { withCache } from '@/lib/cachedFetch'
 
 const useWorkerStore = create((set, get) => ({
   workers: [],
@@ -11,11 +12,21 @@ const useWorkerStore = create((set, get) => ({
 
   fetchWorkers: async ({ siteId, tenantId } = {}) => {
     set({ loading: true, error: null })
-    let q = supabase.from('workers').select('*').order('name')
-    if (siteId)   q = q.eq('site_id', siteId)
-    if (tenantId) q = q.eq('tenant_id', tenantId)
-    const { data, error } = await q
-    set({ workers: data ?? [], loading: false, error: error?.message ?? null })
+    try {
+      await withCache('worker', 'fetchWorkers', { s: siteId, t: tenantId },
+        async () => {
+          let q = supabase.from('workers').select('*').order('name')
+          if (siteId)   q = q.eq('site_id', siteId)
+          if (tenantId) q = q.eq('tenant_id', tenantId)
+          const { data, error } = await q
+          if (error) throw new Error(error.message)
+          return data ?? []
+        },
+        (data) => set({ workers: data, loading: false, error: null }),
+      )
+    } catch (err) {
+      set({ loading: false, error: err.message })
+    }
   },
 
   createWorker: async (payload) => {
@@ -53,13 +64,20 @@ const useWorkerStore = create((set, get) => ({
 
   // Returns { [workerId]: { id, status, notes, approval_status } } for a site + date
   fetchAttendance: async (siteId, date) => {
-    const { data, error } = await supabase
-      .from('attendance')
-      .select('id, worker_id, status, notes, approval_status, confirmed_at')
-      .eq('site_id', siteId)
-      .eq('date', date)
-    if (error) throw error
-    return Object.fromEntries((data ?? []).map((r) => [r.worker_id, r]))
+    let result = {}
+    await withCache('worker', 'fetchAttendance', { s: siteId, d: date },
+      async () => {
+        const { data, error } = await supabase
+          .from('attendance')
+          .select('id, worker_id, status, notes, approval_status, confirmed_at')
+          .eq('site_id', siteId)
+          .eq('date', date)
+        if (error) throw error
+        return Object.fromEntries((data ?? []).map((r) => [r.worker_id, r]))
+      },
+      (data) => { result = data },
+    )
+    return result
   },
 
   // Confirm a whole site+date roster — Site Manager sign-off.
@@ -120,16 +138,23 @@ const useWorkerStore = create((set, get) => ({
 
   // Monthly summary: { date: { present, absent, half_day, paid_leave } }
   fetchMonthlyAttendance: async (siteId, year, month) => {
-    const from = `${year}-${String(month).padStart(2, '0')}-01`
-    const to   = new Date(year, month, 0).toISOString().slice(0, 10) // last day of month
-    const { data, error } = await supabase
-      .from('attendance')
-      .select('worker_id, date, status')
-      .eq('site_id', siteId)
-      .gte('date', from)
-      .lte('date', to)
-    if (error) throw error
-    return data ?? []
+    let result = []
+    await withCache('worker', 'fetchMonthlyAttendance', { s: siteId, y: year, m: month },
+      async () => {
+        const from = `${year}-${String(month).padStart(2, '0')}-01`
+        const to   = new Date(year, month, 0).toISOString().slice(0, 10)
+        const { data, error } = await supabase
+          .from('attendance')
+          .select('worker_id, date, status')
+          .eq('site_id', siteId)
+          .gte('date', from)
+          .lte('date', to)
+        if (error) throw error
+        return data ?? []
+      },
+      (data) => { result = data },
+    )
+    return result
   },
 }))
 
