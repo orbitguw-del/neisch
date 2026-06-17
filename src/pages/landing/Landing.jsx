@@ -13,6 +13,9 @@ function Nav() {
           <span className="font-display text-lg font-bold text-charcoal-900">Storey</span>
         </div>
         <div className="flex items-center gap-3">
+          <a href="/vendor" className="text-sm font-medium text-charcoal-600 hover:text-charcoal-900 transition-colors">
+            Vendor Registration
+          </a>
           <Link to="/login" className="text-sm font-medium text-charcoal-600 hover:text-charcoal-900 transition-colors">
             Sign in
           </Link>
@@ -368,6 +371,7 @@ export default function Landing() {
             <span className="ml-1 text-xs text-charcoal-400">Construction, organised.</span>
           </div>
           <div className="flex gap-5 text-sm text-charcoal-400">
+            <a href="/vendor" className="hover:text-charcoal-700 transition-colors">Vendor Registration</a>
             <Link to="/login" className="hover:text-charcoal-700 transition-colors">Sign in</Link>
             <Link to="/register" className="hover:text-charcoal-700 transition-colors">Register</Link>
             <a href="mailto:support@storeyinfra.com" className="hover:text-charcoal-700 transition-colors">Contact</a>
