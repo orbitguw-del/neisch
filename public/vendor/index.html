@@ -280,6 +280,9 @@
   </div>
 
 <script>
+const SB_URL = 'https://zgvbogxibiilnblmuohg.supabase.co';
+const SB_KEY = 'sb_publishable_zeHTezREKcyaJMBY-IcJQg_ZS-O0AvW';
+
 const form = document.getElementById('vendorForm');
 const btn = document.getElementById('submitBtn');
 const errEl = document.getElementById('errorMsg');
@@ -293,7 +296,7 @@ workTypeSelect.addEventListener('change', () => {
   if (workTypeSelect.value !== 'Other') workTypeOther.value = '';
 });
 
-form.addEventListener('submit', (e) => {
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
   errEl.style.display = 'none';
 
@@ -314,28 +317,43 @@ form.addEventListener('submit', (e) => {
     return;
   }
 
-  const email = fd.get('email')?.trim() || '';
-  const city = fd.get('city')?.trim() || '';
-  let workType = fd.get('work_type') || '';
+  let workType = fd.get('work_type') || null;
   if (workType === 'Other') workType = fd.get('work_type_other')?.trim() || 'Other';
-  const gst = fd.get('gst_number')?.trim() || '';
-  const note = fd.get('note')?.trim() || '';
 
-  let msg = `🏗 *New Vendor Registration*\n\n`;
-  msg += `*Business:* ${business_name}\n`;
-  msg += `*Contact:* ${contact_name}\n`;
-  msg += `*Phone:* ${phone}\n`;
-  if (email) msg += `*Email:* ${email}\n`;
-  if (city) msg += `*City:* ${city}\n`;
-  if (workType) msg += `*Work Type:* ${workType}\n`;
-  if (gst) msg += `*GST:* ${gst}\n`;
-  if (note) msg += `*Note:* ${note}\n`;
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
 
-  const waUrl = `https://wa.me/919864066898?text=${encodeURIComponent(msg)}`;
-  window.open(waUrl, '_blank');
+  try {
+    const res = await fetch(SB_URL + '/rest/v1/vendor_registrations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        business_name,
+        contact_name,
+        phone,
+        email: fd.get('email')?.trim() || null,
+        city: fd.get('city')?.trim() || null,
+        work_type: workType,
+        gst_number: fd.get('gst_number')?.trim() || null,
+        note: fd.get('note')?.trim() || null,
+      }),
+    });
 
-  formCard.style.display = 'none';
-  successCard.style.display = 'block';
+    if (!res.ok) throw new Error('Server error');
+
+    formCard.style.display = 'none';
+    successCard.style.display = 'block';
+  } catch (err) {
+    errEl.textContent = 'Something went wrong. Please try again or WhatsApp us directly.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Register';
+  }
 });
 </script>
 </body>
