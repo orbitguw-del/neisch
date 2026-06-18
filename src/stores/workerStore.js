@@ -82,9 +82,20 @@ const useWorkerStore = create((set, get) => ({
 
   // Confirm a whole site+date roster — Site Manager sign-off.
   confirmAttendanceDay: async ({ siteId, date, profileId }) => {
+    const payload = { approval_status: 'confirmed', confirmed_by: profileId, confirmed_at: new Date().toISOString() }
+    if (!isOnline()) {
+      await queueWrite({
+        table: 'attendance',
+        op: 'update',
+        payload,
+        match: { site_id: siteId, date },
+        label: `Confirm attendance — ${date}`,
+      })
+      return
+    }
     const { error } = await supabase
       .from('attendance')
-      .update({ approval_status: 'confirmed', confirmed_by: profileId, confirmed_at: new Date().toISOString() })
+      .update(payload)
       .eq('site_id', siteId)
       .eq('date', date)
     if (error) throw error
@@ -92,12 +103,20 @@ const useWorkerStore = create((set, get) => ({
 
   // Upsert a single worker's attendance for a date
   upsertAttendance: async ({ workerId, siteId, tenantId, date, status, notes }) => {
+    const row = { worker_id: workerId, site_id: siteId, tenant_id: tenantId, date, status, notes: notes ?? null }
+    if (!isOnline()) {
+      await queueWrite({
+        table: 'attendance',
+        op: 'upsert',
+        payload: row,
+        upsertOpts: { onConflict: 'worker_id,date' },
+        label: `Attendance — ${date} (1 worker)`,
+      })
+      return row
+    }
     const { data, error } = await supabase
       .from('attendance')
-      .upsert(
-        { worker_id: workerId, site_id: siteId, tenant_id: tenantId, date, status, notes: notes ?? null },
-        { onConflict: 'worker_id,date' }
-      )
+      .upsert(row, { onConflict: 'worker_id,date' })
       .select()
       .single()
     if (error) throw error

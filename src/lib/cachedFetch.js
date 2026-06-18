@@ -28,7 +28,8 @@ export async function withCache(storeName, fnName, params, queryFn, setFn) {
     } catch (err) {
       if (!cached) throw err
     }
-  } else if (!cached) {
-    throw new Error('You are offline and no cached data is available.')
   }
+  // Offline + no cache → silently no-op. The caller's default (empty list,
+  // empty map, previous state) is the right UX — a brand-new date or empty
+  // table should render as "nothing yet", not block the page with an error.
 }
