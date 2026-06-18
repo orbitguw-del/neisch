@@ -22,10 +22,12 @@ const useWorkerStore = create((set, get) => ({
           if (error) throw new Error(error.message)
           return data ?? []
         },
-        (data) => set({ workers: data, loading: false, error: null }),
+        (data) => set({ workers: data, error: null }),
       )
     } catch (err) {
-      set({ loading: false, error: err.message })
+      set({ error: err.message })
+    } finally {
+      set({ loading: false })
     }
   },
 
@@ -161,7 +163,8 @@ const useWorkerStore = create((set, get) => ({
     await withCache('worker', 'fetchMonthlyAttendance', { s: siteId, y: year, m: month },
       async () => {
         const from = `${year}-${String(month).padStart(2, '0')}-01`
-        const to   = new Date(year, month, 0).toISOString().slice(0, 10)
+        const toD  = new Date(year, month, 0)
+        const to   = `${toD.getFullYear()}-${String(toD.getMonth() + 1).padStart(2, '0')}-${String(toD.getDate()).padStart(2, '0')}`
         const { data, error } = await supabase
           .from('attendance')
           .select('worker_id, date, status')

@@ -13,9 +13,12 @@ import { cn } from '@/lib/utils'
 
 const WORK_LABEL = Object.fromEntries(WORK_TYPES.map(({ value, label }) => [value, label]))
 
-function todayISO() { return new Date().toISOString().slice(0, 10) }
+function toLocalISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+function todayISO() { return toLocalISO(new Date()) }
 function firstOfMonthISO() {
-  const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10)
+  const d = new Date(); d.setDate(1); return toLocalISO(d)
 }
 function shortDate(iso) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })

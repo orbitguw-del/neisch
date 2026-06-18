@@ -15,13 +15,20 @@ const useCostCentreStore = create((set) => ({
   /** Fetch the editable list of cost centres for a site. */
   fetchCostCentres: async (siteId) => {
     set({ loading: true, error: null })
-    const { data, error } = await supabase
-      .from('cost_centres')
-      .select('*')
-      .eq('site_id', siteId)
-      .order('sort_order')
-      .order('name')
-    set({ costCentres: data ?? [], loading: false, error: error?.message ?? null })
+    try {
+      const { data, error } = await supabase
+        .from('cost_centres')
+        .select('*')
+        .eq('site_id', siteId)
+        .order('sort_order')
+        .order('name')
+      if (error) throw new Error(error.message)
+      set({ costCentres: data ?? [], error: null })
+    } catch (err) {
+      set({ error: err.message })
+    } finally {
+      set({ loading: false })
+    }
   },
 
   /** Fetch budget-vs-actual rollup (view) for a site — for chips and Reports. */

@@ -43,12 +43,17 @@ const useMaterialTransferStore = create((set) => ({
 
   fetchTransfers: async (tenantId) => {
     set({ loading: true })
-    const { data, error } = await supabase
-      .from('material_transfers').select('*')
-      .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
-    if (error) { set({ loading: false }); throw error }
-    set({ transfers: await enrichTransfers(data ?? []), loading: false })
+    try {
+      const { data, error } = await supabase
+        .from('material_transfers').select('*')
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      set({ transfers: await enrichTransfers(data ?? []) })
+    } catch {
+    } finally {
+      set({ loading: false })
+    }
   },
 
   patchLocal: (id, patch) => set((s) => ({

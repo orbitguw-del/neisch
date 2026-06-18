@@ -8,78 +8,53 @@ const useReportsStore = create((set, get) => ({
 
   fetchMonthlyReport: async (tenantId, month /* 'YYYY-MM' */, siteId = null) => {
     set({ monthlyLoading: true, monthlyData: null })
+    try {
+      const startTs = `${month}-01T00:00:00`
+      const [yr, mo] = month.split('-').map(Number)
+      const nextMonth = mo === 12 ? `${yr + 1}-01` : `${yr}-${String(mo + 1).padStart(2, '0')}`
+      const endTs = `${nextMonth}-01T00:00:00`
 
-    const startTs = `${month}-01T00:00:00`
-    // Last day of month: go to next month day 1 and subtract 1 ms
-    const [yr, mo] = month.split('-').map(Number)
-    const nextMonth = mo === 12 ? `${yr + 1}-01` : `${yr}-${String(mo + 1).padStart(2, '0')}`
-    const endTs = `${nextMonth}-01T00:00:00`
+      let rQuery = supabase
+        .from('material_receipts')
+        .select('material_id, quantity, unit_cost, site_id, materials(name, unit), sites(name)')
+        .eq('tenant_id', tenantId)
+        .eq('status', 'received')
+        .or(`and(received_at.gte.${startTs},received_at.lt.${endTs}),and(received_at.is.null,created_at.gte.${startTs},created_at.lt.${endTs})`)
 
-    // Receipts in range
-    let rQuery = supabase
-      .from('material_receipts')
-      .select('material_id, quantity, unit_cost, site_id, materials(name, unit), sites(name)')
-      .eq('tenant_id', tenantId)
-      .eq('status', 'received')
-      // Count by when stock actually arrived (received_at), but fall back to
-      // created_at for any legacy row whose received_at was never set — so no
-      // received receipt can silently drop out of the report.
-      .or(`and(received_at.gte.${startTs},received_at.lt.${endTs}),and(received_at.is.null,created_at.gte.${startTs},created_at.lt.${endTs})`)
+      if (siteId) rQuery = rQuery.eq('site_id', siteId)
 
-    if (siteId) rQuery = rQuery.eq('site_id', siteId)
+      let toQuery = supabase
+        .from('material_transfers')
+        .select('material_id, quantity, from_site_id, materials(name, unit), sites!material_transfers_from_site_id_fkey(name)')
+        .eq('tenant_id', tenantId)
+        .eq('status', 'confirmed')
+        .gte('created_at', startTs)
+        .lt('created_at', endTs)
 
-    // Transfers out in range
-    let toQuery = supabase
-      .from('material_transfers')
-      .select('material_id, quantity, from_site_id, materials(name, unit), sites!material_transfers_from_site_id_fkey(name)')
-      .eq('tenant_id', tenantId)
-      .eq('status', 'confirmed')
-      .gte('created_at', startTs)
-      .lt('created_at', endTs)
+      if (siteId) toQuery = toQuery.eq('from_site_id', siteId)
 
-    if (siteId) toQuery = toQuery.eq('from_site_id', siteId)
+      const [{ data: receipts }, { data: transfersOut }] = await Promise.all([rQuery, toQuery])
 
-    const [{ data: receipts }, { data: transfersOut }] = await Promise.all([
-      rQuery,
-      toQuery,
-    ])
+      const byMaterial = {}
+      ;(receipts ?? []).forEach((r) => {
+        const key = r.material_id
+        if (!byMaterial[key]) byMaterial[key] = { name: r.materials?.name ?? 'Unknown', unit: r.materials?.unit ?? '', received: 0, transferred: 0, cost: 0 }
+        byMaterial[key].received += Number(r.quantity)
+        byMaterial[key].cost     += Number(r.quantity) * Number(r.unit_cost || 0)
+      })
+      ;(transfersOut ?? []).forEach((t) => {
+        const key = t.material_id
+        if (!byMaterial[key]) byMaterial[key] = { name: t.materials?.name ?? 'Unknown', unit: t.materials?.unit ?? '', received: 0, transferred: 0, cost: 0 }
+        byMaterial[key].transferred += Number(t.quantity)
+      })
 
-    // Aggregate by material
-    const byMaterial = {}
-
-    ;(receipts ?? []).forEach((r) => {
-      const key = r.material_id
-      if (!byMaterial[key]) {
-        byMaterial[key] = {
-          name:        r.materials?.name ?? 'Unknown',
-          unit:        r.materials?.unit ?? '',
-          received:    0,
-          transferred: 0,
-          cost:        0,
-        }
-      }
-      byMaterial[key].received += Number(r.quantity)
-      byMaterial[key].cost     += Number(r.quantity) * Number(r.unit_cost || 0)
-    })
-
-    ;(transfersOut ?? []).forEach((t) => {
-      const key = t.material_id
-      if (!byMaterial[key]) {
-        byMaterial[key] = {
-          name:        t.materials?.name ?? 'Unknown',
-          unit:        t.materials?.unit ?? '',
-          received:    0,
-          transferred: 0,
-          cost:        0,
-        }
-      }
-      byMaterial[key].transferred += Number(t.quantity)
-    })
-
-    const rows = Object.entries(byMaterial).map(([id, data]) => ({ id, ...data }))
-    const totalCost = rows.reduce((s, r) => s + r.cost, 0)
-
-    set({ monthlyData: { month, rows, totalCost }, monthlyLoading: false })
+      const rows = Object.entries(byMaterial).map(([id, data]) => ({ id, ...data }))
+      const totalCost = rows.reduce((s, r) => s + r.cost, 0)
+      set({ monthlyData: { month, rows, totalCost } })
+    } catch {
+    } finally {
+      set({ monthlyLoading: false })
+    }
   },
 
   // ─── Budget vs Actual ────────────────────────────────────────────────────
@@ -88,61 +63,40 @@ const useReportsStore = create((set, get) => ({
 
   fetchBudgetReport: async (tenantId, siteId, month) => {
     set({ budgetLoading: true, budgetData: null })
+    try {
+      const startTs = `${month}-01T00:00:00`
+      const [yr, mo] = month.split('-').map(Number)
+      const nextMonth = mo === 12 ? `${yr + 1}-01` : `${yr}-${String(mo + 1).padStart(2, '0')}`
+      const endTs = `${nextMonth}-01T00:00:00`
 
-    const startTs = `${month}-01T00:00:00`
-    const [yr, mo] = month.split('-').map(Number)
-    const nextMonth = mo === 12 ? `${yr + 1}-01` : `${yr}-${String(mo + 1).padStart(2, '0')}`
-    const endTs = `${nextMonth}-01T00:00:00`
+      const [{ data: budgets }, { data: receipts }] = await Promise.all([
+        supabase.from('budget_lines').select('*, materials(name, unit)').eq('tenant_id', tenantId).eq('site_id', siteId).eq('period_month', month),
+        supabase.from('material_receipts').select('material_id, quantity, unit_cost').eq('tenant_id', tenantId).eq('site_id', siteId).eq('status', 'received')
+          .or(`and(received_at.gte.${startTs},received_at.lt.${endTs}),and(received_at.is.null,created_at.gte.${startTs},created_at.lt.${endTs})`),
+      ])
 
-    const [{ data: budgets }, { data: receipts }] = await Promise.all([
-      supabase
-        .from('budget_lines')
-        .select('*, materials(name, unit)')
-        .eq('tenant_id', tenantId)
-        .eq('site_id', siteId)
-        .eq('period_month', month),
-      supabase
-        .from('material_receipts')
-        .select('material_id, quantity, unit_cost')
-        .eq('tenant_id', tenantId)
-        .eq('site_id', siteId)
-        .eq('status', 'received')
-        // received_at with created_at fallback for legacy rows (see fetchMonthlyReport)
-        .or(`and(received_at.gte.${startTs},received_at.lt.${endTs}),and(received_at.is.null,created_at.gte.${startTs},created_at.lt.${endTs})`),
-    ])
+      const actualByMaterial = {}
+      ;(receipts ?? []).forEach((r) => {
+        actualByMaterial[r.material_id] = (actualByMaterial[r.material_id] || 0) + Number(r.quantity) * Number(r.unit_cost || 0)
+      })
 
-    // Map actual spend per material
-    const actualByMaterial = {}
-    ;(receipts ?? []).forEach((r) => {
-      actualByMaterial[r.material_id] = (actualByMaterial[r.material_id] || 0) +
-        Number(r.quantity) * Number(r.unit_cost || 0)
-    })
+      const items = (budgets ?? []).map((b) => {
+        const actual   = actualByMaterial[b.material_id] || 0
+        const variance = Number(b.budgeted_cost) - actual
+        return {
+          id: b.id, material_id: b.material_id, material: b.materials?.name ?? 'Unknown', unit: b.materials?.unit ?? '',
+          budgeted_qty: Number(b.budgeted_quantity), budgeted_cost: Number(b.budgeted_cost), actual, variance,
+          variance_pct: b.budgeted_cost > 0 ? ((variance / Number(b.budgeted_cost)) * 100).toFixed(1) : '0.0',
+        }
+      })
 
-    const items = (budgets ?? []).map((b) => {
-      const actual   = actualByMaterial[b.material_id] || 0
-      const variance = Number(b.budgeted_cost) - actual
-      return {
-        id:             b.id,
-        material_id:    b.material_id,
-        material:       b.materials?.name ?? 'Unknown',
-        unit:           b.materials?.unit ?? '',
-        budgeted_qty:   Number(b.budgeted_quantity),
-        budgeted_cost:  Number(b.budgeted_cost),
-        actual,
-        variance,
-        variance_pct:   b.budgeted_cost > 0
-          ? ((variance / Number(b.budgeted_cost)) * 100).toFixed(1)
-          : '0.0',
-      }
-    })
-
-    const totalBudgeted = items.reduce((s, i) => s + i.budgeted_cost, 0)
-    const totalActual   = items.reduce((s, i) => s + i.actual, 0)
-
-    set({
-      budgetData: { month, siteId, items, totalBudgeted, totalActual, totalVariance: totalBudgeted - totalActual },
-      budgetLoading: false,
-    })
+      const totalBudgeted = items.reduce((s, i) => s + i.budgeted_cost, 0)
+      const totalActual   = items.reduce((s, i) => s + i.actual, 0)
+      set({ budgetData: { month, siteId, items, totalBudgeted, totalActual, totalVariance: totalBudgeted - totalActual } })
+    } catch {
+    } finally {
+      set({ budgetLoading: false })
+    }
   },
 
   // ─── Budget lines CRUD ───────────────────────────────────────────────────
@@ -151,14 +105,19 @@ const useReportsStore = create((set, get) => ({
 
   fetchBudgetLines: async (tenantId, siteId, month) => {
     set({ budgetLinesLoading: true })
-    const { data } = await supabase
-      .from('budget_lines')
-      .select('*, materials(name, unit)')
-      .eq('tenant_id', tenantId)
-      .eq('site_id', siteId)
-      .eq('period_month', month)
-      .order('created_at', { ascending: true })
-    set({ budgetLines: data ?? [], budgetLinesLoading: false })
+    try {
+      const { data } = await supabase
+        .from('budget_lines')
+        .select('*, materials(name, unit)')
+        .eq('tenant_id', tenantId)
+        .eq('site_id', siteId)
+        .eq('period_month', month)
+        .order('created_at', { ascending: true })
+      set({ budgetLines: data ?? [] })
+    } catch {
+    } finally {
+      set({ budgetLinesLoading: false })
+    }
   },
 
   createBudgetLine: async (payload) => {
@@ -191,37 +150,31 @@ const useReportsStore = create((set, get) => ({
 
   fetchProjectBudget: async (tenantId, siteId) => {
     set({ projectBudgetLoading: true, projectBudgetData: null })
+    try {
+      const { data } = await supabase
+        .from('site_material_budget_v')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('site_id', siteId)
+        .order('name')
 
-    const { data } = await supabase
-      .from('site_material_budget_v')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('site_id', siteId)
-      .order('name')
+      const rows = (data ?? []).filter((m) => m.budget_qty != null)
+      const totalBudgetAmt  = rows.reduce((s, r) => s + Number(r.budget_amount  ?? 0), 0)
+      const totalActualCost = rows.reduce((s, r) => s + Number(r.actual_cost    ?? 0), 0)
+      const totalConsumedQty= rows.reduce((s, r) => s + Number(r.consumed_qty   ?? 0), 0)
+      const overBudgetCount = rows.filter((r) => Number(r.pct_consumed ?? 0) > 100).length
 
-    const rows = (data ?? []).filter((m) => m.budget_qty != null)
-
-    const totalBudgetAmt  = rows.reduce((s, r) => s + Number(r.budget_amount  ?? 0), 0)
-    const totalActualCost = rows.reduce((s, r) => s + Number(r.actual_cost    ?? 0), 0)
-    const totalConsumedQty= rows.reduce((s, r) => s + Number(r.consumed_qty   ?? 0), 0)
-    const overBudgetCount = rows.filter((r) => Number(r.pct_consumed ?? 0) > 100).length
-
-    set({
-      projectBudgetData: {
-        siteId,
-        rows,
-        totalBudgetAmt,
-        totalActualCost,
-        totalConsumedQty,
-        overBudgetCount,
-        costVariance: totalBudgetAmt - totalActualCost,
-        // % of total budget amount spent
-        pctSpent: totalBudgetAmt > 0
-          ? Math.round((totalActualCost / totalBudgetAmt) * 100)
-          : 0,
-      },
-      projectBudgetLoading: false,
-    })
+      set({
+        projectBudgetData: {
+          siteId, rows, totalBudgetAmt, totalActualCost, totalConsumedQty, overBudgetCount,
+          costVariance: totalBudgetAmt - totalActualCost,
+          pctSpent: totalBudgetAmt > 0 ? Math.round((totalActualCost / totalBudgetAmt) * 100) : 0,
+        },
+      })
+    } catch {
+    } finally {
+      set({ projectBudgetLoading: false })
+    }
   },
 
   // ─── Monthly trend: planned (budget_lines) vs actual (material_transactions)
@@ -230,7 +183,7 @@ const useReportsStore = create((set, get) => ({
 
   fetchMonthlyTrend: async (tenantId, siteId, materialId, year) => {
     set({ trendLoading: true, trendData: null })
-
+    try {
     // Build 12 month strings for the year
     const months = Array.from({ length: 12 }, (_, i) =>
       `${year}-${String(i + 1).padStart(2, '0')}`
@@ -299,7 +252,11 @@ const useReportsStore = create((set, get) => ({
       label: new Date(m + '-01').toLocaleString('en-IN', { month: 'short' }),
     }))
 
-    set({ trendData: { year, siteId, materialId, chartData }, trendLoading: false })
+    set({ trendData: { year, siteId, materialId, chartData } })
+    } catch {
+    } finally {
+      set({ trendLoading: false })
+    }
   },
 
   // ─── Attendance + payroll report ─────────────────────────────────────────
@@ -312,7 +269,7 @@ const useReportsStore = create((set, get) => ({
    */
   fetchAttendanceReport: async (tenantId, siteId, startDate, endDate) => {
     set({ attendanceLoading: true, attendanceData: null })
-
+    try {
     // Workers in scope (active only; if siteId given, scope to that site)
     let workersQuery = supabase
       .from('workers')
@@ -348,7 +305,7 @@ const useReportsStore = create((set, get) => ({
     const start = new Date(startDate + 'T00:00:00')
     const end = new Date(endDate + 'T00:00:00')
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      dates.push(d.toISOString().slice(0, 10))
+      dates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)
     }
 
     const MULT = { present: 1.0, half_day: 0.5, paid_leave: 1.0, absent: 0.0 }
@@ -391,10 +348,11 @@ const useReportsStore = create((set, get) => ({
       { present: 0, halfDay: 0, paidLeave: 0, absent: 0, payDays: 0, totalPay: 0 },
     )
 
-    set({
-      attendanceData: { startDate, endDate, dates, rows, totals, pendingConfirmation },
-      attendanceLoading: false,
-    })
+    set({ attendanceData: { startDate, endDate, dates, rows, totals, pendingConfirmation } })
+    } catch {
+    } finally {
+      set({ attendanceLoading: false })
+    }
   },
 
   // ─── Site consolidated report (logs + attendance + materials) ───────────
@@ -403,7 +361,7 @@ const useReportsStore = create((set, get) => ({
 
   fetchSiteReport: async (tenantId, siteId, startDate, endDate) => {
     set({ siteReportLoading: true, siteReportData: null })
-
+    try {
     const endTs = `${endDate}T23:59:59`
     const startTs = `${startDate}T00:00:00`
 
@@ -542,8 +500,11 @@ const useReportsStore = create((set, get) => ({
         // True site spend = approved material cost + payroll + approved expenses
         totalSpend: totalReceivedCost + attTotalPay + expApproved,
       },
-      siteReportLoading: false,
     })
+    } catch {
+    } finally {
+      set({ siteReportLoading: false })
+    }
   },
   // ─── Consumption report (material_allocations) ──────────────────────────
   consumptionData:    null,
@@ -551,7 +512,7 @@ const useReportsStore = create((set, get) => ({
 
   fetchConsumptionReport: async (tenantId, siteId = null, startDate, endDate) => {
     set({ consumptionLoading: true, consumptionData: null })
-
+    try {
     let q = supabase
       .from('material_allocations')
       .select('id, material_id, site_id, quantity_allocated, work_description, allocated_date, note, materials(name, unit, work_type, brand, unit_cost, category), sites(name)')
@@ -589,7 +550,11 @@ const useReportsStore = create((set, get) => ({
 
     const summary = Object.values(byMaterial).sort((a, b) => b.total - a.total)
 
-    set({ consumptionData: { rows, summary, startDate, endDate }, consumptionLoading: false })
+    set({ consumptionData: { rows, summary, startDate, endDate } })
+    } catch {
+    } finally {
+      set({ consumptionLoading: false })
+    }
   },
 
   // ─── Tasks report ────────────────────────────────────────────────────────
@@ -598,7 +563,7 @@ const useReportsStore = create((set, get) => ({
 
   fetchTasksReport: async (tenantId, siteId = null, status = null) => {
     set({ tasksLoading: true, tasksData: null })
-
+    try {
     let q = supabase
       .from('tasks')
       .select(`
@@ -616,7 +581,8 @@ const useReportsStore = create((set, get) => ({
 
     const { data } = await q
     const rows = data ?? []
-    const today = new Date().toISOString().slice(0, 10)
+    const _d = new Date()
+    const today = `${_d.getFullYear()}-${String(_d.getMonth() + 1).padStart(2, '0')}-${String(_d.getDate()).padStart(2, '0')}`
 
     const counts = { pending: 0, in_progress: 0, submitted: 0, done: 0, blocked: 0 }
     let overdue = 0
@@ -625,7 +591,11 @@ const useReportsStore = create((set, get) => ({
       if (t.due_date && t.due_date < today && t.status !== 'done') overdue++
     })
 
-    set({ tasksData: { rows, counts, overdue, today }, tasksLoading: false })
+    set({ tasksData: { rows, counts, overdue, today } })
+    } catch {
+    } finally {
+      set({ tasksLoading: false })
+    }
   },
 
   // ─── Stock snapshot (current inventory across sites) ────────────────────
@@ -634,14 +604,19 @@ const useReportsStore = create((set, get) => ({
 
   fetchStockReport: async (tenantId, siteId = null) => {
     set({ stockLoading: true, stockData: null })
-    let q = supabase
-      .from('materials')
-      .select('id, name, brand, unit, work_type, quantity_available, site_id, sites(name, type)')
-      .eq('tenant_id', tenantId)
-      .order('name')
-    if (siteId) q = q.eq('site_id', siteId)
-    const { data } = await q
-    set({ stockData: data ?? [], stockLoading: false })
+    try {
+      let q = supabase
+        .from('materials')
+        .select('id, name, brand, unit, work_type, quantity_available, site_id, sites(name, type)')
+        .eq('tenant_id', tenantId)
+        .order('name')
+      if (siteId) q = q.eq('site_id', siteId)
+      const { data } = await q
+      set({ stockData: data ?? [] })
+    } catch {
+    } finally {
+      set({ stockLoading: false })
+    }
   },
 }))
 

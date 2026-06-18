@@ -137,7 +137,8 @@ export default function ContractorDashboard() {
   const tenantId  = profile?.tenant_id
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
   const companyName = profile?.tenant?.name ?? 'Your company'
-  const today = new Date().toISOString().split('T')[0]
+  const _d2 = new Date()
+  const today = `${_d2.getFullYear()}-${String(_d2.getMonth() + 1).padStart(2, '0')}-${String(_d2.getDate()).padStart(2, '0')}`
   const todayLabel = new Date().toLocaleDateString('en-IN', {
     weekday: 'long', day: '2-digit', month: 'short',
   })

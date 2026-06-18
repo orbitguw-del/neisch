@@ -19,18 +19,22 @@ const useNotificationStore = create((set, get) => ({
   fetch: async (userId) => {
     if (!userId) return
     set({ loading: true })
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(30)
-    const list = data ?? []
-    set({
-      notifications: list,
-      unreadCount:   list.filter(n => !n.read_at).length,
-      loading:       false,
-    })
+    try {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(30)
+      const list = data ?? []
+      set({
+        notifications: list,
+        unreadCount:   list.filter(n => !n.read_at).length,
+      })
+    } catch {
+    } finally {
+      set({ loading: false })
+    }
   },
 
   markAllRead: async (userId) => {

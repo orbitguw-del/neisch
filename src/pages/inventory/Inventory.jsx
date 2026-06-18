@@ -191,7 +191,8 @@ function RecordForm({ material, type, onSubmit, loading }) {
 
 // ─── Allocate to Work Form ─────────────────────────────────────────────────────
 function AllocateForm({ material, onSubmit, loading, success }) {
-  const [form, setForm] = useState({ work_description: '', quantity_allocated: '', allocated_date: new Date().toISOString().slice(0, 10), note: '' })
+  const toLocalISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const [form, setForm] = useState({ work_description: '', quantity_allocated: '', allocated_date: toLocalISO(new Date()), note: '' })
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
   const available = Number(material.quantity_available ?? 0)

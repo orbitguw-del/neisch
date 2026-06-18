@@ -88,8 +88,12 @@ function PhotoPicker({ photos, onChange }) {
 }
 
 // ── Log form ──────────────────────────────────────────────────────────────────
+function toLocalISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function LogForm({ sites, onSubmit, loading, userId }) {
-  const today = new Date().toISOString().split('T')[0]
+  const today = toLocalISO(new Date())
   const [form, setForm] = useState({
     site_id:         sites[0]?.id ?? '',
     log_date:        today,

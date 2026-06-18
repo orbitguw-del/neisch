@@ -23,10 +23,12 @@ const useAssignmentStore = create((set) => ({
           }
           return (data ?? []).map(a => ({ ...a, profile: profileMap[a.profile_id] ?? null }))
         },
-        (data) => set({ assignments: data, loading: false, error: null }),
+        (data) => set({ assignments: data, error: null }),
       )
     } catch (err) {
-      set({ loading: false, error: err.message })
+      set({ error: err.message })
+    } finally {
+      set({ loading: false })
     }
   },
 
@@ -52,10 +54,12 @@ const useAssignmentStore = create((set) => ({
           }
           return list.map(a => ({ ...a, profile: profileMap[a.profile_id] ?? null, site: siteMap[a.site_id] ?? null }))
         },
-        (data) => set({ assignments: data, loading: false, error: null }),
+        (data) => set({ assignments: data, error: null }),
       )
     } catch (err) {
-      set({ loading: false, error: err.message })
+      set({ error: err.message })
+    } finally {
+      set({ loading: false })
     }
   },
 
@@ -77,10 +81,12 @@ const useAssignmentStore = create((set) => ({
           }
           return (data ?? []).map(a => ({ ...a, site: siteMap[a.site_id] ?? null }))
         },
-        (data) => set({ assignments: data, loading: false, error: null }),
+        (data) => set({ assignments: data, error: null }),
       )
     } catch (err) {
-      set({ loading: false, error: err.message })
+      set({ error: err.message })
+    } finally {
+      set({ loading: false })
     }
   },
 

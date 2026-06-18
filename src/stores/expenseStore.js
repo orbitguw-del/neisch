@@ -31,14 +31,14 @@ const useExpenseStore = create((set, get) => ({
           return data ?? []
         },
         (data) => set((s) => {
-          // Preserve optimistic rows queued offline — they live only in store
-          // state, so a cache-driven re-fetch would otherwise wipe them.
           const pending = s.expenses.filter((e) => e._pending)
-          return { expenses: [...pending, ...data], loading: false, error: null }
+          return { expenses: [...pending, ...data], error: null }
         }),
       )
     } catch (err) {
-      set({ loading: false, error: err.message })
+      set({ error: err.message })
+    } finally {
+      set({ loading: false })
     }
   },
 

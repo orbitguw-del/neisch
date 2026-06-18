@@ -19,14 +19,18 @@ const STATUS_CHAR = {
   paid_leave: { ch: 'PL', cls: 'bg-blue-400 text-white' },
 }
 
+function toLocalISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function todayISO() {
-  return new Date().toISOString().slice(0, 10)
+  return toLocalISO(new Date())
 }
 
 function firstOfMonthISO() {
   const d = new Date()
   d.setDate(1)
-  return d.toISOString().slice(0, 10)
+  return toLocalISO(d)
 }
 
 function shortDateLabel(iso) {

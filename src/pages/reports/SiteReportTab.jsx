@@ -13,14 +13,18 @@ import { downloadWorkbook, fmtINR } from '@/lib/exportXLS'
 import { shareOnWhatsApp } from '@/lib/whatsapp'
 import { formatINR, formatINRCompact, formatDate, cn } from '@/lib/utils'
 
+function toLocalISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function todayISO() {
-  return new Date().toISOString().slice(0, 10)
+  return toLocalISO(new Date())
 }
 
 function daysAgoISO(n) {
   const d = new Date()
   d.setDate(d.getDate() - n)
-  return d.toISOString().slice(0, 10)
+  return toLocalISO(d)
 }
 
 function shortDate(iso) {

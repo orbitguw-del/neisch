@@ -58,7 +58,7 @@ function WorkerForm({ sites, defaultSiteId, onSubmit, loading, onCancel }) {
     emergency_contact:'',
     site_id:          defaultSiteId ?? (sites[0]?.id ?? ''),
     status:           'active',
-    joined_at:        new Date().toISOString().slice(0, 10),
+    joined_at:        (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })(),
   })
 
   const [photo, setPhoto] = useState(null)

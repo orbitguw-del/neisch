@@ -25,9 +25,12 @@ const CATEGORIES = [
 ]
 
 
-function todayISO() { return new Date().toISOString().slice(0, 10) }
+function toLocalISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+function todayISO() { return toLocalISO(new Date()) }
 function firstOfMonthISO() {
-  const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10)
+  const d = new Date(); d.setDate(1); return toLocalISO(d)
 }
 
 // ── Add-expense form ──────────────────────────────────────────────────────────
@@ -157,9 +160,13 @@ export default function Expenses() {
     try {
       let photo_path = null
       if (_photo) {
-        photo_path = await uploadPhoto({
-          blob: _photo, tenantId, siteId: payload.site_id, entity: 'expense',
-        })
+        try {
+          photo_path = await uploadPhoto({
+            blob: _photo, tenantId, siteId: payload.site_id, entity: 'expense',
+          })
+        } catch {
+          // Offline — skip photo, save the expense without it
+        }
       }
       await createExpense({ ...payload, photo_path, tenant_id: tenantId, created_by: profile?.id })
       setModalOpen(false)

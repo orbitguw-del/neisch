@@ -20,10 +20,12 @@ const useMaterialStore = create((set) => ({
           if (error) throw new Error(error.message)
           return data ?? []
         },
-        (data) => set({ materials: data, loading: false, error: null }),
+        (data) => set({ materials: data, error: null }),
       )
     } catch (err) {
-      set({ loading: false, error: err.message })
+      set({ error: err.message })
+    } finally {
+      set({ loading: false })
     }
   },
 

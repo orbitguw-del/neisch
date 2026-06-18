@@ -31,7 +31,8 @@ import { formatINR, formatINRCompact, formatDate, cn } from '@/lib/utils'
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function currentMonth() {
-  return new Date().toISOString().slice(0, 7)
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
 function monthLabel(m) {

@@ -33,14 +33,19 @@ const useMaterialReceiptStore = create((set, get) => ({
 
   fetchReceipts: async (tenantId) => {
     set({ loading: true })
-    const { data, error } = await supabase
-      .from('material_receipts')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
-    if (error) { set({ loading: false }); throw error }
-    const enriched = await enrichReceipts(data ?? [])
-    set({ receipts: enriched, loading: false })
+    try {
+      const { data, error } = await supabase
+        .from('material_receipts')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      const enriched = await enrichReceipts(data ?? [])
+      set({ receipts: enriched })
+    } catch {
+    } finally {
+      set({ loading: false })
+    }
   },
 
   createReceipt: async (payload, destinationSiteId = null) => {

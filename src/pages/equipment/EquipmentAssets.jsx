@@ -123,7 +123,7 @@ function ReturnForm({ asset, onSubmit, loading }) {
 function MaintenanceForm({ asset, onSubmit, loading }) {
   const [form, setForm] = useState({
     service_type: 'scheduled', description: '', serviced_by: '',
-    service_date: new Date().toISOString().slice(0, 10), next_service_date: '', cost: '',
+    service_date: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })(), next_service_date: '', cost: '',
   })
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   return (

@@ -19,10 +19,12 @@ const useSiteStore = create((set, get) => ({
           if (error) throw new Error(error.message)
           return data ?? []
         },
-        (data) => set({ sites: data, loading: false, error: null }),
+        (data) => set({ sites: data, error: null }),
       )
     } catch (err) {
-      set({ loading: false, error: err.message })
+      set({ error: err.message })
+    } finally {
+      set({ loading: false })
     }
   },
 
@@ -44,10 +46,12 @@ const useSiteStore = create((set, get) => ({
           }
           return sites.map(s => ({ ...s, tenant: tenantMap[s.tenant_id] ?? null }))
         },
-        (data) => set({ sites: data, loading: false, error: null }),
+        (data) => set({ sites: data, error: null }),
       )
     } catch (err) {
-      set({ loading: false, error: err.message })
+      set({ error: err.message })
+    } finally {
+      set({ loading: false })
     }
   },
 

@@ -24,12 +24,19 @@ const useTaskStore = create((set, get) => ({
   /** All tasks for a tenant (RLS scopes sub-roles to their sites). */
   fetchTasks: async (tenantId, { siteId = null } = {}) => {
     set({ loading: true, error: null })
-    let q = supabase.from('tasks').select(TASK_SELECT)
-      .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
-    if (siteId) q = q.eq('site_id', siteId)
-    const { data, error } = await q
-    set({ tasks: data ?? [], loading: false, error: error?.message ?? null })
+    try {
+      let q = supabase.from('tasks').select(TASK_SELECT)
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
+      if (siteId) q = q.eq('site_id', siteId)
+      const { data, error } = await q
+      if (error) throw new Error(error.message)
+      set({ tasks: data ?? [], error: null })
+    } catch (err) {
+      set({ error: err.message })
+    } finally {
+      set({ loading: false })
+    }
   },
 
   createTask: async (payload) => {

@@ -171,7 +171,8 @@ function LogLabourModal({ sites, siteAssignments, tenantId, profileId, onClose, 
   // siteAssignments: Map<siteId, subcontractor[]>
   const [siteId,    setSiteId]    = useState(sites[0]?.id ?? '')
   const [scId,      setScId]      = useState('')
-  const [date,      setDate]      = useState(new Date().toISOString().slice(0, 10))
+  const toLocalISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const [date,      setDate]      = useState(toLocalISO(new Date()))
   const [headcount, setHeadcount] = useState('')
   const [notes,     setNotes]     = useState('')
   const [photos,    setPhotos]    = useState([])

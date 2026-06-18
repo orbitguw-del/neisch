@@ -49,41 +49,43 @@ const useMaterialTransactionStore = create((set) => ({
    */
   fetchLedger: async (materialId) => {
     set({ loading: true, transactions: [] })
+    try {
+      const { data, error } = await supabase
+        .from('material_transactions')
+        .select('*')
+        .eq('material_id', materialId)
+        .order('created_at', { ascending: true })
 
-    const { data, error } = await supabase
-      .from('material_transactions')
-      .select('*')
-      .eq('material_id', materialId)
-      .order('created_at', { ascending: true })
+      if (error) throw error
+      const list = data ?? []
 
-    if (error) { set({ loading: false }); throw error }
-    const list = data ?? []
-
-    // Enrich with creator profiles
-    const profileIds = [...new Set(list.map((t) => t.created_by).filter(Boolean))]
-    let profileMap = {}
-    if (profileIds.length) {
-      const { data: profiles } = await supabase
-        .from('profiles').select('id, full_name').in('id', profileIds)
-      profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p]))
-    }
-
-    // Compute running balance (from first transaction forward)
-    let running = 0
-    const enriched = list.map((t) => {
-      const sign = TXN_SIGN[t.txn_type]
-      if (sign === '+') running += Number(t.quantity)
-      else if (sign === '-') running -= Number(t.quantity)
-      else if (sign === '=') running = Number(t.quantity)
-
-      return {
-        ...t,
-        created_by_profile: profileMap[t.created_by] ?? null,
-        computed_balance:   running,
+      const profileIds = [...new Set(list.map((t) => t.created_by).filter(Boolean))]
+      let profileMap = {}
+      if (profileIds.length) {
+        const { data: profiles } = await supabase
+          .from('profiles').select('id, full_name').in('id', profileIds)
+        profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p]))
       }
-    })
 
-    set({ transactions: enriched, loading: false })
+      let running = 0
+      const enriched = list.map((t) => {
+        const sign = TXN_SIGN[t.txn_type]
+        if (sign === '+') running += Number(t.quantity)
+        else if (sign === '-') running -= Number(t.quantity)
+        else if (sign === '=') running = Number(t.quantity)
+
+        return {
+          ...t,
+          created_by_profile: profileMap[t.created_by] ?? null,
+          computed_balance:   running,
+        }
+      })
+
+      set({ transactions: enriched })
+    } catch {
+    } finally {
+      set({ loading: false })
+    }
   },
 
   /**

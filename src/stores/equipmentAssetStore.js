@@ -38,14 +38,19 @@ const useEquipmentAssetStore = create((set) => ({
 
   fetchAssets: async (tenantId, filters = {}) => {
     set({ loading: true })
-    let q = supabase.from('equipment_assets').select('*').eq('tenant_id', tenantId).order('asset_code')
-    if (filters.siteId)     q = q.eq('site_id', filters.siteId)
-    if (filters.status)     q = q.eq('status', filters.status)
-    if (filters.materialId) q = q.eq('material_id', filters.materialId)
-    const { data, error } = await q
-    if (error) { set({ loading: false }); throw error }
-    const enriched = await enrichAssets(data ?? [])
-    set({ assets: enriched, loading: false })
+    try {
+      let q = supabase.from('equipment_assets').select('*').eq('tenant_id', tenantId).order('asset_code')
+      if (filters.siteId)     q = q.eq('site_id', filters.siteId)
+      if (filters.status)     q = q.eq('status', filters.status)
+      if (filters.materialId) q = q.eq('material_id', filters.materialId)
+      const { data, error } = await q
+      if (error) throw error
+      const enriched = await enrichAssets(data ?? [])
+      set({ assets: enriched })
+    } catch {
+    } finally {
+      set({ loading: false })
+    }
   },
 
   fetchAsset: async (assetId) => {
@@ -244,7 +249,7 @@ const useEquipmentAssetStore = create((set) => ({
 
     return useEquipmentAssetStore.getState().updateAsset(assetId, {
       status:            'available',
-      last_service_date: new Date().toISOString().slice(0, 10),
+      last_service_date: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })(),
       next_service_date: nextServiceDate || null,
     })
   },
