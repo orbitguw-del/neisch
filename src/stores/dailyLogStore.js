@@ -31,7 +31,11 @@ const useDailyLogStore = create((set) => ({
           if (error) throw new Error(error.message)
           return await attachCreators(data ?? [])
         },
-        (data) => set({ logs: data, loading: false, error: null }),
+        (data) => set((s) => {
+          // Preserve optimistic logs queued offline — same reason as expenses.
+          const pending = s.logs.filter((l) => l._pending)
+          return { logs: [...pending, ...data], loading: false, error: null }
+        }),
       )
     } catch (err) {
       set({ loading: false, error: err.message })

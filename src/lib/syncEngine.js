@@ -32,6 +32,11 @@ async function applyMutation(m) {
   } else if (m.op === 'upsert') {
     const { error } = await supabase.from(m.table).upsert(m.payload, m.upsertOpts)
     if (error) throw error
+  } else if (m.op === 'delete') {
+    let q = supabase.from(m.table).delete()
+    for (const [k, v] of Object.entries(m.match ?? {})) q = q.eq(k, v)
+    const { error } = await q
+    if (error) throw error
   } else if (m.op === 'storage') {
     const { error } = await supabase.storage
       .from(m.bucket)

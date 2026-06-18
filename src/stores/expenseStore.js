@@ -30,7 +30,12 @@ const useExpenseStore = create((set, get) => ({
           if (error) throw new Error(error.message)
           return data ?? []
         },
-        (data) => set({ expenses: data, loading: false, error: null }),
+        (data) => set((s) => {
+          // Preserve optimistic rows queued offline — they live only in store
+          // state, so a cache-driven re-fetch would otherwise wipe them.
+          const pending = s.expenses.filter((e) => e._pending)
+          return { expenses: [...pending, ...data], loading: false, error: null }
+        }),
       )
     } catch (err) {
       set({ loading: false, error: err.message })
@@ -71,9 +76,19 @@ const useExpenseStore = create((set, get) => ({
 
   /** Approve or reject — only site_manager / contractor / superadmin (enforced by RLS). */
   setExpenseStatus: async (id, status, approverId) => {
-    const patch = status === 'approved'
-      ? { status, approved_by: approverId, approved_at: new Date().toISOString() }
-      : { status, approved_by: approverId, approved_at: new Date().toISOString() }
+    const patch = { status, approved_by: approverId, approved_at: new Date().toISOString() }
+    if (!isOnline()) {
+      await queueWrite({
+        table: 'site_expenses',
+        op: 'update',
+        payload: patch,
+        match: { id },
+        label: `Expense ${status} — ${id.slice(0, 8)}`,
+      })
+      // Optimistic local update so the UI flips immediately.
+      set((s) => ({ expenses: s.expenses.map((e) => (e.id === id ? { ...e, ...patch, _pending: true } : e)) }))
+      return { ...patch, id }
+    }
     const { data, error } = await supabase
       .from('site_expenses')
       .update(patch)
@@ -86,6 +101,20 @@ const useExpenseStore = create((set, get) => ({
   },
 
   deleteExpense: async (id) => {
+    if (!isOnline()) {
+      // Optimistic delete + queue. Skip queueing if it's an offline-only row
+      // that never reached the server (id starts with "offline-") — just drop it.
+      if (!String(id).startsWith('offline-')) {
+        await queueWrite({
+          table: 'site_expenses',
+          op: 'delete',
+          match: { id },
+          label: `Delete expense — ${id.slice(0, 8)}`,
+        })
+      }
+      set((s) => ({ expenses: s.expenses.filter((e) => e.id !== id) }))
+      return
+    }
     const { error } = await supabase.from('site_expenses').delete().eq('id', id)
     if (error) throw error
     set((s) => ({ expenses: s.expenses.filter((e) => e.id !== id) }))
