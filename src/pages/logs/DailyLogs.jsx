@@ -372,17 +372,17 @@ export default function DailyLogs() {
                     Filed by {log.created_by_profile?.full_name ?? 'Unknown'}
                   </p>
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
                   {log.workers_present != null && (
-                    <div className="flex items-center gap-1 text-xs text-gray-600">
+                    <div className="flex items-center gap-1 text-xs text-gray-600 flex-shrink-0">
                       <Users className="h-3.5 w-3.5" />
                       {log.workers_present} workers
                     </div>
                   )}
                   {log.weather && (
-                    <div className="flex items-center gap-1 text-xs text-gray-600">
-                      <CloudRain className="h-3.5 w-3.5" />
-                      <span className="truncate max-w-[140px]">{log.weather}</span>
+                    <div className="flex items-center gap-1 text-xs text-gray-600 min-w-0">
+                      <CloudRain className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="truncate">{log.weather}</span>
                     </div>
                   )}
                 </div>
