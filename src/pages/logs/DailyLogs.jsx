@@ -103,7 +103,27 @@ function LogForm({ sites, onSubmit, loading, userId }) {
     issues:          '',
   })
   const [photos, setPhotos] = useState([])
+  const [siteSubcontractors, setSiteSubcontractors] = useState([])
+  const [scHeadcounts, setScHeadcounts] = useState({})
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  // Fetch subcontractors assigned to the selected site
+  useEffect(() => {
+    if (!form.site_id) { setSiteSubcontractors([]); return }
+    let cancelled = false
+    ;(async () => {
+      const { data: assignments } = await supabase
+        .from('subcontractor_site_assignments')
+        .select('subcontractor_id, subcontractors(id, name, type)')
+        .eq('site_id', form.site_id)
+      if (cancelled) return
+      const scs = (assignments ?? []).map(a => a.subcontractors).filter(Boolean)
+      scs.sort((a, b) => a.name.localeCompare(b.name))
+      setSiteSubcontractors(scs)
+      setScHeadcounts({})
+    })()
+    return () => { cancelled = true }
+  }, [form.site_id])
 
   return (
     <form
@@ -115,6 +135,7 @@ function LogForm({ sites, onSubmit, loading, userId }) {
           created_by: userId,
           tenant_id:  sites.find((s) => s.id === form.site_id)?.tenant_id,
           _photos:    photos,
+          _scHeadcounts: scHeadcounts,
         })
       }}
       className="space-y-4"
@@ -153,6 +174,30 @@ function LogForm({ sites, onSubmit, loading, userId }) {
             value={form.issues} onChange={set('issues')}
             placeholder="Equipment breakdown, material shortage, safety incident, etc." />
         </div>
+        {siteSubcontractors.length > 0 && (
+          <div className="col-span-2 rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-3">
+            <div className="flex items-center gap-1.5">
+              <HardHat className="h-4 w-4 text-amber-600" />
+              <span className="text-sm font-semibold text-gray-700">Sub-contractor Labour</span>
+            </div>
+            {siteSubcontractors.map(sc => (
+              <div key={sc.id} className="flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{sc.name}</p>
+                  <p className="text-xs text-gray-400">{sc.type}</p>
+                </div>
+                <input
+                  type="number" inputMode="numeric" min="0" max="999"
+                  className="input w-20 text-center font-bold"
+                  placeholder="0"
+                  value={scHeadcounts[sc.id] ?? ''}
+                  onChange={(e) => setScHeadcounts(prev => ({ ...prev, [sc.id]: e.target.value }))}
+                />
+                <span className="text-xs text-gray-400 w-12">labour</span>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="col-span-2">
           <PhotoPicker photos={photos} onChange={setPhotos} />
         </div>
@@ -272,7 +317,7 @@ export default function DailyLogs() {
     if (activeSiteId) fetchLogs(activeSiteId)
   }, [activeSiteId, fetchLogs])
 
-  const handleCreate = async ({ _photos, ...payload }) => {
+  const handleCreate = async ({ _photos, _scHeadcounts, ...payload }) => {
     setSaving(true)
     setError(null)
     try {
@@ -289,6 +334,25 @@ export default function DailyLogs() {
         }
         // Refresh to pick up the photos
         fetchLogs(activeSiteId ?? payload.site_id)
+      }
+
+      // Insert subcontractor daily logs for any non-zero headcounts
+      if (_scHeadcounts && Object.keys(_scHeadcounts).length > 0) {
+        const scRows = Object.entries(_scHeadcounts)
+          .filter(([, count]) => count && parseInt(count, 10) > 0)
+          .map(([scId, count]) => ({
+            tenant_id:        payload.tenant_id,
+            site_id:          payload.site_id,
+            subcontractor_id: scId,
+            date:             payload.log_date,
+            headcount:        parseInt(count, 10),
+            logged_by:        user?.id ?? null,
+          }))
+        if (scRows.length > 0) {
+          await supabase
+            .from('subcontractor_daily_logs')
+            .upsert(scRows, { onConflict: 'site_id,subcontractor_id,date' })
+        }
       }
 
       if (payload.site_id !== activeSiteId) setActiveSiteId(payload.site_id)
