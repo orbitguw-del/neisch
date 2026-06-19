@@ -22,6 +22,7 @@ import Settings from '@/pages/settings/Settings'
 import Help from '@/pages/help/Help'
 import NotFound from '@/pages/NotFound'
 import Tenants from '@/pages/admin/Tenants'
+import VendorRegistrations from '@/pages/admin/VendorRegistrations'
 import Team from '@/pages/team/Team'
 import DailyLogs from '@/pages/logs/DailyLogs'
 import Inventory from '@/pages/inventory/Inventory'
@@ -97,6 +98,14 @@ const router = createHashRouter([
         element: (
           <RoleGuard roles={SUPERADMIN}>
             <Tenants />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: '/admin/vendors',
+        element: (
+          <RoleGuard roles={SUPERADMIN}>
+            <VendorRegistrations />
           </RoleGuard>
         ),
       },

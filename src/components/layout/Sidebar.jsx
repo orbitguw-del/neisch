@@ -17,6 +17,7 @@ import {
   ListTodo,
   HardDriveDownload,
   LifeBuoy,
+  Store,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import useAuthStore from '@/stores/authStore'
@@ -26,6 +27,7 @@ const NAV_BY_ROLE = {
   superadmin: [
     { label: 'Dashboard',  to: '/dashboard',     icon: LayoutDashboard },
     { label: 'All Tenants', to: '/admin/tenants', icon: Shield },
+    { label: 'Vendors',    to: '/admin/vendors', icon: Store },
     { label: 'Help',       to: '/help',          icon: LifeBuoy },
     { label: 'Settings',   to: '/settings',      icon: Settings },
   ],
