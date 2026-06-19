@@ -64,9 +64,17 @@ function TaskForm({ sites, role, tenantId, parentTask, onSubmit, onCancel, loadi
     due_date:  '',
   })
   const [people, setPeople] = useState([])
+  const [effectiveRole, setEffectiveRole] = useState(assignRole)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
+  // Reset assignee when site changes (previous selection won't be valid)
+  useEffect(() => {
+    setForm((f) => ({ ...f, assignee: '' }))
+  }, [form.site_id])
+
   // Load the people this role can assign to, for the chosen site.
+  // Site managers normally assign to supervisors, but if no supervisor exists
+  // on the site, fall back to showing workers so the manager can assign directly.
   useEffect(() => {
     if (!form.site_id || !assignRole) return
     let cancelled = false
@@ -75,16 +83,34 @@ function TaskForm({ sites, role, tenantId, parentTask, onSubmit, onCancel, loadi
         const { data } = await supabase
           .from('workers').select('id, name, trade').eq('site_id', form.site_id)
           .eq('status', 'active').order('name')
-        if (!cancelled) setPeople((data ?? []).map((w) => ({ id: w.id, label: `${w.name} · ${w.trade ?? 'Worker'}`, kind: 'worker' })))
+        if (!cancelled) {
+          setEffectiveRole('worker')
+          setPeople((data ?? []).map((w) => ({ id: w.id, label: `${w.name} · ${w.trade ?? 'Worker'}`, kind: 'worker' })))
+        }
       } else {
         // profiles assigned to this site with the target role
         const { data: asg } = await supabase
           .from('site_assignments').select('profile_id, role').eq('site_id', form.site_id).eq('role', assignRole)
         const ids = (asg ?? []).map((a) => a.profile_id)
-        if (!ids.length) { if (!cancelled) setPeople([]); return }
-        const { data: profs } = await supabase
-          .from('profiles').select('id, full_name').in('id', ids)
-        if (!cancelled) setPeople((profs ?? []).map((p) => ({ id: p.id, label: p.full_name ?? 'Unnamed', kind: 'profile' })))
+        if (ids.length) {
+          const { data: profs } = await supabase
+            .from('profiles').select('id, full_name').in('id', ids)
+          if (!cancelled) {
+            setEffectiveRole(assignRole)
+            setPeople((profs ?? []).map((p) => ({ id: p.id, label: p.full_name ?? 'Unnamed', kind: 'profile' })))
+          }
+        } else if (assignRole === 'supervisor') {
+          // No supervisors on this site — fall back to workers
+          const { data } = await supabase
+            .from('workers').select('id, name, trade').eq('site_id', form.site_id)
+            .eq('status', 'active').order('name')
+          if (!cancelled) {
+            setEffectiveRole('worker')
+            setPeople((data ?? []).map((w) => ({ id: w.id, label: `${w.name} · ${w.trade ?? 'Worker'}`, kind: 'worker' })))
+          }
+        } else {
+          if (!cancelled) { setEffectiveRole(assignRole); setPeople([]) }
+        }
       }
     })()
     return () => { cancelled = true }
@@ -130,14 +156,14 @@ function TaskForm({ sites, role, tenantId, parentTask, onSubmit, onCancel, loadi
           onChange={set('description')} placeholder="Details, quantities, location…" />
       </div>
       <div>
-        <label className="label">Assign to ({ROLE_LABEL[assignRole]}) *</label>
+        <label className="label">Assign to ({ROLE_LABEL[effectiveRole]}) *</label>
         <select className="input" required value={form.assignee} onChange={set('assignee')}>
-          <option value="">Select {ROLE_LABEL[assignRole]?.toLowerCase()}…</option>
+          <option value="">Select {ROLE_LABEL[effectiveRole]?.toLowerCase()}…</option>
           {people.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
         </select>
         {people.length === 0 && (
           <p className="mt-1 text-xs text-amber-600">
-            No {ROLE_LABEL[assignRole]?.toLowerCase()} on this site yet.
+            No {ROLE_LABEL[effectiveRole]?.toLowerCase()} on this site yet.
           </p>
         )}
       </div>
