@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, LifeBuoy, BookOpen } from 'lucide-react'
+import { ChevronDown, ChevronUp, LifeBuoy, BookOpen, Camera, Loader2 } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
 import PageHeader from '@/components/ui/PageHeader'
+import { sendHelpScreenshot, openWhatsAppWindowEarly } from '@/lib/helpScreenshot'
+import { useLocation } from 'react-router-dom'
 
 // ── How-to content, per role ──────────────────────────────────────────────────
 
@@ -171,6 +173,56 @@ function RoleSection({ roleKey, defaultOpen }) {
   )
 }
 
+// ── Still stuck? card with screenshot sender ──────────────────────────────────
+
+function StuckCard() {
+  const location = useLocation()
+  const [status, setStatus] = useState('idle') // idle | capturing | sent | clipboard | downloaded | error
+
+  async function handleSend() {
+    if (status !== 'idle') return
+    const preOpened = openWhatsAppWindowEarly()
+    setStatus('capturing')
+    await new Promise((r) => setTimeout(r, 80))
+    const result = await sendHelpScreenshot('Help', '', preOpened)
+    setStatus(result === 'shared' ? 'sent' : result === 'clipboard' ? 'clipboard' : result === 'downloaded' ? 'downloaded' : 'error')
+    setTimeout(() => setStatus('idle'), 4000)
+  }
+
+  const btnLabel = {
+    idle:       'Send screenshot to support',
+    capturing:  'Taking screenshot…',
+    sent:       '✓ Sent to Karun',
+    clipboard:  '✓ Copied — paste in WhatsApp',
+    downloaded: '✓ Saved — attach in WhatsApp',
+    error:      'Could not capture — try again',
+  }[status]
+
+  return (
+    <div className="card p-5 space-y-3">
+      <div className="flex items-start gap-3">
+        <LifeBuoy className="h-5 w-5 flex-shrink-0 text-brand-600 mt-0.5" />
+        <div className="text-sm text-gray-700">
+          <p className="font-semibold text-gray-900">Still stuck?</p>
+          <p className="text-gray-500 mt-0.5">
+            Tap below to send a screenshot of your current screen directly to support via WhatsApp.
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={handleSend}
+        disabled={status !== 'idle'}
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+      >
+        {status === 'capturing'
+          ? <Loader2 className="h-4 w-4 animate-spin" />
+          : <Camera className="h-4 w-4" />}
+        {btnLabel}
+      </button>
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function Help() {
@@ -201,19 +253,7 @@ export default function Help() {
         ROLE_ORDER.map((r, i) => <RoleSection key={r} roleKey={r} defaultOpen={i === 0} />)
       )}
 
-      <div className="card p-5 flex items-start gap-3">
-        <LifeBuoy className="h-5 w-5 flex-shrink-0 text-brand-600" />
-        <div className="text-sm text-gray-700">
-          <p className="font-semibold text-gray-900">Still stuck?</p>
-          <p className="text-gray-600">
-            Email us at{' '}
-            <a href="mailto:help@storeyinfra.com" className="font-medium text-brand-600 hover:underline">
-              help@storeyinfra.com
-            </a>
-            {' '}— we reply within one business day.
-          </p>
-        </div>
-      </div>
+      <StuckCard />
     </div>
   )
 }
