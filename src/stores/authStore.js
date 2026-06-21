@@ -156,16 +156,17 @@ const useAuthStore = create((set, get) => ({
               await setCache(profileCacheKey, { profile: { ...profile, tenant } })
             }
           } catch {
-            // Timed out — profile already set above; cache it without tenant enrichment
             console.warn('[fetchProfile] tenant fetch timed out — skipping enrichment')
-            await setCache(profileCacheKey, { profile })
+            // Don't write to cache — the prior entry may have tenant data; let it live.
           }
         } else {
           await setCache(profileCacheKey, { profile })
         }
       } catch (err) {
         console.error('[authStore] fetchProfile failed:', err)
-        set({ profile: null, profileError: err, loading: false })
+        // Preserve whatever profile is already in-memory (may have been loaded
+        // from the IndexedDB cache above) — only surface the error banner.
+        set((s) => ({ profileError: err, loading: false, profile: s.profile ?? null }))
       }
     })()
 

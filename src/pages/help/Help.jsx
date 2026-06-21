@@ -179,7 +179,8 @@ function StuckCard() {
 
   // Auto-reset to idle 4s after any non-idle state; clears cleanly on unmount.
   useEffect(() => {
-    if (status === 'idle') return
+    // Only auto-reset from terminal states — not while a capture is still in flight.
+    if (status === 'idle' || status === 'capturing') return
     const t = setTimeout(() => setStatus('idle'), 4000)
     return () => clearTimeout(t)
   }, [status])
@@ -203,7 +204,7 @@ function StuckCard() {
   }[status]
 
   return (
-    <div className="card p-5 space-y-3">
+    <div id="help-button-root" className="card p-5 space-y-3">
       <div className="flex items-start gap-3">
         <LifeBuoy className="h-5 w-5 flex-shrink-0 text-brand-600 mt-0.5" />
         <div className="text-sm text-gray-700">
