@@ -25,3 +25,15 @@ _trash/
 
 # Generated PowerPoint output (regen via scripts when needed)
 ~$*.pptx
+
+# Accidental Windows duplicate files (Explorer "- Copy" suffix)
+* - Copy*
+
+# Generated marketing artifacts at repo root (regen via make-*.cjs scripts).
+# Leading slash scopes to root so Android icons / docs/pdf assets stay tracked.
+/storey-contractor-pitch.pptx
+/storey-builder-leads-guwahati.xlsx
+/storey-intern-poster.jpg
+/storey-intern-poster.png
+/storey-intern-poster-square.jpg
+/intern-interview-pack.pdf
