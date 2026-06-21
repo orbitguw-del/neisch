@@ -409,6 +409,20 @@ passes). 28 fixes total. AAB at `android\app\build\outputs\bundle\release\app-re
 when possible, with: what's broken · where · severity · commit hash if
 fixed on web · APK status)*
 
+### Pending — not yet bundled
+
+- [ ] **Edge-to-edge deprecated-API warning** *(Play Console "2 recommended
+  actions" on v30 / 1.2.6, surfaced 2026-06-18)* — Console flags "edge-to-edge
+  may not display for all users" + "uses deprecated APIs or parameters for
+  edge-to-edge" (Android 15 / targetSdk 35). **Advisory only — NOT a policy
+  violation, NOT a blocker; 0 user-perceived crashes on v30, app is live &
+  stable (19 installs, 2 countries).** Purely cosmetic — content can draw under
+  the status / nav bars on the newest phones. Fix: handle window insets /
+  edge-to-edge in the Capacitor Android shell (status-bar plugin + edge-to-edge
+  insets). **Ship in the SAME APK as the offline-mode release (branch
+  `feat/offline-read-cache`) — do NOT cut a release just for this.** APK status:
+  pending next build.
+
 ---
 
 ## 🐞 P1.5 — Known bugs
@@ -1134,6 +1148,15 @@ blocker, not just a liability concern.
     widget. Makes the vague "stalled" idea precise.
   Reminders/notifications for due updates build on this via the Notifications item.
 
+- [ ] **Task assignment to workers (not just supervisors)** _(hardening — Tasks module)_
+  — when a Site Manager creates a task and there is no supervisor on that site,
+  the manager should be able to assign the task directly to a worker/labourer.
+  Currently the assignee picker may only show supervisors. Fix: the assignee
+  dropdown should list **all workers on that site** (+ supervisors if any). The
+  site manager becomes the de-facto supervisor for that site's tasks. This is a
+  real scenario — small sites (1–3 workers) often run without a dedicated
+  supervisor. Ship with the next bug-fix batch.
+
 - [ ] **Supervisor "Today" work schedule** _(v1.2 — enhancement of Tasks)_ —
   requested 2026-05-20 by devraaj (Supervisor at BuildNE). A focused
   "today" view: tasks where assignee = me AND start_date ≤ today ≤ due_date,
@@ -1157,6 +1180,14 @@ blocker, not just a liability concern.
   Decide scope when at least 5 supervisors have asked for it across distinct
   tenants — until then, contractors track allocation manually. Do NOT build
   until 12-tester gate cleared.
+
+- [ ] **Planner role** _(v2 — new role)_ — a new role between Site Manager and
+  Contractor, focused on site planning, estimation, and scheduling. Scope TBD:
+  likely read access to budgets/materials/tasks + ability to create/edit site
+  plans, BOQ estimates, and timeline schedules. Does NOT approve expenses or
+  manage workers — pure planning function. Add to the role hierarchy:
+  `superadmin > contractor > planner > site_manager > supervisor > store_keeper`.
+  Needs: RLS policies, role guard updates, dedicated dashboard, planning module UI.
 
 - [ ] **Team activity log** _(v2 — new feature)_ — requested 2026-05-19.
   A contractor should see what their team is doing (attendance marked, logs
