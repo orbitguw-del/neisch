@@ -1,9 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronDown, ChevronUp, LifeBuoy, BookOpen, Camera, Loader2 } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
 import PageHeader from '@/components/ui/PageHeader'
 import { sendHelpScreenshot, openWhatsAppWindowEarly } from '@/lib/helpScreenshot'
-import { useLocation } from 'react-router-dom'
 
 // ── How-to content, per role ──────────────────────────────────────────────────
 
@@ -176,8 +175,14 @@ function RoleSection({ roleKey, defaultOpen }) {
 // ── Still stuck? card with screenshot sender ──────────────────────────────────
 
 function StuckCard() {
-  const location = useLocation()
   const [status, setStatus] = useState('idle') // idle | capturing | sent | clipboard | downloaded | error
+
+  // Auto-reset to idle 4s after any non-idle state; clears cleanly on unmount.
+  useEffect(() => {
+    if (status === 'idle') return
+    const t = setTimeout(() => setStatus('idle'), 4000)
+    return () => clearTimeout(t)
+  }, [status])
 
   async function handleSend() {
     if (status !== 'idle') return
@@ -186,7 +191,6 @@ function StuckCard() {
     await new Promise((r) => setTimeout(r, 80))
     const result = await sendHelpScreenshot('Help', '', preOpened)
     setStatus(result === 'shared' ? 'sent' : result === 'clipboard' ? 'clipboard' : result === 'downloaded' ? 'downloaded' : 'error')
-    setTimeout(() => setStatus('idle'), 4000)
   }
 
   const btnLabel = {

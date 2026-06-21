@@ -16,15 +16,21 @@ export function cacheKey(store, fn, params) {
   return `${store}:${fn}:${sorted}`
 }
 
-// Races a query against a 15-second deadline. On spotty 4G the TCP connection
-// can hang indefinitely — without this the loading spinner never clears.
-async function runWithTimeout(queryFn) {
+// Races a query against a deadline. On spotty 4G the TCP connection can hang
+// indefinitely — without this the loading spinner never clears.
+// Also exported so auth and other direct-supabase callers can opt in.
+export async function runWithTimeout(queryFn, timeoutMs = QUERY_TIMEOUT_MS) {
   let timer
   const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error('Network request timed out — check your connection')), QUERY_TIMEOUT_MS)
+    timer = setTimeout(() => reject(new Error('Network request timed out — check your connection')), timeoutMs)
   })
+  // Wrap in .then() so a synchronous throw in queryFn becomes a rejection.
+  const queryPromise = Promise.resolve().then(() => queryFn())
+  // Register .catch() before the race so the rejection is always handled
+  // if the timeout wins and nobody else is listening to queryPromise.
+  queryPromise.catch(() => {})
   try {
-    return await Promise.race([queryFn(), timeout])
+    return await Promise.race([queryPromise, timeout])
   } finally {
     clearTimeout(timer)
   }

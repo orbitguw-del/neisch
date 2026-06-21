@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { getCached, setCache, clearAllCache } from '@/lib/offlineCache'
+import { runWithTimeout } from '@/lib/cachedFetch'
 import useOfflineStore from '@/stores/offlineStore'
 
 const useAuthStore = create((set, get) => ({
@@ -105,11 +106,10 @@ const useAuthStore = create((set, get) => ({
           if (!useOfflineStore.getState().online) return
         }
 
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single()
+        const { data: profile, error } = await runWithTimeout(
+          () => supabase.from('profiles').select('*').eq('id', userId).single(),
+          10000, // 10s — fires before the 12s init safety-net, so profileError is set before loading clears
+        )
 
         // PGRST116 = no rows — handle_new_user trigger didn't run for this account
         // (common for Google OAuth users created before the trigger existed)
@@ -145,16 +145,20 @@ const useAuthStore = create((set, get) => ({
         set({ profile: profile ?? null, profileError: null, loading: false })
 
         if (profile?.tenant_id) {
-          const { data: tenant, error: tenantError } = await supabase
-            .from('tenants')
-            .select('name, plan, sm_can_create_receipts')
-            .eq('id', profile.tenant_id)
-            .single()
-          if (tenantError) {
-            console.error('[fetchProfile] tenant fetch failed', tenantError.code, tenantError.message)
-          } else if (tenant) {
-            set((state) => ({ profile: state.profile ? { ...state.profile, tenant } : state.profile }))
-            await setCache(profileCacheKey, { profile: { ...profile, tenant } })
+          try {
+            const { data: tenant, error: tenantError } = await runWithTimeout(() =>
+              supabase.from('tenants').select('name, plan, sm_can_create_receipts').eq('id', profile.tenant_id).single()
+            )
+            if (tenantError) {
+              console.error('[fetchProfile] tenant fetch failed', tenantError.code, tenantError.message)
+            } else if (tenant) {
+              set((state) => ({ profile: state.profile ? { ...state.profile, tenant } : state.profile }))
+              await setCache(profileCacheKey, { profile: { ...profile, tenant } })
+            }
+          } catch {
+            // Timed out — profile already set above; cache it without tenant enrichment
+            console.warn('[fetchProfile] tenant fetch timed out — skipping enrichment')
+            await setCache(profileCacheKey, { profile })
           }
         } else {
           await setCache(profileCacheKey, { profile })
