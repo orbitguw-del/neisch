@@ -35,19 +35,6 @@
           }
         ]
       }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PROJECT_DIR:-C:/consne}/.claude/hooks/check-supabase-catch.mjs\" 2>/dev/null || true",
-            "timeout": 15,
-            "statusMessage": "Checking for Supabase .catch() trap"
-          }
-        ]
-      }
     ]
   }
 }
