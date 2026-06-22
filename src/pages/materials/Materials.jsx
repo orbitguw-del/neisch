@@ -16,6 +16,18 @@ import { formatINR } from '@/lib/utils'
 
 const UNIT_OPTIONS = ['bags', 'kg', 'tonnes', 'pieces', 'sq ft', 'cu ft', 'cu m', 'litres', 'bundles', 'metres', 'nos']
 
+// Use-based grouping palette. Group names come from material_group column.
+const GROUP_COLORS = {
+  'Cement':     'bg-amber-100 text-amber-800',
+  'Steel':      'bg-slate-200 text-slate-800',
+  'Aggregate':  'bg-stone-200 text-stone-800',
+  'Masonry':    'bg-orange-100 text-orange-800',
+  'Electrical': 'bg-yellow-100 text-yellow-800',
+  'Plumbing':   'bg-sky-100 text-sky-800',
+  'Finishing':  'bg-emerald-100 text-emerald-800',
+  'Site':       'bg-purple-100 text-purple-800',
+}
+
 const BLANK = { name: '', brand: '', unit: 'bags', category: 'consumable', work_type: '', quantity_available: '', quantity_minimum: '', unit_cost: '', supplier: '', cost_centre_id: '' }
 
 function MaterialForm({ siteId, onSubmit, loading, costCentres = [] }) {
@@ -388,14 +400,28 @@ export default function Materials() {
             <table className="min-w-full divide-y divide-gray-100">
               <thead className="bg-gray-50">
                 <tr>
-                  {['Material', 'Unit', 'Available', 'Reorder at', 'Unit cost', 'Supplier'].map((h) => (
+                  {['Group', 'Material', 'Unit', 'Available', 'Reorder at', 'Unit cost', 'Supplier'].map((h) => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
-                {materials.map((m) => (
+                {[...materials].sort((a, b) => {
+                  const ga = a.material_group || 'ZZZ'
+                  const gb = b.material_group || 'ZZZ'
+                  if (ga !== gb) return ga.localeCompare(gb)
+                  return (a.name || '').localeCompare(b.name || '')
+                }).map((m) => (
                   <tr key={m.id} className={isLow(m) ? 'bg-red-50' : 'hover:bg-gray-50'}>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {m.material_group ? (
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${GROUP_COLORS[m.material_group] ?? 'bg-gray-100 text-gray-600'}`}>
+                          {m.material_group}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         {isLow(m) && <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />}
