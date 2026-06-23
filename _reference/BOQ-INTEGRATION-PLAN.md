@@ -5,9 +5,15 @@
 
 ---
 
+## Field signal (2026-06-23)
+
+Karun spoke to a working architect — **he uses SketchUp**, not Revit. This single data point is consistent with the broader pattern: in NE-India residential architecture, SketchUp dominates, Revit is for enterprise. **Consequence:** Revit-specific integration is now treated as a **customisation-only** offering for enterprise customers — not a default product feature.
+
+---
+
 ## TL;DR (the one-line answer)
 
-> *"BOQ extraction is on our roadmap. We're not building it before 5 paying customers — that's our internal discipline. When we do, we'll start with manual entry, not Revit parsing, because most of our contractors don't work from Revit files."*
+> *"BOQ entry is on our roadmap as manual + Excel-paste. Revit / IFC auto-extraction is offered only as a paid customisation for enterprise customers — most of our contractors work with SketchUp or AutoCAD, where auto-extraction doesn't add value."*
 
 ---
 
@@ -48,9 +54,10 @@ At project creation, the contractor types or pastes the planned material quantit
 Contractor pastes their existing Excel BOQ. App auto-parses rows, fuzzy-matches material names, confirms each row.
 **Effort:** ~2 weeks.
 
-### Tier 3 — IFC / Revit auto-extract *(builds for ~20% of contractors)*
+### Tier 3 — IFC / Revit auto-extract *(custom enterprise only — NOT default product)*
 IfcOpenShell parses the IFC file, extracts material schedules, maps to Storey materials. Contractor reviews and confirms.
 **Effort:** ~3–4 weeks.
+**Positioning:** offered only as a paid customisation to enterprise customers (large commercial builders who actually work with Revit). Not in the default roadmap. Most NE-India residential contractors do not have Revit files; SketchUp models don't carry quantity data by default; AutoCAD / PDF plans don't either. Auto-extract from a model file is a small-segment feature.
 
 ---
 
@@ -94,7 +101,7 @@ Until this survey is done, all BOQ feature talk is speculation.
 
 Use this answer:
 
-> *"It's on the roadmap, but we are disciplined about sequence. Most of our contractors don't work from Revit yet — they work from hand-drawn plans and Excel BOQs. We'll build the manual-entry version first (which works for everyone), then Excel paste, then native Revit/IFC for the segment that needs it. Building Revit support first would be technically interesting and commercially premature."*
+> *"BOQ entry is on our roadmap as manual and Excel-paste. Most of our contractors get SketchUp models or AutoCAD plans from their architects — neither carries quantity data, so auto-extract doesn't help them. Revit integration is offered only as a paid customisation for enterprise customers who already work in Revit."*
 
 ---
 
@@ -102,7 +109,15 @@ Use this answer:
 
 Use this answer:
 
-> *"BIM differentiation matters for the 20% of contractors who use Revit. For the 80% we serve, BIM is a non-starter. The differentiator that wins our segment is not 'we have BIM' — it's 'the supervisor in his 40s can use it on day one without training'. We will earn BIM once we earn the 80%. Order of operations matters."*
+> *"BIM differentiation matters for the ~10% of contractors who use Revit. For the 90% we serve, BIM is a non-starter — most of them work with SketchUp, AutoCAD, or paper. The differentiator that wins our segment is not 'we have BIM' — it's 'the supervisor in his 40s can use it on day one without training'. We will earn BIM as a paid customisation once we earn the 90%. Order of operations matters."*
+
+---
+
+## If a contractor specifically asks "can I import my Revit model?"
+
+> *"Yes, that's a paid customisation we set up project-by-project. It needs your architect to export the model as IFC4. Let's first get your basic site running on Storey; once you're using us daily, we'll quote the Revit setup as an add-on."*
+
+Translation: don't refuse; price it as bespoke; let revenue decide whether it's worth productising.
 
 ---
 
