@@ -1,6 +1,5 @@
 // Storey handbill for Interior Designers (A5 portrait).
-// Shows V1 (Available now) + V2 (Coming soon) clearly separated.
-// Brand: terracotta dominant, sand cards, sage accent dots, white CTA.
+// V3 — WhatsApp-readable: BIG fonts, fewer cards, terser copy.
 
 const fs = require('fs');
 const path = require('path');
@@ -9,7 +8,6 @@ const { execSync } = require('child_process');
 const OUT_HTML = path.join(__dirname, '_tmp-interior-handbill.html');
 const OUT_JPG  = path.join(__dirname, 'storey-handbill-interior-designers.jpg');
 
-// A5 portrait at 300dpi = 1748 × 2480
 const html = `<!doctype html>
 <html><head><meta charset="utf-8"/>
 <style>
@@ -19,24 +17,19 @@ const html = `<!doctype html>
 
   /* TOP brand strip */
   .top {
-    flex: 0 0 110px;
+    flex: 0 0 140px;
     background: #E7E8D1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 18px;
+    display: flex; align-items: center; justify-content: center; gap: 22px;
   }
-  .top svg { width: 50px; height: 50px; }
+  .top svg { width: 70px; height: 70px; }
   .top .name {
     font-family: 'Impact', 'Arial Black', sans-serif;
-    font-size: 44px;
-    letter-spacing: 12px;
-    color: #B85042;
+    font-size: 64px; letter-spacing: 16px; color: #B85042;
   }
 
   /* HERO */
   .hero {
-    flex: 0 0 580px;
+    flex: 0 0 660px;
     background: linear-gradient(160deg, #B85042 0%, #9A3F33 100%);
     color: #fff;
     padding: 70px 90px 60px;
@@ -47,49 +40,50 @@ const html = `<!doctype html>
     content: '';
     position: absolute; inset: 0;
     background: repeating-linear-gradient(135deg, transparent 0 60px, rgba(255,255,255,0.025) 60px 120px);
-    pointer-events: none;
   }
   .hero .label {
     display: inline-block;
-    background: rgba(255,255,255,0.18);
-    padding: 12px 26px;
-    border-radius: 28px;
-    font-size: 24px;
-    letter-spacing: 5px;
+    background: rgba(255,255,255,0.20);
+    padding: 16px 32px;
+    border-radius: 36px;
+    font-size: 32px;
+    letter-spacing: 6px;
     font-weight: 700;
-    margin-bottom: 30px;
+    margin-bottom: 36px;
   }
   .hero h1 {
     font-family: Georgia, 'Cambria', serif;
-    font-size: 84px;
-    line-height: 1.05;
-    margin-bottom: 30px;
+    font-size: 108px;
+    line-height: 1.02;
+    margin-bottom: 36px;
     font-weight: 700;
-    letter-spacing: -1px;
+    letter-spacing: -2px;
   }
   .hero h1 em { font-style: normal; color: #E7E8D1; }
   .hero .sub {
     font-family: Georgia, serif;
     font-style: italic;
-    font-size: 32px;
-    line-height: 1.42;
-    color: rgba(255,255,255,0.92);
-    max-width: 1500px;
+    font-size: 40px;
+    line-height: 1.35;
+    color: rgba(255,255,255,0.95);
   }
 
-  /* WHAT YOU GET — Available now */
+  /* NOW SECTION */
   .now {
+    flex: 1;
     background: #FAF7F2;
-    padding: 70px 90px 60px;
+    padding: 60px 90px 50px;
+    display: flex;
+    flex-direction: column;
   }
   .section-label {
-    display: inline-block;
+    align-self: flex-start;
     background: #2A1410;
     color: #E7E8D1;
-    padding: 12px 26px;
-    border-radius: 28px;
-    font-size: 24px;
-    letter-spacing: 5px;
+    padding: 14px 30px;
+    border-radius: 32px;
+    font-size: 30px;
+    letter-spacing: 6px;
     font-weight: 700;
     margin-bottom: 26px;
   }
@@ -99,158 +93,122 @@ const html = `<!doctype html>
   }
   .section-title {
     font-family: Georgia, serif;
-    font-size: 52px;
+    font-size: 66px;
     color: #B85042;
-    margin-bottom: 34px;
+    margin-bottom: 36px;
     font-weight: 700;
-    line-height: 1.1;
+    line-height: 1.05;
   }
   .feature-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 22px;
+    gap: 28px;
   }
   .feature {
     background: #fff;
-    padding: 28px 32px;
-    border-radius: 14px;
-    border-left: 7px solid #B85042;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.05);
-    display: flex;
-    align-items: flex-start;
-    gap: 22px;
-  }
-  .feature .dot {
-    flex: 0 0 48px;
-    height: 48px;
-    background: #A7BEAE;
-    border-radius: 50%;
+    padding: 32px 36px;
+    border-radius: 16px;
+    border-left: 9px solid #B85042;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 26px;
+  }
+  .feature .dot {
+    flex: 0 0 68px;
+    height: 68px;
+    background: #A7BEAE;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
     color: #2A1410;
     font-family: Georgia, serif;
-    font-size: 24px;
+    font-size: 36px;
     font-weight: 700;
-    margin-top: 2px;
   }
   .feature .body { flex: 1; }
   .feature .name {
-    font-size: 30px;
+    font-size: 40px;
     color: #B85042;
     font-weight: 700;
-    margin-bottom: 8px;
-    line-height: 1.15;
+    margin-bottom: 6px;
+    line-height: 1.1;
   }
   .feature .desc {
-    font-size: 22px;
-    line-height: 1.4;
+    font-size: 30px;
+    line-height: 1.25;
     color: #4A3A30;
   }
 
-  /* COMING SOON */
+  /* SOON SECTION */
   .soon-block {
     background: #E7E8D1;
-    padding: 60px 90px 50px;
+    padding: 55px 90px 50px;
   }
   .soon-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 22px;
   }
   .soon-card {
     background: #fff;
-    padding: 26px 30px;
-    border-radius: 14px;
-    border-left: 7px solid #A7BEAE;
-    display: flex;
-    align-items: flex-start;
-    gap: 22px;
+    padding: 30px 32px;
+    border-radius: 16px;
+    border-top: 9px solid #A7BEAE;
+    text-align: center;
   }
   .soon-card .dot {
-    flex: 0 0 48px;
-    height: 48px;
+    width: 60px;
+    height: 60px;
     background: #E7E8D1;
-    border: 2px solid #A7BEAE;
+    border: 3px solid #A7BEAE;
     border-radius: 50%;
     color: #2A1410;
     font-family: Georgia, serif;
-    font-size: 22px;
+    font-size: 30px;
     font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
   }
   .soon-card .name {
-    font-size: 28px;
+    font-size: 34px;
     color: #2A1410;
     font-weight: 700;
-    margin-bottom: 7px;
-    line-height: 1.15;
+    margin-bottom: 10px;
+    line-height: 1.1;
   }
   .soon-card .desc {
-    font-size: 21px;
-    line-height: 1.4;
+    font-size: 26px;
+    line-height: 1.3;
     color: #4A3A30;
   }
 
-  /* WHY US */
-  .why {
-    flex: 1;
-    background: #FAF7F2;
-    padding: 50px 90px 50px;
-    border-top: 1px solid #E0DBCF;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  .why h2 {
-    font-family: Georgia, serif;
-    font-size: 40px;
-    color: #B85042;
-    margin-bottom: 26px;
-    font-weight: 700;
-  }
-  .why ul {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 20px;
-    list-style: none;
-  }
-  .why li {
-    background: #fff;
-    padding: 24px 28px;
-    border-radius: 12px;
-    font-size: 22px;
-    line-height: 1.45;
-    color: #2A1410;
-  }
-  .why li b { color: #B85042; display: block; margin-bottom: 8px; font-size: 26px; }
-
   /* FOOTER */
   .footer {
+    margin-top: auto;
     background: #2A1410;
     color: #E7E8D1;
-    padding: 40px 90px;
+    padding: 50px 90px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 30px;
   }
-  .footer .left { flex: 1; }
+  .footer .left { flex: 1.3; }
   .footer .price {
     font-family: Georgia, serif;
-    font-size: 30px;
+    font-size: 42px;
     color: #fff;
     font-weight: 700;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    line-height: 1.15;
   }
   .footer .price em { color: #A7BEAE; font-style: normal; }
   .footer .sub2 {
-    font-size: 20px;
-    color: rgba(231,232,209,0.80);
+    font-size: 26px;
+    color: rgba(231,232,209,0.85);
   }
-  .footer .right { text-align: right; font-size: 22px; line-height: 1.5; }
-  .footer .right b { color: #fff; font-size: 26px; }
+  .footer .right { text-align: right; font-size: 30px; line-height: 1.4; }
+  .footer .right b { color: #fff; font-size: 36px; display: block; margin-bottom: 4px; }
   .footer .right .url { color: #A7BEAE; font-weight: 700; }
 </style>
 </head>
@@ -258,7 +216,6 @@ const html = `<!doctype html>
 
 <div class="page">
 
-  <!-- BRAND STRIP -->
   <div class="top">
     <svg viewBox="0 0 32 32">
       <rect width="32" height="32" rx="7" fill="#B85042"/>
@@ -269,14 +226,12 @@ const html = `<!doctype html>
     <div class="name">STOREY</div>
   </div>
 
-  <!-- HERO -->
   <div class="hero">
     <span class="label">FOR INTERIOR DESIGNERS</span>
-    <h1>Run 5 projects<br/>without 50 <em>WhatsApp</em><br/>groups.</h1>
-    <p class="sub">One app for every site you run — materials, daily logs, expenses, vendors, photos. Built so your supervisors actually use it, even on a 4-year-old phone.</p>
+    <h1>Run 5 projects.<br/>Not 50 <em>WhatsApp</em><br/>groups.</h1>
+    <p class="sub">One app for every site you run — built so your supervisors actually use it.</p>
   </div>
 
-  <!-- AVAILABLE NOW -->
   <div class="now">
     <span class="section-label">AVAILABLE NOW</span>
     <div class="section-title">What you get today</div>
@@ -284,109 +239,69 @@ const html = `<!doctype html>
       <div class="feature">
         <div class="dot">1</div>
         <div class="body">
-          <div class="name">Daily site logs with photos</div>
-          <div class="desc">See exactly what happened on every site each day — without a single phone call.</div>
+          <div class="name">Daily logs + photos</div>
+          <div class="desc">See every site, every day.</div>
         </div>
       </div>
       <div class="feature">
         <div class="dot">2</div>
         <div class="body">
           <div class="name">Material tracking</div>
-          <div class="desc">Every receipt, transfer and consumption logged. Know where every bag of cement went.</div>
+          <div class="desc">Every kg in. Every kg out.</div>
         </div>
       </div>
       <div class="feature">
         <div class="dot">3</div>
         <div class="body">
           <div class="name">Expense vs budget</div>
-          <div class="desc">Real-time spending against your project budget. Catch overruns before the client does.</div>
+          <div class="desc">Catch overruns live.</div>
         </div>
       </div>
       <div class="feature">
         <div class="dot">4</div>
         <div class="body">
-          <div class="name">Subcontractor management</div>
-          <div class="desc">Carpenter, electrician, painter, plumber — track scope, labour, payments, snags in one place.</div>
-        </div>
-      </div>
-      <div class="feature">
-        <div class="dot">5</div>
-        <div class="body">
-          <div class="name">Snag &amp; task list</div>
-          <div class="desc">Assign snags to specific contractors with photos. Status open / done. Handover-ready.</div>
-        </div>
-      </div>
-      <div class="feature">
-        <div class="dot">6</div>
-        <div class="body">
-          <div class="name">Multi-site dashboard</div>
-          <div class="desc">All your active projects on one screen. Workers today, materials low, expenses pending.</div>
+          <div class="name">Vendor management</div>
+          <div class="desc">Carpenter, electrician, painter — all in one.</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- COMING SOON -->
   <div class="soon-block">
     <span class="section-label soon">COMING SOON</span>
     <div class="section-title" style="color:#2A1410;">Being built next</div>
     <div class="soon-grid">
       <div class="soon-card">
+        <div class="dot">5</div>
+        <div class="name">Site documents</div>
+        <div class="desc">Drawings, BOQs, contracts — one place.</div>
+      </div>
+      <div class="soon-card">
+        <div class="dot">6</div>
+        <div class="name">Vendor dossier</div>
+        <div class="desc">Everything about each vendor in one screen.</div>
+      </div>
+      <div class="soon-card">
         <div class="dot">7</div>
-        <div>
-          <div class="name">Site documents</div>
-          <div class="desc">Drawings, BOQs, contracts, approvals, vendor quotes — all attached to the site, accessible from any phone, shareable with one tap.</div>
-        </div>
-      </div>
-      <div class="soon-card">
-        <div class="dot">8</div>
-        <div>
-          <div class="name">Subcontractor dossier</div>
-          <div class="desc">One screen per contractor: scope drawing + BOQ + materials issued + labour log + payments + snags. Google Drive can't do this.</div>
-        </div>
-      </div>
-      <div class="soon-card">
-        <div class="dot">9</div>
-        <div>
-          <div class="name">Client share link</div>
-          <div class="desc">A read-only progress page you send to the client. Photos + updates, no login needed. Stop sending 30 photos a day on WhatsApp.</div>
-        </div>
-      </div>
-      <div class="soon-card">
-        <div class="dot">10</div>
-        <div>
-          <div class="name">Excel BOQ import</div>
-          <div class="desc">Paste your BOQ from Excel — Storey pre-populates your materials list with planned quantities. Variance tracking comes free.</div>
-        </div>
+        <div class="name">Client share link</div>
+        <div class="desc">Live progress page for clients.</div>
       </div>
     </div>
   </div>
 
-  <!-- WHY -->
-  <div class="why">
-    <h2>Why Storey, not Drive + Excel + WhatsApp?</h2>
-    <ul>
-      <li><b>Built in India</b><span>Made for the messy reality of multi-vendor sites in Indian cities — not adapted from a US contractor app.</span></li>
-      <li><b>Works on any phone</b><span>Your supervisor's 4-year-old Android in 4G. No 50 MB app, no plug-in, no friction.</span></li>
-      <li><b>Free during launch beta</b><span>Per-site pricing later, never per-user. Your whole team uses it free for now.</span></li>
-    </ul>
-  </div>
-
-  <!-- FOOTER -->
   <div class="footer">
     <div class="left">
-      <div class="price">Free during launch beta · <em>per-SITE pricing later</em></div>
-      <div class="sub2">No credit card · 10-minute setup · Cancel anytime</div>
+      <div class="price">Free during launch beta</div>
+      <div class="sub2">Per-site pricing later · 10-minute setup</div>
     </div>
     <div class="right">
-      <b>Karun Roongta</b><br/>
+      <b>Karun Roongta</b>
       WhatsApp +91 98640 66898<br/>
       <span class="url">storeyinfra.com</span>
     </div>
   </div>
 
 </div>
-
 </body></html>`;
 
 fs.writeFileSync(OUT_HTML, html, 'utf8');
