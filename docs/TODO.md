@@ -28,6 +28,27 @@ Last reprioritised: 2026-05-31.
 
 ## 🟠 P1 — High (launch blockers + security)
 
+- [ ] **Existing-site onboarding gaps** _(sales-blocker hardening — added 2026-06-23)_
+  Today onboarding an ongoing-construction contractor requires manual help
+  from Karun (the Opening-Stock modal is superadmin-only, hidden flow). Three
+  small additions would let interns or contractors self-onboard. Full
+  checklist: `_reference/ONBOARDING-EXISTING-SITE.md`.
+  - [ ] **Self-service "Onboard existing site" wizard** — step-by-step:
+        site shell → materials → workers → subs → vendors → opening stock →
+        go-live. Removes superadmin-only barrier. ~3 days. Build AFTER
+        rod-variance Phase 3b–6.
+  - [ ] **Bulk-paste opening stock** — paste `Material, Qty` rows from
+        Excel; auto-match material names; confirm each row. Cuts opening-
+        stock entry from ~90 min to ~30 min per site. ~1 day. Build with
+        BOQ Tier 1 (same paste-from-clipboard pattern in
+        `_reference/BOQ-INTEGRATION-PLAN.md`).
+  - [ ] **Pre-seeded material list per project type** — at site creation,
+        "Residential RCC" / "Commercial RCC" / "Interior fit-out" auto-adds
+        a 30-item starter material list (like Garchuk got centrally). Skips
+        manual material entry for 80% of standard projects. ~4 hours. Build
+        first — it's the smallest and unblocks the wizard work.
+
+
 - [🟢 FIX WRITTEN — PENDING DEPLOY] **🔔 Notification forgery within a tenant**
   *(found 2026-06-12 module audit; fix written same day on branch
   `fix/notification-rls-hardening`)* — the old `notif_tenant_insert` RLS policy
