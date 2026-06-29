@@ -303,7 +303,13 @@ form.addEventListener('submit', async (e) => {
   const fd = new FormData(form);
   const business_name = fd.get('business_name')?.trim();
   const contact_name = fd.get('contact_name')?.trim();
-  const phone = fd.get('phone')?.trim().replace(/\s+/g, '');
+
+  // Normalise phone: strip everything except digits (handles +91, spaces,
+  // dashes, brackets), then drop leading 91 / 091 country code so we
+  // store a clean 10-digit Indian mobile.
+  let phone = (fd.get('phone') || '').replace(/\D/g, '');
+  if (phone.length === 12 && phone.startsWith('91'))  phone = phone.slice(2);
+  if (phone.length === 13 && phone.startsWith('091')) phone = phone.slice(3);
 
   if (!business_name || !contact_name || !phone) {
     errEl.textContent = 'Please fill in Business Name, Contact Person, and Phone.';
@@ -311,8 +317,8 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
-  if (!/^\d{10,12}$/.test(phone)) {
-    errEl.textContent = 'Enter a valid 10-digit phone number.';
+  if (!/^\d{10}$/.test(phone)) {
+    errEl.textContent = 'Enter a valid 10-digit Indian mobile number.';
     errEl.style.display = 'block';
     return;
   }
