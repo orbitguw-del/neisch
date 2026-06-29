@@ -28,7 +28,7 @@ const GROUP_COLORS = {
   'Site':       'bg-purple-100 text-purple-800',
 }
 
-const BLANK = { name: '', brand: '', unit: 'bags', category: 'consumable', work_type: '', quantity_available: '', quantity_minimum: '', unit_cost: '', supplier: '', cost_centre_id: '' }
+const BLANK = { name: '', brand: '', unit: 'bags', category: 'consumable', work_type: '', quantity_available: '', quantity_minimum: '', unit_cost: '', supplier: '', cost_centre_id: '', unit_weight_kg: '' }
 
 function MaterialForm({ siteId, onSubmit, loading, costCentres = [] }) {
   const [step, setStep]         = useState('pick')
@@ -129,6 +129,11 @@ function MaterialForm({ siteId, onSubmit, loading, costCentres = [] }) {
         <div>
           <label className="label">Reorder level</label>
           <input className="input" type="number" min="0" value={form.quantity_minimum} onChange={set('quantity_minimum')} placeholder="50" />
+        </div>
+        <div className="col-span-2">
+          <label className="label">Weight per piece (kg) <span className="text-xs font-normal text-gray-400">— optional, enables kg ↔ pcs conversion</span></label>
+          <input className="input" type="number" min="0" step="0.01" value={form.unit_weight_kg} onChange={set('unit_weight_kg')} placeholder="e.g. 10.66 for TMT 12mm @ 12m" />
+          <p className="text-xs text-gray-500 mt-1">For TMT rods (IS 1786, 12m): 8mm = 4.74 · 10mm = 7.40 · 12mm = 10.66 · 16mm = 18.96 · 20mm = 29.61 kg/piece. Edit if your supplier ships different length.</p>
         </div>
         <div className="col-span-2">
           <label className="label">Supplier</label>
@@ -339,6 +344,7 @@ export default function Materials() {
         unit_cost: payload.unit_cost || null,
         quantity_available: payload.quantity_available || null,
         quantity_minimum: payload.quantity_minimum || null,
+        unit_weight_kg: payload.unit_weight_kg || null,
       })
       setModalOpen(false)
     } catch (err) {
@@ -440,6 +446,11 @@ export default function Materials() {
                               </span>
                             )}
                           </div>
+                          {m.unit_weight_kg && (
+                            <p className="text-xs text-gray-500 mt-0.5 italic">
+                              1 ton ≈ {Math.round(1000 / Number(m.unit_weight_kg))} pcs · {Number(m.unit_weight_kg).toFixed(2)} kg / piece
+                            </p>
+                          )}
                         </div>
                       </div>
                     </td>

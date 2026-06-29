@@ -44,6 +44,7 @@ function ReceiptForm({ sites, onSubmit, loading }) {
     source_type: 'supplier',
     source_name: '',
     quantity: '',
+    quantity_pcs: '',
     unit_cost: '',
     lr_number: '',
     lr_date: '',
@@ -64,7 +65,7 @@ function ReceiptForm({ sites, onSubmit, loading }) {
     if (!form.site_id) return
     supabase
       .from('materials')
-      .select('id, name, unit, category')
+      .select('id, name, unit, category, unit_weight_kg')
       .eq('site_id', form.site_id)
       .order('name')
       .then(({ data }) => {
@@ -74,6 +75,26 @@ function ReceiptForm({ sites, onSubmit, loading }) {
   }, [form.site_id])
 
   const selectedMat = allMaterials.find((m) => m.id === form.material_id)
+  const isDualUnit  = !!(selectedMat?.unit_weight_kg && Number(selectedMat.unit_weight_kg) > 0)
+  const weightPerPiece = Number(selectedMat?.unit_weight_kg) || 0
+
+  // Auto-conversion handlers for dual-unit materials.
+  // Editing kg recomputes pcs (and vice versa). Both fields remain editable
+  // so the user can override the auto-calc if their physical count differs.
+  const setKg = (e) => {
+    const kg = e.target.value
+    const pcs = (kg !== '' && weightPerPiece > 0)
+      ? (Number(kg) / weightPerPiece).toFixed(2)
+      : ''
+    setForm((f) => ({ ...f, quantity: kg, quantity_pcs: pcs }))
+  }
+  const setPcs = (e) => {
+    const pcs = e.target.value
+    const kg = (pcs !== '' && weightPerPiece > 0)
+      ? (Number(pcs) * weightPerPiece).toFixed(2)
+      : ''
+    setForm((f) => ({ ...f, quantity_pcs: pcs, quantity: kg }))
+  }
 
   return (
     <form
@@ -85,6 +106,7 @@ function ReceiptForm({ sites, onSubmit, loading }) {
           ...rest,
           tenant_id:          site?.tenant_id,
           unit_cost:          form.unit_cost    || null,
+          quantity_pcs:       form.quantity_pcs || null,
           lr_date:            form.lr_date      || null,
           challan_date:       form.challan_date || null,
           invoice_date:       form.invoice_date || null,
@@ -131,18 +153,42 @@ function ReceiptForm({ sites, onSubmit, loading }) {
         </div>
       </div>
 
-      {/* Quantity + Unit cost */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label">Quantity{selectedMat ? ` (${selectedMat.unit})` : ''} *</label>
-          <input className="input" type="number" min="0.01" step="any" required
-            value={form.quantity} onChange={set('quantity')} placeholder="0" />
+      {/* Quantity — dual unit (kg + pcs) for materials with unit_weight_kg, single otherwise */}
+      {isDualUnit ? (
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Quantity (kg) *</label>
+              <input className="input" type="number" min="0.01" step="any" required
+                value={form.quantity} onChange={setKg} placeholder="0" />
+            </div>
+            <div>
+              <label className="label">Quantity (pcs) *</label>
+              <input className="input" type="number" min="0.01" step="any" required
+                value={form.quantity_pcs} onChange={setPcs} placeholder="0" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 italic">
+            Auto-converted using {weightPerPiece.toFixed(2)} kg per piece. Edit either field — the other recalculates. Override if your physical count differs.
+          </p>
+          <div>
+            <label className="label">Unit cost (₹) — optional</label>
+            <input className="input" type="number" min="0" value={form.unit_cost} onChange={set('unit_cost')} placeholder="385" />
+          </div>
         </div>
-        <div>
-          <label className="label">Unit cost (₹) — optional</label>
-          <input className="input" type="number" min="0" value={form.unit_cost} onChange={set('unit_cost')} placeholder="385" />
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="label">Quantity{selectedMat ? ` (${selectedMat.unit})` : ''} *</label>
+            <input className="input" type="number" min="0.01" step="any" required
+              value={form.quantity} onChange={set('quantity')} placeholder="0" />
+          </div>
+          <div>
+            <label className="label">Unit cost (₹) — optional</label>
+            <input className="input" type="number" min="0" value={form.unit_cost} onChange={set('unit_cost')} placeholder="385" />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* LR Details */}
       <div className="rounded-lg border border-gray-200 p-3 space-y-3">
